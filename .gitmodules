@@ -7,3 +7,6 @@
 [submodule "game/plugins/StageBackgroundExtensions"]
 	path = game/plugins/StageBackgroundExtensions
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Stage-Background-Extensions.git
+[submodule "game/plugins/PlayerExtensions"]
+	path = game/plugins/PlayerExtensions
+	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions.git
