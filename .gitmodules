@@ -1,3 +1,6 @@
 [submodule "game/packages/thlib-resources"]
 	path = game/packages/thlib-resources
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Resources.git
+[submodule "doc"]
+	path = doc
+	url = https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub-Documentation.git
