@@ -1,0 +1,7 @@
+{
+    "log_file_enable": true,
+    "log_file_path": "engine.log",
+    "persistent_log_file_enable": true,
+    "persistent_log_file_directory": "userdata/logs/",
+    "engine_cache_directory": "userdata/"
+}
