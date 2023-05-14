@@ -68,7 +68,7 @@ function Copy-Directory-And-Remove-Old {
         [string] $TargetPath
     )
     Remove-Directory-If-Exist -Path $TargetPath
-    Copy-Item -Path $SourcePath -Destination $TargetPath -Recurse
+    Copy-Item -Path $SourcePath -Destination $TargetPath -Recurse -Exclude ".git"
 }
 
 function Rename-File-And-Remove-Old {
@@ -99,10 +99,12 @@ Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\d3dcompiler_47.dll" ) 
 Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\LuaSTGSub.exe"      ) -TargetPath ($GameOutput + "\LuaSTGSub.exe"      )
 Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\launch"             ) -TargetPath ($GameOutput + "\launch"             )
 Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages"           ) -TargetPath ($GameOutput + "\packages"           )
-Remove-File-Force                                                               -Path       ($GameOutput + "\packages\thlib-resources\.git")
+#Remove-File-Force                                                               -Path       ($GameOutput + "\packages\thlib-resources\.git")
 Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins"            ) -TargetPath ($GameOutput + "\plugins"            )
 Remove-File-If-Exist                                                            -Path       ($GameOutput + "\plugins\plugins.json")
 Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\plugins\JyuSeoiJanPlayer")
+#Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\PlayerExtensions\.git")
+#Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\StageBackgroundExtensions\.git")
 # 创建空白文件夹
 New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\mod")
 New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\userdata")
@@ -110,7 +112,7 @@ New-Directory-If-Not-Exist                                                      
 Remove-Directory-If-Exist                                                       -Path       ($DocOutput)
 Copy-Directory-And-Remove-Old -SourcePath ($DocInput)                           -TargetPath ($DocOutput)
 Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\更新日志.txt")         -TargetPath ($DocOutput + "\更新日志.txt")
-Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
+#Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
 # 工具
 Remove-Directory-If-Exist                                                       -Path       ($ToolOutput)
 Copy-Directory-And-Remove-Old -SourcePath ($ToolInput)                          -TargetPath ($ToolOutput)
