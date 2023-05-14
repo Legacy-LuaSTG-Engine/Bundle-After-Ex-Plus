@@ -14,9 +14,7 @@ tools/fonted/fonted.log
 # luajit debug
 game/dump.txt
 
-build/game/*
-build/doc/*
-build/tools/外部设置工具/config.json
+build/*
 
 engine/luastg
 engine/luastg/*
