@@ -4,3 +4,6 @@
 [submodule "doc"]
 	path = doc
 	url = https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub-Documentation.git
+[submodule "game/plugins/StageBackgroundExtensions"]
+	path = game/plugins/StageBackgroundExtensions
+	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Stage-Background-Extensions.git
