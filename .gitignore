@@ -5,6 +5,7 @@
 game/mod/*
 
 # temp
+game/engine.log
 game/userdata/*
 game/plugins/plugins.json
 
