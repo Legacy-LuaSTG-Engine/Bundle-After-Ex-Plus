@@ -8,16 +8,16 @@
     :: Env
 
     @set LUASTG_BUILD_DIR=%cd%\engine\build
-    @set LUASTG_DOC_DIR=%cd%\engine\luastg\doc
-    @set DOC_DIR=%cd%\doc
+    ::@set LUASTG_DOC_DIR=%cd%\engine\luastg\doc
+    ::@set DOC_DIR=%cd%\doc
     @set GAME_DIR=%cd%\game
-    @set BUILD_DIR=%cd%\build
+    ::@set BUILD_DIR=%cd%\build
     @set TOOLS_DIR=%cd%\tools
 
     :: Doc
 
-    @rmdir    %DOC_DIR%           /s /q
-    @robocopy %LUASTG_DOC_DIR%    %DOC_DIR%    /e
+    ::@rmdir    %DOC_DIR%           /s /q
+    ::@robocopy %LUASTG_DOC_DIR%    %DOC_DIR%    /e
 
     :: Develop
 
