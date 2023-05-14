@@ -1,0 +1,468 @@
+总览：
+
+    LuaSTG aex+，即 LuaSTG After Ex Plus，是由引擎和通用 data 组成的整套开发工具。
+    引擎方面，基于 LuaSTG Ex Plus 开发，引擎组件升级到 Direct3D 11 和 XAudio2，
+    引擎的名称也由 LuaSTG Ex Plus 变更为 LuaSTG Sub。
+    由于一些开发过程的历史原因，引擎名称和整套开发工具的名称并不一致。
+    通用 data 方面，基于 LuaSTG ex+ 0.83 的 THlib 迁移而来。
+
+更新日志：
+
+    aex+ v0.8.20-beta
+        THlib
+            修复：直接从编辑器启动关卡调试或符卡调试时，更新速率控制器报错
+            修复：退出程序时 GameExit 回调函数被调用两次
+            修复：core 中的切换关卡逻辑和 THlib/ext 中的不一致
+            修复：符卡练习结束后返回符卡练习菜单，没有返回到正确的符卡列表
+            修复：玩家疮痍后，弹出的暂停菜单可以被直接关闭
+
+    aex+ v0.8.19-beta
+        LuaSTG Sub 引擎
+            更新到 v0.20.0
+            v0.20.0
+                新增：实验性 lstg.PostEffectShader 对象
+                新增：实验性 lstg.PostEffect 方法重载
+                新增：现在 hlsl 中可以通过 #include 包含其他 hlsli 头文件
+            v0.19.100 ~ v0.19.202
+                画布模式更新，由于内容过长，请见 doc/specification/画布模式更新.txt
+        THlib
+            新增：调试界面，游戏更新速率控制器
+            新增：调试界面，关卡组、关卡、boss 场景跳转工具
+            修改：允许 boss 场景练习（符卡练习）使用不在编辑器生成的符卡列表中的符卡、非符等
+            修改：启动器设置界面已适配画布模式
+
+    aex+ v0.8.18-beta
+        THlib
+            修改：F3 调试菜单增加更多关于自机无敌时的行为的选项
+            新增：移植了均值模糊后处理特效
+
+    aex+ v0.8.17-beta
+        LuaSTG Sub 引擎
+            更新到 v0.19.7
+            v0.19.7
+                修改：开启桌面窗口管理器（DWM）优化时，启用三重缓冲让帧率更平稳
+                修改：开启桌面窗口管理器（DWM）优化时，自动重置呈现队列，丢弃过时的画面缓冲区
+                修改：Frame Statistics 界面添加 Wait 项，用于可视化帧率控制器的等待时间
+                修复：lfs.dir 枚举得到的不是文件/文件夹名而是文件/文件夹相对路径的问题
+            v0.19.6
+                修改：阻止窗口过大（宽度或高度比屏幕大）时被压扁
+                修改：如果操作系统不满足最低需求（Windows 7 SP1 With Platform Update）则弹窗报错
+                修改：DirectWrite 拓展生成描边字体时使用圆角边缘，避免在某些字体上出现描边毛刺
+                修改：当满足以下条件时：
+                        1、系统为 Windows 10 1709+
+                        2、支持立即刷新（可查看 engine.log 确认自己的设备是否支持）
+                    自动开启桌面窗口管理器（DWM）优化，以应对 Windows 10 某次更新后导致传统窗口化方式性能下降的问题
+                新增：现在 engine.log 中会记录窗口焦点是被哪个窗口抢走的，用来抓流氓程序
+                修改：在 RenderFunc 以外地方调用渲染命令时，将会引发设备丢失，在 engine.log 中也会记录设备丢失事件，
+                    开发者在开发时，应有意识地检查 engine.log 是否出现设备丢失的错误
+            v0.19.5
+                新增：实验性功能，允许运行时切换显卡设备，详情请查看 doc 文件夹中的 API 文档
+            v0.19.4
+                修复：lstg.PostEffect 没有检查参数是否错误的问题
+        THlib
+            修改：F3 调试菜单新增一个让自机持续射击的选项，方便测试
+                涉及的文件：
+                    lib/Ldebug.lua
+                    THlib/player/player.lua
+                    THlib/player/player_system.lua
+            修改：直线激光 laser 的 kill、del、newkill 函数不再修改 group，而是先把 colli 关掉，然后延迟到 frame 回调里修改
+            修复：直线激光 laser 在某些特定条件下会触发报错（见上一条）
+
+    aex+ v0.8.16-beta
+        LuaSTG Sub 引擎
+            更新到 v0.19.3
+            v0.19.3
+                修改：LoadMusic 时，如果同名资源已存在，则跳过加载，且“不停止播放”，以正确模拟以前的行为
+        THlib
+            修复：THlib/editor.lua 中，LoadMusicRecord 在符卡练习时判断 BGM 是否已经加载的逻辑会在重新开始后失效
+
+    aex+ v0.8.15-beta
+        LuaSTG Sub 引擎
+            更新到 v0.19.2
+            v0.19.2
+                更新第三方库，修复一些问题
+                新增：引擎从设备丢失恢复时，DirectWrite 平台拓展库生成的纹理可以自动恢复（内容不会丢失）
+                修改：引擎报错弹窗的窗口标题改为“引擎名称+引擎版本”
+                修改：引擎报错弹窗使用系统主题，不再使用 Windows Classic 主题
+            v0.19.1
+                修改：对 lstg.PlaySound 的调用将被缓存下来，并在 FrameFunc 之后统一执行，减少音效播放压力
+                新增：DirectWrite 平台拓展库新增函数 DirectWrite.SaveTextLayoutToFile，可保存纹理为 PNG 图片
+                修改：通过 DirectWrite.CreateTextureFromTextLayout 创建纹理资源时，如果资源池内已存在同名资源，则报错而不是跳过
+                修复：DirectWrite.ReadingDirection 中的枚举值 TopToBottom 和 BottomToTop 更正为 LeftToRight 和 RightToLeft
+                修改：DirectWrite 平台拓展库绘制描边字体时，不再修改文本布局，而是根据文本布局的大小，向外拓展画布尺寸，并生成相应大小纹理
+                新增：DirectWrite.TextLayout 对象方法 SetStrikethrough、SetUnderline
+            v0.19.0
+                引擎版本号去除“beta”后缀
+                新增：DirectWrite 平台拓展库，用于排版、光栅化文本，并创建纹理资源用于渲染（详情请查看 doc 文件夹下的文档）
+                新增：支持 QOI 图片格式，一种新兴的快速无损图片编解码压缩格式
+                新增：lstg.SetTextureSamplerState，其曾为实验性 API，现转为正式 API
+            v0.18.12-beta
+                修改：自动调整大小的 RenderTarget 资源在窗口大小改变后，内部的纹理资源不再重新创建，而是调整已有纹理的大小，
+                　　　以便 lstg.LoadImage 创建的图片精灵依然能正确引用 RenderTarget 资源
+            v0.18.11-beta
+                更新第三方库，修复一些问题
+                修复：lstg.PostEffect 无法正确设置多个纹理
+                修复：使用 [".render"] = true 开启渲染对象特性后，通过 _r、_g、_b、_a 访问或设置颜色分量时，引擎无报错崩溃
+                新增：d3dcompiler_47.dll 文件，让引擎能运行在早期 Windows 7 SP1 和早期 Windows 8 系统上，它们均缺少该 DLL 文件
+                移除：实验性 API lstg.SetTextureSamplerState 不再支持旧写法（LuaSTG Ex Plus 的全局采样器状态设置）
+                修改：lstg.LoadMusic 在加载前先判断音乐资源是否存在，如果存在，则跳过加载，并停止播放
+
+    aex+ v0.8.14-beta
+        LuaSTG Sub 引擎
+            更新到 0.18.11-beta
+            0.18.11-beta
+                修复：lstg.PostEffect 在传入多张纹理时渲染异常
+                修复：通过 [".render"] = true 开启游戏渲染对象特性后，访问 _r, _g, _b, _a 属性时游戏无报错崩溃
+                新增：d3dcompiler_47.dll 文件，在未安装更新的 Windows 7 SP1 系统上该库文件不存在
+                移除：lstg.SetTextureSamplerState 的旧行为（修改全局的采样器状态）
+        THlib
+            新增：alpha_mask.hlsl 后处理特效，用于实现遮罩效果
+            新增：lib/posteffect.lua 后处理特效包装库，用于简化 shader 的使用
+            移除：未使用且意味不明的 THlib/UI/sc_show.lua 文件
+            修改：除了 temple 和 spellcard 之外的背景都被移动到单独的插件 StageBackgroundExtensions 中，方便制作私人项目时一键移除
+
+    aex+ v0.8.13-beta
+        LuaSTG Sub 引擎
+            更新到 0.18.10-beta
+            0.18.9-beta
+                修改：Lua 标准库函数 print 现在会写入 engine.log 和打印到日志窗口（如果开启了日志窗口）
+                修复：lstg.LoadFX 失败时游戏闪退
+                修改：调用 lstg.ChangeVideoMode 时不再将鼠标指针移动到窗口右下角
+                修复：lstg.SetSplash 无法立即生效，需要稍微移动鼠标指针触发更新
+                修改：当一个字体的字形缓存贴图超过一张时，分成多个阶段合批渲染，避免频繁切换纹理
+                修复：文本渲染器在渲染不提供“空格”字符的字体时，无法渲染出任何内容
+            0.18.10-beta
+                修复：背景音乐循环区间无法准确衔接
+                修改：在碰撞检测时修改游戏对象的 group 属性会进行严格检查，如果这个修改会导致碰撞检测链表损坏，则报错
+        THlib
+            修复：misc.KeepParticle 中直接修改碰撞组的代码可能导致游戏崩溃
+            修复：shader/boss_distortion.hlsl（注：hlsl 中正确的常量写法应该带有 static const 修饰）
+            修改：插件（plugin）功能也支持文件夹模式
+            修改：插件新增三个事件 "beforeTHlib"、"afterTHlib"、"afterMod"，方便插件开发者控制代码执行时机
+            修改：新增加的插件默认为启用状态
+            修改：Library/plugins 文件夹位置修改为 plugin
+            修改：移除 THlib/player/player.lua 中加载自机包的代码，现在应该通过插件实现
+            移除：Library/players 文件夹，不再从此处加载自机包
+            移除：Library 文件夹
+
+    aex+ v0.8.12-beta
+        LuaSTG Sub 引擎
+            更新到 0.18.8-beta
+            0.18.8-beta
+                修复：引擎在计算量大时抢占消息循环线程优先级，导致键盘、鼠标输入断断续续
+                修改：现在引擎从 Windows 文件系统中加载文件时（裸文件），会校验文件路径的大小写是否匹配，如果不匹配则加载失败
+                新增：从 Lua 5.4 迁移过来的 string.pack, string.unpack, string.packsize 函数
+        THlib
+            修改：THlib/ui 重命名为 THlib/UI
+            修改：THlib/ui/ui.lua 重命名为 THlib/UI/UI.lua
+
+    aex+ v0.8.11-beta
+        LuaSTG Sub 引擎
+            更新到 0.18.7-beta
+            0.18.3-beta
+                修复：加载某些 png 图片时没有正确处理颜色空间，导致渲染出来的画面偏暗
+                新增：utf8 Lua 标准库（从 Lua 5.4 迁移过来）
+            0.18.4-beta
+                新增：实验性类 lstg.Mesh 和实验性函数 lstg.RenderMesh （详情请查看 doc 文件夹下的文档）
+            0.18.5-beta
+                新增：实验性函数 lstg.SetTextureSamplerState （详情请查看 doc 文件夹下的文档）
+            0.18.6-beta
+                修复：字符 \n 导致文本无法正常渲染出来
+                修复：上一个版本的修改导致空指针让程序崩溃
+                修复：lstg.PostEffect 没有正确设置像素着色器导致内容无法正常渲染
+            0.18.7-beta
+                修复：在某些版本的 Windows 系统（目前已知版本为 Windows 7）中，消息循环被意外阻塞，导致无法获取键盘和鼠标输入
+        THlib
+            修改：第一次启动时，以窗口化模式启动
+            修改：自带的字体 THlib/ui/font/default_ttf （方正黑体）替换为思源黑体
+            修改：自带的字体 THlib/ui/font/syst_heavy.otf 替换为思源宋体
+            修改：启动器 launcher 支持中英文切换
+            修复：自机类 player_class:colli 中错误重复调用 player_lib.system:doColliBeforeEvent 两次
+            修改：原 launch 脚本中暴力导出所有 lstg 库的函数到全局的代码，现在迁移到 lib/Lapi.lua 中
+            新增：游戏设置 setting 和 default_setting 新增 locale 条目
+
+    aex+ v0.8.10-beta.3
+        LuaSTG Sub 引擎
+            更新到 v0.18.2 
+            修复：有些图片显示出来偏黑（sRGB 标记导致）
+        THlib
+            修复：扭曲特效 shader 由于未定义行为（超出定义域）导致扭曲波纹消失
+
+    aex+ v0.8.10-beta.2
+        LuaSTG Sub 引擎
+            更新到 v0.18.0 （中间还有 v0.17.1，v0.17.2，v0.17.3）
+            修复（v0.17.1）：独占全屏切换时没有正确处理大小改变导致画面停滞
+            修复（v0.17.2）：关闭游戏时可能会卡死
+            修复（v0.17.2）：鼠标处于窗口标题栏、窗口边框时鼠标指针消失
+            修复（v0.17.2）：lfs.attributes 用字符串获取属性时，文件或者文件夹不存在时没有返回 nil 值（返回 nil 值才是正确行为）
+            新增（v0.17.2）：xinput 拓展新增 xinput.isConnected 用于判断指定槽位的手柄是否已连接
+            修改（v0.17.2）：xinput 拓展在窗口失去焦点时不再获取输入
+            修复（v0.17.2）：运行于 Windows 10 1607 时无法正确启用 DPI 感知
+            修改（v0.17.2）：lstg.SetPerspective 会严格检查 znear 和 zfar，要求 (0 < znear < zfar)
+            修复（v0.17.2）：报错弹窗会被游戏窗口或者其他窗口覆盖（导致报错时看不到报错弹窗）
+            修改（v0.17.2）：彻底移除 fancy2d 引擎，不再使用 fancy2d
+            修改（v0.17.3）：WAV 解码库更换为 dr_libs，能兼容更多 WAV 格式的音频文件
+            新增（v0.17.3）：支持 FLAC 格式的音频文件
+            修改（v0.17.4）：优化曲线激光渲染逻辑，去除大约一半的重复计算代码
+            修复（v0.17.4）：以独占全屏启动时没有正确匹配分辨率和刷新率
+            修复：lstg.LoadMusic 的循环节参数都填 0 时没有自动使用整个音频文件作为循环节
+            修改：lstg.SetTitle 修改窗口标题文本时不再阻塞更新渲染线程
+            修复：lstg.ParticleSystem:Update 方法错误忽略了 delta 参数
+            更新：同步 luajit 源码到最新版本
+        LuaSTG Config 独立设置工具
+            修复：运行于 Windows 10 1607 时无法正确启用 DPI 感知
+        THlib
+            修复：启动器 launcher 掉帧问题
+            修改：启动器 launcher 选择 mod 后隐藏游戏鼠标
+            修改：同步来自 ex+ v0.83a 的直线激光代码，现在直线激光的粗细和判定一致
+            修复：判定显示插件 CollisionChecker 显示的直线激光判定宽度错误地设为 2 倍宽度
+            新增：判定显示插件 CollisionChecker 能显示曲线激光的判定
+
+    aex+ v0.8.9-beta
+        THlib
+            修改：stage.Set 在 THlib 中重载的版本参数顺序和 core 中保持一致，第一个参数为关卡名称而不是模式
+            修改：截图、replay、玩家存档等数据统一存放到 userdata 文件夹内
+            修改：完全重写启动器 launcher，支持鼠标、键盘操作
+            修改：启动器 launcher 的窗口大小和游戏时保持一致
+            移除：键盘数字键 1 到 9 切换启动器 launcher 的窗口大小（因为可以在启动器的游戏设置界面修改）
+
+    aex+ v0.8.8-beta
+        LuaSTG Sub 引擎
+            更新到 v0.17.0 （中间还有 v0.16.1）
+            修复（v0.16.1）：各种游戏对象、游戏对象管理器的小 bug
+            修复（v0.16.1）：lstg.SetBound 错误地将参数取整
+            修复（v0.16.1）：游戏对象的 _angle 和 _speed 错误地使用 float 来计算中间结果导致丢失精度（但是仍然不推荐使用这两个属性）
+            修改（v0.16.1）：游戏对象（lua 侧）的数组部分 1 至 4 为引擎内部使用，不应该访问/修改
+            修改（v0.16.1）：加强了对游戏对象的正确性的校验
+            修改（v0.16.1）：游戏对象切换碰撞组时直接在末尾插入，而不是根据游戏对象的 uid 排序
+            恢复（v0.16.1）：lstg.DrawCollider 和 lstg.RenderGroupCollider(group:number, color:lstg.Color) 函数，现在能正常渲染调试用的碰撞判定
+            更新：引擎使用的各种第三方库版本同步到最新
+            新增：（实验性）对 Windows 10/11 暗色主题窗口标题栏支持
+            新增：lstg.ParticleSystem 类，包含大量新方法用于动态修改粒子系统，详情见 doc 文件夹内的 API 文档
+            新增：函数 lstg.ParticleSystemData(ps_name:string):lstg.ParticleSystem 用于创建粒子系统实例
+            新增：（实验性）游戏对象属性 rc 用于访问绑定在游戏对象上的粒子系统（需要在定义游戏对象 class 时启用 [".render"] = true）
+        THlib
+            新增：启动器 launcher 可以通过键盘数字键 1 到 9 切换窗口大小
+
+    aex+ v0.8.7-beta
+        LuaSTG Sub 引擎
+            更新到 v0.16.0
+            修改：Lua 标准库 io 库和 os 库支持 utf-8
+                io.open, io.popen
+                os.execute, os.remove, os.rename, os.tmpname, os.getenv
+            新增：函数 lstg.FileManager.DirectoryExist(path:string, also_check_archive:boolean) 用于判断文件夹是否存在
+            新增：函数重载 lstg.FileManager.FileExist(filepath:string, also_check_archive:boolean) 用于替代 lstg.FileManager.FileExistEx
+            废弃：函数 lstg.FileManager.FileExistEx（仍然可用，在未来会删除）
+            新增：函数重载 lstg.FileManager.EnumFiles(searchpath:string, extend:string|nil, also_enum_archives:boolean) 用于替代 lstg.FileManager.EnumFilesEx
+            废弃：函数 lstg.FileManager.EnumFiles（仍然可用，在未来会删除）
+            修复：判断文件是否存在、枚举文件时引擎随机崩溃
+        THlib
+            移除：老版本 LuaSTG Ex Plus 的 lstg.ResourceReference，以下源文件为修改的部分：
+                THlib/bullet/bullet.lua
+                game/data/THlib/item/item.lua
+            移除：plus/NativeAPI.lua 中所有的 ffi 相关的代码
+            修改：plus 库的 plus.DirectoryExists, plus.EnumFiles 和 plus.CreateDirectory 修改为通过 lstg.FileManager 实现，影响：
+                THlib/ext/ext_replay.lua
+                THlib/player/player.lua
+                lib/Lplugin.lua
+                lib/Lresources.lua
+                plus/Replay.lua
+                plus/NativeAPI.lua
+            移除：lib/Ldebug.lua 脚本，影响：
+                lib/Ldebug.lua
+                core.lua
+            移除：lib/Lglobal.lua 中大量的 ex+ 时期多玩家功能（？）遗留下来的未使用代码：
+                lstg.var.player_names, lstg.GetMaxPlayerNumber, lstg.GetPlayerNameNumber, lstg.SetPlayerName, lstg.GetPlayerName, lstg.ClearPlayerName
+                lstg.var.rep_players, lstg.SetRepPlayerName, lstg.GetRepPlayerName, lstg.ClearRepPlayerName
+            移除：Llog.lua 中不必要的 UDP 代码（引擎已经提供日志窗口）
+            移除：调用 io.open 时将 UTF8 转码为 ANSI（不再调用 __UTF8ToANSI 函数转码），影响：
+                lib/Lscoredata.lua
+                plus/Replay.lua
+            修复：plus.FileStream:Delete 实际上未成功删除文件
+            移除：不明所以的 ex/module.lua
+            修改：启动器 launcher.lua 支持显示中文 mod
+
+    aex+ v0.8.6-beta
+        LuaSTG Sub 引擎
+            更新到 v0.15.8 （中间还有 v0.15.6、v0.15.7）
+            重写：lfs 库，但是注意 lfs 库已经处于“过时、不推荐、弃用”的状态，应该避免使用
+            修改：lfs 库支持 UTF8，砍掉大多数不适合游戏引擎的功能，只保留 lfs.mkdir、lfs.rmdir、lfs.dir、lfs.currentdir、lfs.chdir 以及功能有限的 lfs.attributes
+            修改：lfs.attributes 只能获取 mode 和 size 信息，其中 mode 只剩下 "file"、"directory"、"other" 三种可能
+            修复（v0.15.7）：进入了独占全屏，但是没完全进入
+            新增（v0.15.6）：函数 lstg.GetVersionNumber():number, number, number 用于获取引擎 major、minor、patch 版本号，比如 0, 10, 0 代表 0.10.0
+            新增（v0.15.6）：函数 lstg.GetVersionName():string 用于获取引擎友好版本名称，比如 "LuaSTG Sub v0.10.0-beta"
+            新增（v0.15.6）：lstg.Input 库，包含 lstg.Input.Keyboard 和 lstg.Input.Mouse，提供获取输入状态的方法和按键码常量（请查看 doc 文件夹内的 API 文档）
+            重写（v0.15.6）：帧率（FPS）限速器，重写后应该能让游戏帧率更稳定（？有待测试）
+        THlib
+            修复：launcher 启动器修改键位会导致游戏崩溃
+            修复：scoredata 存档文件路径在错误的地方转换编码
+
+    aex+ v0.8.5-beta
+        LuaSTG Sub 引擎
+            更新到 v0.15.5
+            新增：函数 lstg.FileManager.CreateDirectory(dirs:string):boolean 用于创建多层文件夹（替换 lfs.mkdir）
+            新增：函数 lstg.FileManager.RemoveDirectory(path:string):boolean 用于递归删除文件夹（替换 lfs.rmdir 和 lfs.dir）
+            修改：lfs 库进入“过时、不推荐、弃用”状态，请尽可能使用 lstg.FileManager 替代
+            修改：重新添加 Ctrl+Enter 快捷切换独占全屏的功能（不推荐，可能某个独占全屏模式是不受支持的）
+        THlib
+            修复：snapshot 文件夹不存在的时候截图会导致游戏崩溃
+            修改：游戏启动时如果进入独占全屏失败，不会重新开启游戏，而是尝试切换到窗口模式（避免循环重开游戏卡死电脑）
+            修改：窗口标题的版本号统一
+            修复：直线激光的激光头位置
+
+    aex+ v0.8.4-beta20
+        THlib
+            修复：从编辑器启动会报错的问题
+
+    aex+ v0.8.4-beta19
+        LuaSTG Sub 引擎
+            更新到 v0.15.4 （中间还有个 v0.15.3）
+            新增：命令行参数 --log-window 开启引擎日志窗口
+            新增：命令行参数 --log-window-wait 让引擎日志窗口在程序退出后不会立即关闭
+            修复：模型加载错误
+            新增：引擎日志窗口（目前似乎只能在 Windows 10 上正常显示，Windows 7 命令行似乎不支持 UTF8，会乱码）
+            修改：函数重载 lstg.SetImageScale(img:string, scale:number)
+            修改：函数重载 lstg.GetImageScale(img:string):number
+            新增：函数 lstg.SetAnimationScale(ani:string, scale:number)
+            新增：函数 lstg.GetAnimationScale(ani:string):number
+
+    aex+ v0.8.4-beta18
+        LuaSTG Sub 引擎
+            更新到 v0.15.2 （中间还有个 v0.15.1）
+            更改：根据微软官方文档说明，DirectInput 的键盘和鼠标输入支持已标记为弃用，因此现在键盘和鼠标输入不再通过 DirectInput 获取，而是通过窗口消息获取（输入延迟的变化有待测试）
+        THlib
+            更改：统一修改 THlib/UI 为 THlib/ui，这个大小写不统一的问题会导致文件打包进压缩包后可能找不到文件
+            更改：统一修改大量脚本中路径分隔符的反斜杠 \\ 为正斜杠 /，一些涉及到命令行、ffi 的部分无需修改，也不应该修改
+            更改：将 THlib 大部分内容挪到 data 文件夹下（便于查看和管理），并在 launch 脚本中添加搜索路径
+            更改：一些原本通过 lfs 库实现的功能已修改为 lstg.FileManager 实现（比如 FileExist）
+            修复：userdata 文件夹不存在的时候保存设置文件失败导致启动失败
+
+    aex+ v0.8.4-beta17
+        LuaSTG Sub 引擎
+            更新到 v0.15.0
+            更改：重新添加 lstg.LoadModel，支持加载 glTF 2.0 模型
+            更改：重新添加 lstg.RenderModel，目前还不支持任何光照功能
+
+    aex+ v0.8.4-beta16
+        LuaSTG Sub 引擎
+            更新到 v0.14.1
+            修复：在同一帧重复打断并播放（调用 lstg.PlaySound）同一个音效次数过多导致音效播放失败
+
+    aex+ v0.8.4-beta15
+        LuaSTG Sub 引擎
+            更新到 v0.14.0 （中间还有个 v0.13.0）
+            更改：RenderTarget 默认为预乘 Alpha 的纹理，并以预乘 Alpha 的方式设置顶点色混合、雾颜色混合、Direct3D 混合模式
+            更改：普通的纹理（比如从文件加载的纹理）默认为直通纹理（没有预乘 Alpha），并以直通纹理的方式设置顶点色混合、雾颜色混合、Direct3D 混合模式
+            修复：lstg.Render、lstg.RenderAnimation 方法重复调用四次 sin + cos 三角函数，现在优化为只调用一次
+            更改：将各个动态库（DLL）静态编译进引擎可执行文件（EXE）中，除了微软没开源的 XAudio2 运行库（xaudio2_9redist.dll）
+        LuaSTG Config 独立设置工具
+            更改：将 freetype.dll 静态编译进可执行文件（EXE）中
+
+    aex+ v0.8.4-beta14
+        LuaSTG Sub 引擎
+            更新到 v0.12.3
+            修复：lstg.SaveTexture 导致游戏崩溃
+
+    aex+ v0.8.4-beta13
+        LuaSTG Sub 引擎
+            更新到 v0.12.2
+            修复：在某些设备上进入独占全屏且不指定刷新率时，刷新率会低于60Hz
+
+    aex+ v0.8.4-beta12
+        LuaSTG Sub 引擎
+            更新到 v0.12.1
+            修复：add+xxx 系列混合模式结果不正确的问题
+            更改：尝试减少交换链的缓冲数量，减少延迟（未测试）
+
+    aex+ v0.8.4-beta11
+        LuaSTG Sub 引擎
+            更新到 v0.12.0
+            更改：lstg.SetPreferenceGPU 新增一个参数用于强制 NVIDIA 或 AMD 独显处于第一顺位
+            新增：当不存在 launch 文件且 config.json 文件存在时，自动读取 config.json 并应用
+            修复：以独占全屏初始化启动时独占全屏状态异常或者无法进入独占全屏
+        LuaSTG Config 独立设置工具
+            更改：导出的 config.json 新增 dgpu_trick 字段，用于 lstg.SetPreferenceGPU 第二个参数
+            更改：当选择的显卡不是第一个时，默认保存 dgpu_trick 为 true
+        THlib
+            移除：THlib/bulletex 文件夹下的一些脚本
+                THlib/bulletex/Array.lua
+                THlib/bulletex/Class.lua
+                THlib/bulletex/Heap.lua
+                THlib/bulletex/List.lua
+                THlib/bulletex/Queue.lua
+                THlib/bulletex/Scene.lua
+            修改：game/THlib/editor.lua 取消对上述脚本的加载
+            修改：THlib/bulletex/Class.lua 的内容移动到 THlib/bulletex/BulletEx.lua 内并加上 local
+
+    aex+ v0.8.4-beta10
+        LuaSTG Sub 引擎
+            更新到 v0.11.0
+            新增：lstg.SetPreferenceGPU 用于指定引擎在哪个显卡上创建渲染组件
+            新增：lstg.EnumGPUs 用于枚举显卡
+            更改：lstg.SetResolution 增加刷新率分子分母参数
+        LuaSTG Config 独立设置工具
+            第一次发布，存放在 tools 里面
+            可枚举显卡、分辨率
+            可配置窗口化、垂直同步
+            可保存和读取配置文件 config.json 供 data 使用
+            更多内容请参考该工具的 使用说明.txt
+
+    aex+ v0.8.4-beta9
+        LuaSTG Sub 引擎
+            更新到 v0.10.0
+            重写：引擎 FileManager 类
+            修复：通过 require 加载的 Lua 脚本，没有路径信息
+            新增：lstg.FileManager.AddSearchPath 用于添加加载文件的时候的搜索路径条目
+            新增：lstg.FileManager.RemoveSearchPath 用于移除加载文件的时候的搜索路径条目
+            新增：lstg.FileManager.ClearSearchPath 用于清空搜索路径条目
+        THlib
+            修改：launcher.lua 让启动器支持列出文件夹形式的 mod
+            修改：launch 文件以支持加载文件夹形式的 mod
+            适配：LuaSTG Editor Sharp 的文件夹打包模式（不打包为 zip）,参考前面两条的修改
+        LuaSTG Editor (wlua 版)
+            已移除，请用 LuaSTG Editor Sharp 替代
+        性能监视器
+            已移除，因为这个工具已失效
+
+    aex+ v0.8.4-beta8
+        THlib
+            修复：plus.BinaryWriter:WriteFloat 会写入错误的数值的 bug
+
+    aex+ v0.8.4-beta? 到 aex+ v0.8.4-beta7
+        整套开发工具版本号从 ex+ 0.83 变更为 aex+ 0.8.4-beta[n]
+        LuaSTG Sub 引擎
+            修改内容实在过多，已经无法逐一列出
+            可查看 API 文档来得知更改内容以及迁移指南
+            更新到 v0.9.0
+            修改：继承自 LuaSTG Ex Plus，更名为 LuaSTG Sub
+            修复：PostEffect 无法设置额外的纹理
+            修复：曲线激光无法渲染出来
+            修复：launch 文件中调用 lstg.SetSEVolume、lstg.SetBGMVolume 导致程序崩溃
+        THlib
+            适配：LuaSTG Sub 引擎
+            修改：将所有压缩包内的内容解压出来以方便开发
+            修改：launch 文件中的打包 data.zip 的代码不再起作用
+            修改：精简 launch 文件，按键码独立为 lib/Lkeycode.lua 文件、setting 存储独立为 lib/Lsetting.lua 文件
+            移除：去掉 launch 内对 lstg.ShowSplashWindow 的调用，因为已经失效
+            新增：lib/Lkeycode.lua 文件，储存引擎输入按键码
+            新增：lib/Lsetting.lua 文件，用于统一保存、加载设置文件
+            修改：修改 launch、launcher.lua、lib/Lscoredata.lua 让 scoredata 存档文件和 setting 设置文件统一储存到 userdata 文件夹下面
+            新增：stage.group.initTask 封装函数，让编辑器不再生成一大坨样板代码
+            新增：stage.group.GoToStageTask 封装函数，让编辑器不再生成一大坨样板代码
+            新增：stage.group.FinishGroupTask 封装函数，让编辑器不再生成一大坨样板代码
+            修复：sp.boss.CheckBonus 因 jstg.players 不存在而报错
+            新增：重新添加 jstg.UpdateWorld、jstg.worlds、jstg.worldcount 以兼容一些写了宽屏的老 mod
+            新增：重新添加 SetLuaSTGWorld、SetLuaSTGWorld2 以兼容一些写了宽屏的老 mod
+            新增：重新添加 jstg.CreatePlayers 以兼容一些老 mod
+            移除：没有用到的 syst_heavy.oft 字体（拓展名甚至还是错的）
+            修改：让 sp/sp.lua、sp/spboss.lua、sp/spmath.lua、sp/spmisc.lua、sp/spstring.lua 生成的 sp_log.txt 储存在 userdata 文件夹下面
+            修改：Set3D 方法设置雾颜色的时候，固定 alpha 通道为 255 以模拟 Direct3D 9 的行为
+            新增：background.ClearToFogColor 统一方法清空 3d 背景为雾颜色
+            修改：background 文件夹下所有背景统一使用 background.ClearToFogColor 方法
+            移除：stage.group:render、RenderFunc 中不必要的 RenderClear 调用以提高性能
+            新增：RenderClearViewMode 模拟 Direct3D 9 的 RenderClear 的行为
+            修改：background:render、stage.group:render 中的 RenderClear 为 新增：RenderClearViewMode
+            修改：shader/boss_distortion.hlsl 适配 LuaSTG Sub
+            新增：shader/template.hlsl 模板 shader
+            修改：background.WarpEffectApply 中对 lstg.PostEffect 的调用，以适配 LuaSTG Sub
+            修复：SetRenderRect 中调用 lstg.SetViewport 设置视口的同时也调用 lstg.SetScissorRect 防止画面被意外裁剪（LuaSTG Sub 默认启用裁剪矩形功能）
