@@ -1,0 +1,25 @@
+# ide & editor
+.vscode/*
+
+# mod
+game/mod/*
+
+# temp
+game/userdata/*
+game/plugins/plugins.json
+
+# luajit debug
+game/dump.txt
+
+build/game/*
+build/doc/*
+build/tools/外部设置工具/config.json
+
+engine/luastg
+engine/luastg/*
+engine/build/*
+
+LuaSTG*.zip
+cache.zip
+
+project/*
