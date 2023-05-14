@@ -1,0 +1,46 @@
+{
+    "launcher.comment.common": "公共部分",
+
+    "launcher.back_icon": "< Back",
+    "launcher.save_and_return": "Save And Return",
+    "launcher.restore_to_default": "Restore To Default",
+
+    "launcher.comment.menu_and_title": "-- 菜单标题 & 主菜单",
+
+    "launcher.menu.start": "Start Game",
+    "launcher.menu.username": "Modify User Name",
+    "launcher.menu.setting.input.keyboard": "Keyboard Setting",
+    "launcher.menu.setting.game": "Game Setting",
+    "launcher.menu.plugin_manager": "Plugin Manager",
+    "launcher.menu.exit": "Exit Game",
+
+    "launcher.comment.menu.start": "-- 开始游戏",
+
+    "launcher.menu.start.select": "Select Mod",
+
+    "launcher.comment.action": "-- 玩家操作",
+
+    "launcher.action.left": "Left",
+    "launcher.action.right": "Right",
+    "launcher.action.up": "Up",
+    "launcher.action.down": "Down",
+    "launcher.action.slow": "Slow",
+    "launcher.action.shoot": "Shoot/Confirm",
+    "launcher.action.spell": "Spell/Cancel",
+    "launcher.action.special": "Special",
+    "launcher.action.menu": "Pause/Back",
+    "launcher.action.snapshot": "Snapshot",
+    "launcher.action.repfast": "Replay Faster",
+    "launcher.action.repslow": "Replay Slower",
+
+    "launcher.comment.setting.game": "-- 游戏设置",
+
+    "launcher.menu.setting.game.desktop_refresh_rate": "Auto",
+    "launcher.menu.setting.game.display_mode": "Display Mode",
+    "launcher.menu.setting.game.fullscreen": "Fullscreen",
+    "launcher.menu.setting.game.vsync": "VSync",
+    "launcher.menu.setting.game.sound_effect": "Sound Effect",
+    "launcher.menu.setting.game.music": "Music",
+
+    "launcher.comment.end": ""
+}

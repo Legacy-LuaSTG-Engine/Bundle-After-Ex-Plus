@@ -1,0 +1,46 @@
+{
+    "launcher.comment.common": "公共部分",
+
+    "launcher.back_icon": "< 返回",
+    "launcher.save_and_return": "保存并返回",
+    "launcher.restore_to_default": "恢复默认",
+
+    "launcher.comment.menu_and_title": "-- 菜单标题 & 主菜单",
+
+    "launcher.menu.start": "开始游戏",
+    "launcher.menu.username": "修改用户名称",
+    "launcher.menu.setting.input.keyboard": "按键设置",
+    "launcher.menu.setting.game": "游戏设置",
+    "launcher.menu.plugin_manager": "插件管理",
+    "launcher.menu.exit": "退出游戏",
+
+    "launcher.comment.menu.start": "-- 开始游戏",
+
+    "launcher.menu.start.select": "选择 Mod",
+
+    "launcher.comment.action": "-- 玩家操作",
+
+    "launcher.action.left": "左移",
+    "launcher.action.right": "右移",
+    "launcher.action.up": "上移",
+    "launcher.action.down": "下移",
+    "launcher.action.slow": "低速移动",
+    "launcher.action.shoot": "射击/确认",
+    "launcher.action.spell": "符卡/取消",
+    "launcher.action.special": "特殊功能",
+    "launcher.action.menu": "暂停/返回",
+    "launcher.action.snapshot": "截图",
+    "launcher.action.repfast": "录像播放加速",
+    "launcher.action.repslow": "录像播放减速",
+
+    "launcher.comment.setting.game": "-- 游戏设置",
+
+    "launcher.menu.setting.game.desktop_refresh_rate": "桌面刷新率",
+    "launcher.menu.setting.game.display_mode": "显示模式",
+    "launcher.menu.setting.game.fullscreen": "全屏",
+    "launcher.menu.setting.game.vsync": "垂直同步",
+    "launcher.menu.setting.game.sound_effect": "音效音量",
+    "launcher.menu.setting.game.music": "背景音乐音量",
+
+    "launcher.comment.end": ""
+}
