@@ -8,6 +8,8 @@ game/mod/*
 game/engine.log
 game/userdata/*
 game/plugins/plugins.json
+tools/外部设置工具/config.json
+tools/fonted/fonted.log
 
 # luajit debug
 game/dump.txt

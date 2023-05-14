@@ -1,0 +1,21 @@
+该工具可独立使用，会生成一个 config.json 文件，里面储存的内容可能为：（示例）
+
+{
+    "dgpu_trick": false,
+    "gpu": "Intel(R) HD Graphics 530",
+    "height": 480,
+    "refresh_rate_denominator": 2542200,
+    "refresh_rate_numerator": 152600000,
+    "vsync": false,
+    "width": 640,
+    "windowed": true
+}
+
+这些数据可以在 launch 脚本中通过这些 API：
+
+lstg.SetWindowed
+lstg.SetVsync
+lstg.SetResolution
+lstg.SetPreferenceGPU
+
+设置给 LuaSTG Sub 引擎，用于创建渲染相关的组件。
