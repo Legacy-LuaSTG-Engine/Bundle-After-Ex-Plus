@@ -488,6 +488,29 @@ local function checkNewVersion()
     return false, ""
 end
 
+local function getLatestVersion()
+    local http = require("socket.http")
+    local ltn12 = require("ltn12")
+    local cjson = require("cjson")
+
+    local api_url_root = "http://service-fef6it46-1259234056.gz.apigw.tencentcs.com:80"
+
+    local t = {}
+    local r, c, h = http.request({
+        url = api_url_root .. "/thlib/after_extra_plus/version/latest",
+        method = "GET",
+        sink = ltn12.sink.table(t),
+    })
+
+    if r and c == 200 then
+        local json_text = table.concat(t)
+        local json_data = cjson.decode(json_text)
+        return true, json_data.description
+    end
+
+    return false, ""
+end
+
 ---@class launcher.menu.VersionView : launcher.menu.Base
 local VersionView = Class(object)
 
@@ -521,7 +544,7 @@ function VersionView:init(exit_f)
     function self:refresh()
         self.title = i18n_str("launcher.menu.check_new_version")
         self._back.text = i18n_str("launcher.back_icon")
-        local check_nv, nv_name = checkNewVersion()
+        local check_nv, nv_name = getLatestVersion()
         if not check_nv then
             nv_name = i18n_str("launcher.menu.version.fetch_failed")
         end
