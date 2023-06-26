@@ -13,6 +13,7 @@ setting = nil
 
 -- 加载包
 
+lstg.FileManager.AddSearchPath("packages/luasocket/")
 lstg.FileManager.AddSearchPath("packages/thlib-scripts/")
 lstg.FileManager.AddSearchPath("packages/thlib-resources/")
 
