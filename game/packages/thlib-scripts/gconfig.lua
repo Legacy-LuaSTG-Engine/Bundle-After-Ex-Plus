@@ -3,8 +3,8 @@
 ---@class gconfig
 gconfig = {}
 
-gconfig.thlib_version = "0.8.21"
+gconfig.bundle_version = "0.8.21"
 
-gconfig.thlib_name = "THlib aex+"
+gconfig.bundle_name = "LuaSTG aex+"
 
-gconfig.window_title = gconfig.thlib_name .. " v" .. gconfig.thlib_version .. " (for LuaSTG Sub)"
+gconfig.window_title = gconfig.bundle_name .. " v" .. gconfig.bundle_version
