@@ -350,7 +350,7 @@ function Main:init(exit_f, entries)
 
     local _w_height = 16 + 4 * 2 -- 上下都留空隙
     local _width = 200 --screen.width - 16 * 2 -- 两侧留边缘
-    local _height = 7 * _w_height
+    local _height = #entries * _w_height
 
     self._view = subui.layout.LinearScrollView(_width, _height)
     self._view.scroll_height = _w_height -- 一次滚轮滚动一个按键
@@ -440,6 +440,146 @@ end
 ---@return launcher.menu.MainMenu
 function Main.create(exit_f, entries)
     return lstg.New(Main, exit_f, entries)
+end
+
+--------------------------------------------------------------------------------
+
+local function isVersionHigher(v, v2)
+    if type(v) ~= "string" or type(v2) ~= "string" then
+        return false
+    end
+    local x1, y1, z1 = string.gmatch(v , "(%d+).(%d+).(%d+)")()
+    local x2, y2, z2 = string.gmatch(v2, "(%d+).(%d+).(%d+)")()
+    if type(x1) ~= "string" or type(y1) ~= "string" or type(z1) ~= "string" then
+        return false
+    end
+    if type(x2) ~= "string" or type(y2) ~= "string" or type(z2) ~= "string" then
+        return false
+    end
+    local x1n, y1n, z1n = tonumber(x1), tonumber(y1), tonumber(z1)
+    local x2n, y2n, z2n = tonumber(x2), tonumber(y2), tonumber(z2)
+    local n1 = x1n * 100000000 + y1n * 10000 + z1n
+    local n2 = x2n * 100000000 + y2n * 10000 + z2n
+    return n1 < n2
+end
+
+local function checkNewVersion()
+    local http = require("socket.http")
+    local ltn12 = require("ltn12")
+    local cjson = require("cjson")
+
+    local api_url_root = "http://service-fef6it46-1259234056.gz.apigw.tencentcs.com:80"
+
+    local t = {}
+    local r, c, h = http.request({
+        url = api_url_root .. "/thlib/after_extra_plus/version/latest",
+        method = "GET",
+        sink = ltn12.sink.table(t),
+    })
+
+    if r and c == 200 then
+        local json_text = table.concat(t)
+        local json_data = cjson.decode(json_text)
+        if isVersionHigher(gconfig.bundle_version, json_data.version) then
+            return true, json_data.description
+        end
+    end
+
+    return false, ""
+end
+
+---@class launcher.menu.VersionView : launcher.menu.Base
+local VersionView = Class(object)
+
+---@param exit_f fun()
+function VersionView:init(exit_f)
+    initMenuObjectCommon(self)
+
+    self.title = ""
+    self.exit_func = exit_f
+
+    local _w_height = 16 + 4 * 2 -- 上下都留空隙
+    local _width = screen.width - 16 * 2 -- 两侧留边缘
+    local _height = 18 * _w_height
+
+    self._back = subui.widget.Button("", exit_f)
+    self._back.width = _width / 4
+    self._back.height = _w_height
+
+    self._view = subui.layout.LinearScrollView(_width, _height)
+    self._view.scroll_height = _w_height -- 一次滚轮滚动一个按键
+
+    function self:_updateViewState()
+        self._view.alpha = self.alpha
+        self._view.x = self.x - _width / 2
+        self._view.y = self.y + _height / 2 - _w_height -- 降一个控件高度
+
+        self._back.alpha = self.alpha
+        self._back.x = self.x - _width / 2
+        self._back.y = self.y + _height / 2 + _w_height
+    end
+    function self:refresh()
+        self.title = i18n_str("launcher.menu.check_new_version")
+        self._back.text = i18n_str("launcher.back_icon")
+        local check_nv, nv_name = checkNewVersion()
+        if not check_nv then
+            nv_name = i18n_str("launcher.menu.version.fetch_failed")
+        end
+        local widget_list = {
+            { i18n_str("launcher.menu.version.check"), function() self:refresh() end },
+            { "", function() end },
+            { i18n_str("launcher.menu.version.label_current") .. gconfig.window_title, function() end },
+            { i18n_str("launcher.menu.version.label_latest") .. nv_name, function() end },
+            { "", function() end },
+            { i18n_str("launcher.menu.version.download_sources"), function() end },
+            { i18n_str("launcher.menu.version.download_source1"), function() end },
+            { i18n_str("launcher.menu.version.download_source2"), function() end },
+            { i18n_str("launcher.menu.version.download_source3"), function() end },
+        }
+        local ws_ = {}
+        for _, v in ipairs(widget_list) do
+            local w_button = subui.widget.Button(v[1], function()
+                v[2]()
+            end)
+            w_button.width = _width
+            w_button.height = _w_height
+            table.insert(ws_, w_button)
+        end
+        self._view:setWidgets(ws_)
+        self._view._index = 1
+    end
+
+    self:_updateViewState() -- 先更新一次
+    --self:refresh() -- 创建时不更新，防止触发流控（1s请求1次）
+end
+
+function VersionView:frame()
+    task.Do(self)
+    self:_updateViewState()
+    if not self.locked then
+        if self.exit_func and (subui.keyboard.cancel.down or subui.mouse.xbutton1.down) then
+            self.exit_func()
+        end
+    end
+    self._back:update(not self.locked and subui.isMouseInRect(self._back))
+    self._view:update(not self.locked)
+end
+
+function VersionView:render()
+    if self.alpha0 >= 0.0001 then
+        SetViewMode("ui")
+        local y = self.y + 9.5 * 24
+        subui.drawTTF("ttf:menu-font", self.title, self.x, self.x, y, y, lstg.Color(self.alpha * 255, 255, 255, 255), "center", "vcenter")
+        self._back:draw()
+        self._view:draw()
+        SetViewMode("world")
+    end
+end
+
+---@param exit_f fun()
+---@return launcher.menu.VersionView
+function VersionView.create(exit_f)
+    return lstg.New(VersionView, exit_f)
 end
 
 --------------------------------------------------------------------------------
@@ -1336,6 +1476,12 @@ function stage_launcher:init()
         popMenuStack()
     end)
 
+    -- 版本更新菜单
+    local version_view = VersionView.create(function()
+        subui.sound.playConfirm()
+        popMenuStack()
+    end)
+
     -- 一级菜单
     ---@type launcher.menu.MainMenu
     local menu_main
@@ -1355,7 +1501,7 @@ function stage_launcher:init()
             menu_main._view:setCursorIndex(#menu_main._view._widget)
         end
     end
-    menu_main = Main.create(exitMain, {
+    local main_widgets = {
         { "launcher.menu.start", function()
             subui.sound.playConfirm()
             menu_mod:refresh()
@@ -1388,8 +1534,23 @@ function stage_launcher:init()
             pushMenuStack(menu_plugin)
         end },
         { "$lang", function() end }, -- 被自己的代码丑到了……
-        { "launcher.menu.exit", exitGame },
-    })
+    }
+    local check_nv, nv_name = checkNewVersion()
+    if check_nv then
+        table.insert(main_widgets, { "launcher.menu.found_new_version", function()
+            subui.sound.playConfirm()
+            version_view:refresh()
+            pushMenuStack(version_view)
+        end })
+    else
+        table.insert(main_widgets, { "launcher.menu.check_new_version", function()
+            subui.sound.playConfirm()
+            version_view:refresh()
+            pushMenuStack(version_view)
+        end })
+    end
+    table.insert(main_widgets, { "launcher.menu.exit", exitGame })
+    menu_main = Main.create(exitMain, main_widgets)
 
     -- 开始场景
     subui.sound.playConfirm()
