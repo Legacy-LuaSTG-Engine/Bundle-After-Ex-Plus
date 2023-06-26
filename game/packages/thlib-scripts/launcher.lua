@@ -1558,20 +1558,21 @@ function stage_launcher:init()
         end },
         { "$lang", function() end }, -- 被自己的代码丑到了……
     }
-    local check_nv, nv_name = checkNewVersion()
-    if check_nv then
-        table.insert(main_widgets, { "launcher.menu.found_new_version", function()
-            subui.sound.playConfirm()
-            version_view:refresh()
-            pushMenuStack(version_view)
-        end })
-    else
+    -- 暂时不在这里做新版本检查，防止被报毒
+    --local check_nv, nv_name = checkNewVersion()
+    --if check_nv then
+    --    table.insert(main_widgets, { "launcher.menu.found_new_version", function()
+    --        subui.sound.playConfirm()
+    --        version_view:refresh()
+    --        pushMenuStack(version_view)
+    --    end })
+    --else
         table.insert(main_widgets, { "launcher.menu.check_new_version", function()
             subui.sound.playConfirm()
             version_view:refresh()
             pushMenuStack(version_view)
         end })
-    end
+    --end
     table.insert(main_widgets, { "launcher.menu.exit", exitGame })
     menu_main = Main.create(exitMain, main_widgets)
 
