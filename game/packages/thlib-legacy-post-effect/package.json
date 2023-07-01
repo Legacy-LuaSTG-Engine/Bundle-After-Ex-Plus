@@ -1,5 +1,5 @@
 {
-    "name": "legacy-post-effect",
+    "name": "thlib-legacy-post-effect",
     "version": "0.1.0",
     "description": "用于 LuaSTG Plus、LuaSTG Ex Plus 的屏幕后处理特效（已弃用）"
 }
