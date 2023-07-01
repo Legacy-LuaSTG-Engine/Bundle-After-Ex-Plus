@@ -817,40 +817,7 @@ function smear:kill()
 end
 
 ----------------------------------------
---阿基米德螺线 powered by 二要
---？细节：现有版本的编辑器不再提供该功能
---？细节：现有版本的data不再对极坐标系统进行计算更新
-
-Include 'THlib/bulletex/Archimedes.lua'
-
-archiexpand = Class(bullet)
-function archiexpand:init(imgclass, color, destroyable, navi, auto, center, radius, angle, omiga, deltar)
-    bullet.init(self, imgclass, color, true, destroyable)
-    self.navi = navi and auto == 0
-    self.omiga = auto
-    archimedes.expand.init(self, center, radius, angle, omiga, deltar)
-end
-function archiexpand:frame()
-    bullet.frame(self)
-    archimedes.expand.frame(self)
-end
-
-archirotate = Class(bullet)
-function archirotate:init(imgclass, color, destroyable, navi, auto, center, radius, angle, omiga, time)
-    bullet.init(self, imgclass, color, true, destroyable)
-    self.navi = navi and auto == 0
-    self.omiga = auto
-    archimedes.rotation.init(self, center, radius, angle, omiga, time)
-end
-function archirotate:frame()
-    bullet.frame(self)
-    archimedes.rotation.frame(self)
-end
-
-----------------------------------------
---bullet ex系统
-
-Include("THlib/bulletex/BulletEx.lua")
+--仅用于绘制图片的对象
 
 RenderObject = Class(object)
 function RenderObject:init(parent, image, x, y, rot, h, v, layer, tf)
