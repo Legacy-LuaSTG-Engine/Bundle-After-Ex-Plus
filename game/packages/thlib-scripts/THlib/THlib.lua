@@ -6,6 +6,7 @@
 ----------------------------------------
 ---加载脚本
 
+Include 'THlib/ex.lua' --ESC的ex库
 Include 'THlib/WalkImageSystem.lua'
 Include 'THlib/DNHWalkImageSystem.lua'
 Include 'THlib/DNHRenderObject.lua'

@@ -14,7 +14,6 @@ lstg.DoFile("lib/Llog.lua")--简单的log系统
 lstg.DoFile("lib/Lglobal.lua")--用户全局变量
 lstg.DoFile("lib/Lmath.lua")--数学常量、数学函数、随机数系统
 lstg.DoFile("plus/plus.lua")--CHU神的plus库，replay系统、plusClass、NativeAPI
-lstg.DoFile("ex/ex.lua")--ESC神的ex库
 lstg.DoFile("lib/Lobject.lua")--Luastg的Class、object
 lstg.DoFile("lib/Lresources.lua")--资源的加载函数、资源枚举和判断
 lstg.DoFile("lib/Lscreen.lua")--world、3d、viewmode的参数设置
