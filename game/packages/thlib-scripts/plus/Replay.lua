@@ -106,6 +106,13 @@ end
 
 ---@param byte_array number[]
 function ReplayFrameWriter:Write(byte_array)
+    if type(byte_array) == "string" then
+        -- 兼容性处理
+        -- aex+0.8.21 将 Write 重命名为 CopyToFileStream
+        -- 然后添加了功能完全不一样的 Write 函数，但更匹配函数名称
+        ---@diagnostic disable-next-line: param-type-mismatch
+        return self:CopyToFileStream(byte_array)
+    end
     for _, b in ipairs(byte_array) do
         self._count = self._count + 1
         self._data[self._count] = b
