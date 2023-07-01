@@ -558,6 +558,8 @@ function VersionView:init(exit_f)
             { i18n_str("launcher.menu.version.download_source1"), function() end },
             { i18n_str("launcher.menu.version.download_source2"), function() end },
             { i18n_str("launcher.menu.version.download_source3"), function() end },
+            { i18n_str("launcher.menu.version.download_source4"), function() lstg.Execute("https://luastg.ritsukage.com") end },
+            { i18n_str("launcher.menu.version.download_source5"), function() lstg.Execute("https://files.luastg-sub.com") end },
         }
         local ws_ = {}
         for _, v in ipairs(widget_list) do
