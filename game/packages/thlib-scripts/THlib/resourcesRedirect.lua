@@ -18,6 +18,12 @@ local function _redirect_font(filename)
     then
         filename = "assets/font/SourceHanSerifCN-Heavy.otf"
     end
+    -- 重定向 THlib/enemy/balloon_font.ttf -> assets/font/wqy-microhei-mono.ttf
+    if filename == "THlib/enemy/balloon_font.ttf"
+    or filename == "THlib\\enemy\\balloon_font.ttf"
+    then
+        filename = "assets/font/wqy-microhei-mono.ttf"
+    end
     return filename
 end
 

@@ -191,7 +191,7 @@ for i = 5, 8 do
     SetImageCenter("balloonBody" .. i, 0, yy)
     SetImageCenter("balloonTail" .. i, 0, yy)
 end
-LoadTTF("balloon_font", patch .. "balloon_font.ttf", 32)
+LoadTTF("balloon_font", "assets/font/wqy-microhei-mono.ttf", 32)
 
 Include(patch .. "boss_system.lua")--boss行为逻辑
 Include(patch .. "boss_function.lua")--boss额外函数
