@@ -162,7 +162,7 @@ function camera_setter:frame()
     end
 end
 
-function _str(num)
+local function _str(num)
     return string.format('%.2f', num)
 end
 
