@@ -77,15 +77,6 @@ function GameInit()
     if setting.mod ~= 'launcher' then
         Include 'root.lua'
         lstg.plugin.DispatchEvent("afterMod")
-        -- TODO: 这玩意还有什么用吗？？？
-        _mod_version = _mod_version or 0
-        if _mod_version > _luastg_version or _mod_version < _luastg_min_support then
-            error(string.format(
-                    "Mod version and engine version mismatch. Mod version is %.2f, LuaSTG version is %.2f.",
-                    _mod_version / 100,
-                    _luastg_version / 100
-            ))
-        end
     else
         Include 'launcher.lua'
     end
