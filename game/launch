@@ -1,10 +1,57 @@
--- 执行命令行参数
--- [警告] 如果你在开发自己的私人或商业项目，请[必须]去掉执行命令行参数的代码
+-- 获取编辑器提供的参数，覆盖部分设置
+-- 警告：该功能可能会被恶意利用，请考虑在正式项目发行版中移除
 
-setting = {}
-if #lstg.args>=2 then loadstring(lstg.args[2])() end
-local editor_setting = setting
-setting = nil
+---@param name string
+---@param str string
+---@param env table
+---@return fun()
+local function load_as_sandbox(name, str, env)
+	local available = true
+	local function read_callback()
+		if available then
+			available = false
+			return str
+		else
+			return nil
+		end
+	end
+	local chunk, message = load(read_callback, name)
+	if chunk then
+		setfenv(chunk, env)
+		return chunk
+	else
+		print(tostring(message))
+		return function() end
+	end
+end
+
+--- 从命令行选项中找看起来像编辑器参数的
+---@return string|nil
+local function find_editor_setting()
+	for _, v in ipairs(lstg.args) do
+		if string.find(v, "setting.mod") then -- 编辑器参数特征，包含 setting.mod
+			return v
+		end
+	end
+	return nil
+end
+
+local editor_setting_text = find_editor_setting()
+local editor_setting = {}
+if editor_setting_text then
+	local sandbox_environment = { setting = editor_setting }
+	load_as_sandbox("editor_setting", editor_setting_text, sandbox_environment)()
+	-- 受信任的全局变量
+	if sandbox_environment.start_game then
+		start_game = true
+	end
+	if sandbox_environment.is_debug then
+		is_debug = true
+	end
+	if sandbox_environment.cheat then
+		cheat = true
+	end
+end
 
 -- 加载包
 
