@@ -59,6 +59,3 @@ function plus.SplitPath(path)
     end
     return string.sub(path, 1, pos), string.sub(path, pos + 1)
 end
-
----@deprecated
-function __UTF8ToANSI(str) return str end
