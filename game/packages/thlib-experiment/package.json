@@ -1,0 +1,8 @@
+{
+    "name": "thlib-experiment",
+    "version": "0.1.0",
+    "dependencies": {
+        "thlib-scripts": "latest"
+    },
+    "description": "THlib 实验性脚本包，目前暂未使用"
+}

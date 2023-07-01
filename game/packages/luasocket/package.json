@@ -1,0 +1,5 @@
+{
+    "name": "luasocket",
+    "version": "3.1.0",
+    "description": "用于 LuaSTG Sub 的 luasocket 库，引擎集成了核心（c/c++）部分，该包补充了 lua 脚本部分"
+}
