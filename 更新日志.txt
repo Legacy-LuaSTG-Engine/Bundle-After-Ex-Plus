@@ -154,6 +154,7 @@
             移除：彻底移除 __UTF8ToANSI 函数，引擎使用的 luajit 是定制的版本，io 和 os 库已经支持 utf-8
             修改：将 background.lua 中不应该定义为全局的 _str 函数改为局部
             修改：THlib/enemy/balloon_font.ttf 移动到 assets/font/wqy-microhei-mono.ttf 并做了重定向
+            修改：沙盒化编辑器命令行参数的加载，防止通过命令行参数注入恶意代码
 
     aex+ v0.8.20-beta
         THlib
