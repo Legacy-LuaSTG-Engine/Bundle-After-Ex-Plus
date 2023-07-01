@@ -555,9 +555,9 @@ function VersionView:init(exit_f)
             { i18n_str("launcher.menu.version.label_latest") .. nv_name, function() end },
             { "", function() end },
             { i18n_str("launcher.menu.version.download_sources"), function() end },
-            { i18n_str("launcher.menu.version.download_source1"), function() end },
-            { i18n_str("launcher.menu.version.download_source2"), function() end },
-            { i18n_str("launcher.menu.version.download_source3"), function() end },
+            { i18n_str("launcher.menu.version.download_source1"), function() lstg.Execute("https://qm.qq.com/cgi-bin/qm/qr?k=b6VXIK9HauTk33-tiWiMRqfQV1S5aSE_&jump_from=webapi&authKey=9ZNcegQlRo3dVVsMQs5K4R2/DckQYajmO3JnMdzL98/nmdv615q7bXbJCNubFgYi") end },
+            { i18n_str("launcher.menu.version.download_source2"), function() lstg.Execute("https://qm.qq.com/cgi-bin/qm/qr?k=0ScR3LsxhNu1YCrHvpEoodu74J21S1fP&jump_from=webapi&authKey=IoAb/UI23m574Igvg93xidQZ1MU7otUjB6LrHp5+rxiU9nT/jeGuuNVxjgCsmlNJ") end },
+            { i18n_str("launcher.menu.version.download_source3"), function() lstg.Execute("https://qm.qq.com/cgi-bin/qm/qr?k=8M0k3qfYNQu11ptp-_p4WX-24oXA2djt&jump_from=webapi&authKey=B8/uqQh05JTC0Ss0UzFYBk4FLmqBhNS2I0l0CuAt4sho5uW/+ZvKCGZeBWkOa4hN") end },
             { i18n_str("launcher.menu.version.download_source4"), function() lstg.Execute("https://luastg.ritsukage.com") end },
             { i18n_str("launcher.menu.version.download_source5"), function() lstg.Execute("https://files.luastg-sub.com") end },
         }
