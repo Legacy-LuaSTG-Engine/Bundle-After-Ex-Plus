@@ -21,6 +21,13 @@
         LuaSTG Sub 引擎
             更新到 v0.20.13
             v0.20.13
+                引擎基础
+                    新增：config.json 新增配置项 persistent_log_file_max_count
+                        用于限制持久日志文件最大数量，避免日志文件越来越多
+                窗口
+                    修改：不再默认追踪抢占引擎窗口焦点的窗口，该功能涉及个人隐私，应该交给用户手动开启
+                    新增：config.json 新增配置项 debug_track_window_focus 用于开启追踪抢占引擎窗口焦点的窗口的调试功能，
+                        可以抓出导致独占全屏失效、按键输入没反应的流氓应用
                 游戏对象
                     移除：移除多个游戏对象上粒子系统相关 API 的无用警告信息，避免日志文件被写入大量无用内容，涉及的 API：
                         lstg.ParticleStop
@@ -28,7 +35,7 @@
                         lstg.ParticleGetn
                         lstg.ParticleGetEmission
                         lstg.ParticleSetEmission
-            v0.20.13
+            v0.20.12
                 引擎基础
                     修复：修复引擎关闭时可能会访问到空指针导致引擎崩溃，且没有报错弹窗或日志记录
                     修复：修复通过 error()、error(nil) 或类似方式抛出内容为 nil 的错误时导致引擎崩溃，
