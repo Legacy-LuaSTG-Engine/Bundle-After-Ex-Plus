@@ -50,12 +50,13 @@
     "launcher.menu.version.label_current": "当前版本：",
     "launcher.menu.version.label_latest": "最新版本：",
     "launcher.menu.version.fetch_failed": "获取失败",
-    "launcher.menu.version.download_sources": "下载地址：",
+    "launcher.menu.version.download_sources": "下载地址（有些链接国内可能无法访问）：",
     "launcher.menu.version.download_source1": "    1、▶ LuaSTG交流群（主群）：QQ群230927410",
     "launcher.menu.version.download_source2": "    2、▶ LuaSTG寒流群（二群）：QQ群563868788",
     "launcher.menu.version.download_source3": "    3、▶ LuaSTG直流群（文件群）：QQ群673067136",
     "launcher.menu.version.download_source4": "    4、▶ 小律影的网盘（OneDrive）：https://luastg.ritsukage.com",
     "launcher.menu.version.download_source5": "    5、▶ 璀境石的网盘（OneDrive）：https://files.luastg-sub.com",
+    "launcher.menu.version.download_source6": "    6、▶ LuaSTG Sub（GitHub）：https://home.luastg-sub.com",
 
     "launcher.comment.end": ""
 }

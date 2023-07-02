@@ -560,6 +560,7 @@ function VersionView:init(exit_f)
             { i18n_str("launcher.menu.version.download_source3"), function() lstg.Execute("https://qm.qq.com/cgi-bin/qm/qr?k=8M0k3qfYNQu11ptp-_p4WX-24oXA2djt&jump_from=webapi&authKey=B8/uqQh05JTC0Ss0UzFYBk4FLmqBhNS2I0l0CuAt4sho5uW/+ZvKCGZeBWkOa4hN") end },
             { i18n_str("launcher.menu.version.download_source4"), function() lstg.Execute("https://luastg.ritsukage.com") end },
             { i18n_str("launcher.menu.version.download_source5"), function() lstg.Execute("https://files.luastg-sub.com") end },
+            { i18n_str("launcher.menu.version.download_source6"), function() lstg.Execute("https://home.luastg-sub.com") end },
         }
         local ws_ = {}
         for _, v in ipairs(widget_list) do
