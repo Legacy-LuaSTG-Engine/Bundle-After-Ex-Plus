@@ -3,6 +3,7 @@
     "log_file_path": "engine.log",
     "persistent_log_file_enable": true,
     "persistent_log_file_directory": "userdata/logs/",
+    "persistent_log_file_max_count": 10,
     "engine_cache_directory": "userdata/",
     "single_application_instance": true,
     "application_instance_id": "6514C225-EF44-4F9F-B092-A137F469B0A7"
