@@ -1,4 +1,4 @@
-# Bundle-After-Ex-Plus
+# LuaSTG After Ex Plus 游戏框架
 
 LuaSTG aex+ 游戏框架，包含：
 * [LuaSTG Sub 引擎](https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub)
