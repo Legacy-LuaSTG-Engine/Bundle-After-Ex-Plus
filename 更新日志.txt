@@ -19,8 +19,16 @@
             新增：由于引擎仅集成了 luasocket 核心部分（c/c++），因此新增 luasocket 包，内含 lua 脚本用于补充
             修改：插件文件夹 plugin 重命名为 plugins
         LuaSTG Sub 引擎
-            更新到 v0.20.12
-            v0.20.12
+            更新到 v0.20.13
+            v0.20.13
+                游戏对象
+                    移除：移除多个游戏对象上粒子系统相关 API 的无用警告信息，避免日志文件被写入大量无用内容，涉及的 API：
+                        lstg.ParticleStop
+                        lstg.ParticleFire
+                        lstg.ParticleGetn
+                        lstg.ParticleGetEmission
+                        lstg.ParticleSetEmission
+            v0.20.13
                 引擎基础
                     修复：修复引擎关闭时可能会访问到空指针导致引擎崩溃，且没有报错弹窗或日志记录
                     修复：修复通过 error()、error(nil) 或类似方式抛出内容为 nil 的错误时导致引擎崩溃，
