@@ -15,8 +15,6 @@ tools/fonted/fonted.log
 # luajit debug
 game/dump.txt
 
-build/*
-
 engine/luastg
 engine/luastg/*
 engine/build/*
@@ -25,3 +23,7 @@ LuaSTG*.zip
 cache.zip
 
 project/*
+
+# build
+build/*
+.backup/*
