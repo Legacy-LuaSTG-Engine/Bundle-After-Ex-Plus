@@ -3,6 +3,7 @@
 
 # mod
 game/mod/*
+!game/mod/模组安装说明（必读）.txt
 
 # temp
 game/engine.log

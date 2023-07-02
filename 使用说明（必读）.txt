@@ -1,0 +1,29 @@
+﻿                    使用说明（必读）
+
+注意：游戏框架、教程会经常更新，欢迎加入社区获取最新版本和资讯
+
+将压缩包解压到一个【空文件夹】内，你应该会看到三个文件夹：
+    doc   -> 存放引擎和游戏框架更新日志、引擎API文档
+    game  -> 游戏框架，内含 LuaSTG Sub 引擎和 THlib 等
+    tools -> 其他工具，比如 HGE 粒子特效编辑器、HGE 字体生成器等
+
+！！！【不要直接解压覆盖旧版本】，这可能会导致奇怪的问题！！！
+
+要启动游戏，请双击 game 文件夹下的 LuaSTGSub.exe，打开启动器界面
+
+游戏框架本身不包含可游玩的内容，需要安装他人制作的模组（mod）
+
+具体请阅读 game 文件夹的 mod 文件夹下的《模组安装说明（必读）》
+
+                    项目页面和社区
+
+国内社区（开发人员常驻）：
+    QQ 群：LuaSTG 交流群（主群）230927410
+    QQ 群：LuaSTG 寒流群（二群）563868788
+    QQ 群：LuaSTG 直流群（文件群）673067136
+开源项目主页（GitHub）：
+    LuaSTG Sub 引擎：https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub
+    LuaSTG aex+ 游戏框架：https://github.com/Legacy-LuaSTG-Engine/Bundle-After-Ex-Plus
+
+优先加入 LuaSTG 交流群，预览版、正式版本发布都在这里进行，
+教程随时更新，大佬众多，技术交流频繁，引擎和框架开发人员常驻

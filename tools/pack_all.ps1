@@ -114,6 +114,8 @@ Write-Output ("当前工作目录：" + $WorkSpace)
     Remove-Directory-If-Exist                                                       -Path       ($DocOutput)
     Copy-Directory-And-Remove-Old -SourcePath ($DocInput)                           -TargetPath ($DocOutput)
     Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\更新日志.txt")         -TargetPath ($DocOutput + "\更新日志.txt")
+    Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\使用说明（必读）.txt")          -TargetPath ($BuildRoot + "\使用说明（必读）.txt")
+    Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\mod\模组安装说明（必读）.txt")  -TargetPath ($GameOutput + "\mod\模组安装说明（必读）.txt")
     #Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
 # 工具
     Remove-Directory-If-Exist                                                       -Path       ($ToolOutput)
