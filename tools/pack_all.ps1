@@ -92,35 +92,37 @@ function Remove-Game-UserData {
 
 Write-Output ("当前工作目录：" + $WorkSpace)
 # 复制游戏本体
-Remove-Directory-If-Exist                                                       -Path       ($GameOutput)
-New-Directory-If-Not-Exist                                                      -Path       ($GameOutput)
-Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\xaudio2_9redist.dll") -TargetPath ($GameOutput + "\xaudio2_9redist.dll")
-Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\d3dcompiler_47.dll" ) -TargetPath ($GameOutput + "\d3dcompiler_47.dll" )
-Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\LuaSTGSub.exe"      ) -TargetPath ($GameOutput + "\LuaSTGSub.exe"      )
-Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\launch"             ) -TargetPath ($GameOutput + "\launch"             )
-Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages"           ) -TargetPath ($GameOutput + "\packages"           )
-#Remove-File-Force                                                               -Path       ($GameOutput + "\packages\thlib-resources\.git")
-Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins"            ) -TargetPath ($GameOutput + "\plugins"            )
-Remove-File-If-Exist                                                            -Path       ($GameOutput + "\plugins\plugins.json")
-Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\plugins\JyuSeoiJanPlayer")
-#Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\PlayerExtensions\.git")
-#Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\StageBackgroundExtensions\.git")
+    Remove-Directory-If-Exist                                                       -Path       ($GameOutput)
+    New-Directory-If-Not-Exist                                                      -Path       ($GameOutput)
+    Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\xaudio2_9redist.dll") -TargetPath ($GameOutput + "\xaudio2_9redist.dll")
+    Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\d3dcompiler_47.dll" ) -TargetPath ($GameOutput + "\d3dcompiler_47.dll" )
+    Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\LuaSTGSub.exe"      ) -TargetPath ($GameOutput + "\LuaSTGSub.exe"      )
+    Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\launch"             ) -TargetPath ($GameOutput + "\launch"             )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages"           ) -TargetPath ($GameOutput + "\packages"           )
+    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\packages\thlib-experiment")
+    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\packages\thlib-legacy-post-effect")
+    #Remove-File-Force                                                               -Path       ($GameOutput + "\packages\thlib-resources\.git")
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins"            ) -TargetPath ($GameOutput + "\plugins"            )
+    Remove-File-If-Exist                                                            -Path       ($GameOutput + "\plugins\plugins.json")
+    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\plugins\JyuSeoiJanPlayer")
+    #Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\PlayerExtensions\.git")
+    #Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\StageBackgroundExtensions\.git")
 # 创建空白文件夹
-New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\mod")
-New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\userdata")
+    New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\mod")
+    New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\userdata")
 # 复制文档
-Remove-Directory-If-Exist                                                       -Path       ($DocOutput)
-Copy-Directory-And-Remove-Old -SourcePath ($DocInput)                           -TargetPath ($DocOutput)
-Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\更新日志.txt")         -TargetPath ($DocOutput + "\更新日志.txt")
-#Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
+    Remove-Directory-If-Exist                                                       -Path       ($DocOutput)
+    Copy-Directory-And-Remove-Old -SourcePath ($DocInput)                           -TargetPath ($DocOutput)
+    Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\更新日志.txt")         -TargetPath ($DocOutput + "\更新日志.txt")
+    #Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
 # 工具
-Remove-Directory-If-Exist                                                       -Path       ($ToolOutput)
-Copy-Directory-And-Remove-Old -SourcePath ($ToolInput)                          -TargetPath ($ToolOutput)
-Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\pack_all.ps1")
-Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\fonted\fonted.log")
-Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\外部设置工具\config.json")
+    Remove-Directory-If-Exist                                                       -Path       ($ToolOutput)
+    Copy-Directory-And-Remove-Old -SourcePath ($ToolInput)                          -TargetPath ($ToolOutput)
+    Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\pack_all.ps1")
+    Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\fonted\fonted.log")
+    Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\外部设置工具\config.json")
 # 打包
-Set-Location -Path $BuildRoot
-Remove-File-If-Exist -Path ($WorkSpace + "\cache.zip")
-& $Zip a ($WorkSpace + "\cache.zip") .\ -tzip -mmt=on -mcu=on -mx9
-Set-Location -Path $WorkSpace
+    Set-Location -Path $BuildRoot
+    Remove-File-If-Exist -Path ($WorkSpace + "\cache.zip")
+    & $Zip a ($WorkSpace + "\cache.zip") .\ -tzip -mmt=on -mcu=on -mx9
+    Set-Location -Path $WorkSpace
