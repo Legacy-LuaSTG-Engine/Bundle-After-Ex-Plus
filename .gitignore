@@ -5,6 +5,9 @@
 game/mod/*
 !game/mod/模组安装说明（必读）.txt
 
+#plugins
+game/plugins/JyuSeoiJanPlayer/*
+
 # temp
 game/engine.log
 game/userdata/*
