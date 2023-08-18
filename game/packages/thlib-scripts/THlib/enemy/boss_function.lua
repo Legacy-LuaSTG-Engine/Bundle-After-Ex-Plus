@@ -24,6 +24,7 @@ function boss:PopSpellResult(c)
                     New(kill_timer, 0, 30, self.timer)
                     if not ext.replay.IsReplay() then
                         scoredata.spell_card_hist[lstg.var.player_name][self.difficulty][c.name][1] = scoredata.spell_card_hist[lstg.var.player_name][self.difficulty][c.name][1] + 1
+                        SaveScoreData()
                     end
                     self.spell_get = true
                 else
@@ -238,6 +239,7 @@ function boss:_castcard(c)
         end
         if not ext.replay.IsReplay() then
             scoredata.spell_card_hist[lstg.var.player_name][self.difficulty][c.name][2] = scoredata.spell_card_hist[lstg.var.player_name][self.difficulty][c.name][2] + 1
+            SaveScoreData()
         end
         self.ui.sc_hist = scoredata.spell_card_hist[lstg.var.player_name][self.difficulty][c.name]
     else

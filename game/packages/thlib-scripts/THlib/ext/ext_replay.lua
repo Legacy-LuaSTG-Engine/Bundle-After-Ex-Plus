@@ -147,6 +147,7 @@ function stage.Set(stageName, mode, path)
             scoredata.hiscore[str] = 0
         end
         scoredata.hiscore[str] = max(scoredata.hiscore[str], lstg.var.score)
+        SaveScoreData()
     end
 
     -- 转场

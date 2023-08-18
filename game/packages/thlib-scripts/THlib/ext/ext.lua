@@ -146,7 +146,11 @@ function ChangeGameStage()
             scoredata.hiscore = {}
         end
         lstg.tmpvar.hiscore = scoredata.hiscore[stage.next_stage.stage_name .. "@" .. tostring(lstg.var.player_name)]
+        --SaveScoreData() -- 下面固定调用，所以这里可以不重复调用
     end
+
+    --进行一次定期存档
+    SaveScoreData()
 end
 
 ---获取输入

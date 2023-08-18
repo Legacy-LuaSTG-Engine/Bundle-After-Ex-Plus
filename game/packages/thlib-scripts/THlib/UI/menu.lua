@@ -422,6 +422,7 @@ function replay_saver:frame()
                 else
                     --由OLC添加，保存rep时菜单用来记录名称的参数
                     scoredata.repsaver = self.state2UserName
+                    SaveScoreData()
                 end
 
                 -- 保存录像

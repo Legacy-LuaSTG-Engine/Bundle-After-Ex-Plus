@@ -1015,6 +1015,7 @@ function system:startSpellHist(name, diff, player)
     end
     if not ext.replay.IsReplay() then
         hist[diff][name][player][2] = hist[diff][name][player][2] + 1
+        SaveScoreData()
     end
     b.spellcard_hist = { name = name, diff = diff, player = player }
     b._sc_hist = hist[diff][name][player]
@@ -1034,6 +1035,7 @@ function system:finishSpellHist(getcard)
         local player = b.spellcard_hist.player
         if getcard and not ext.replay.IsReplay() then
             hist[diff][name][player][1] = hist[diff][name][player][1] + 1
+            SaveScoreData()
         end
         b.spellcard_hist = nil
     end
