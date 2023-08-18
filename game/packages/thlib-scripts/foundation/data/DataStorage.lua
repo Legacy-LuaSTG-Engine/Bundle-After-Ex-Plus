@@ -162,7 +162,7 @@ function M:load()
         end
         return false
     else
-        lstg.Log(2, string.format("data storage file '%s' not exist %s", self.path))
+        lstg.Log(2, string.format("data storage file '%s' not exist", self.path))
         return true
     end
 end
