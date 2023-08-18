@@ -5,13 +5,9 @@
 ----------------------------------------
 ---scoredata
 
-function new_scoredata_table()
-    local t = {}
-    setmetatable(t, { __newindex = scoredata_mt_newindex, __index = scoredata_mt_index, data = {} })
-    return t
-end
+local function make_scoredata_table(t) end
 
-function scoredata_mt_newindex(t, k, v)
+local function scoredata_mt_newindex(t, k, v)
     if type(k) ~= "string" and type(k) ~= "number" then
         error("Invalid key type \"" .. type(k) .. "\"")
     end
@@ -25,8 +21,14 @@ function scoredata_mt_newindex(t, k, v)
     SaveScoreData()
 end
 
-function scoredata_mt_index(t, k)
+local function scoredata_mt_index(t, k)
     return getmetatable(t).data[k]
+end
+
+local function new_scoredata_table()
+    local t = {}
+    setmetatable(t, { __newindex = scoredata_mt_newindex, __index = scoredata_mt_index, data = {} })
+    return t
 end
 
 function make_scoredata_table(t)
@@ -44,7 +46,7 @@ function make_scoredata_table(t)
     end
 end
 
-function DefineDefaultScoreData(t)
+local function DefineDefaultScoreData(t)
     scoredata = t
 end
 
