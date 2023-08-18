@@ -81,24 +81,24 @@ local function get_file_name()
 	return lstg.LocalUserData.GetRootDirectory() .. "/setting.json"
 end
 
+local function visitTable(t)
+	local ret = {}
+	if getmetatable(t) and getmetatable(t).data then
+		t = getmetatable(t).data
+	end
+	for k, v in pairs(t) do
+		if type(v) == 'table' then
+			ret[k] = visitTable(v)
+		else
+			ret[k] = v
+		end
+	end
+	return ret
+end
+
 function Serialize(o)
 	if type(o) == 'table' then
 		-- 特殊处理：lstg中部分表将数据保存在metatable的data域中，因此对于table必须重新生成一个干净的table进行序列化操作
-		function visitTable(t)
-			local ret = {}
-			if getmetatable(t) and getmetatable(t).data then
-				t = getmetatable(t).data
-			end
-			for k, v in pairs(t) do
-				if type(v) == 'table' then
-					ret[k] = visitTable(v)
-				else
-					ret[k] = v
-				end
-			end
-			return ret
-		end
-
 		o = visitTable(o)
 	end
 	return cjson.encode(o)
