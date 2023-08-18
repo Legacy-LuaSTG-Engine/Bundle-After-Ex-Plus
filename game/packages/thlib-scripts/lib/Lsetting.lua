@@ -108,13 +108,33 @@ function DeSerialize(s)
 	return cjson.decode(s)
 end
 
+local function safe_encode_json(t)
+	local r, e = pcall(cjson.encode, t)
+	if r then
+		return e
+	else
+		lstg.Log(4, "encode table to json failed: " .. tostring(e))
+		return cjson.encode(default_setting)
+	end
+end
+
+local function safe_decode_json(s)
+	local r, e = pcall(cjson.decode, s)
+	if r then
+		return e
+	else
+		lstg.Log(4, "decode json to table failed: " .. tostring(e))
+		return cjson.decode(cjson.encode(s)) -- copy
+	end
+end
+
 function loadConfigure()
 	local f, msg
 	f, msg = io.open(get_file_name(), 'r')
 	if f == nil then
-		setting = DeSerialize(Serialize(default_setting))
+		setting = safe_decode_json(safe_encode_json(default_setting))
 	else
-		setting = DeSerialize(f:read('*a'))
+		setting = safe_decode_json(f:read('*a'))
 		f:close()
 	end
 end
@@ -125,7 +145,7 @@ function saveConfigure()
 	if f == nil then
 		error(msg)
 	else
-		f:write(format_json(Serialize(setting)))
+		f:write(format_json(safe_encode_json(setting)))
 		f:close()
 	end
 end
@@ -134,10 +154,10 @@ function loadConfigureTable()
 	local f, msg
 	f, msg = io.open(get_file_name(), 'r')
 	if f == nil then
-		local t = DeSerialize(Serialize(default_setting))
+		local t = safe_decode_json(safe_encode_json(default_setting))
 		return t
 	else
-		local t = DeSerialize(f:read('*a'))
+		local t = safe_decode_json(f:read('*a'))
 		f:close()
 		return t
 	end
@@ -149,7 +169,7 @@ function saveConfigureTable(t)
 	if f == nil then
 		error(msg)
 	else
-		f:write(format_json(Serialize(t)))
+		f:write(format_json(safe_encode_json(t)))
 		f:close()
 	end
 end
