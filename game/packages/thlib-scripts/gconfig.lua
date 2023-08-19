@@ -3,7 +3,7 @@
 ---@class gconfig
 gconfig = {}
 
-gconfig.bundle_version = "0.8.21"
+gconfig.bundle_version = "0.8.22"
 
 gconfig.bundle_name = "LuaSTG aex+"
 
