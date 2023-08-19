@@ -444,6 +444,8 @@ end
 
 --------------------------------------------------------------------------------
 
+local api_url_root = "http://api.luastg-sub.com"
+
 local function isVersionHigher(v, v2)
     if type(v) ~= "string" or type(v2) ~= "string" then
         return false
@@ -468,11 +470,9 @@ local function checkNewVersion()
     local ltn12 = require("ltn12")
     local cjson = require("cjson")
 
-    local api_url_root = "http://service-fef6it46-1259234056.gz.apigw.tencentcs.com:80"
-
     local t = {}
     local r, c, h = http.request({
-        url = api_url_root .. "/thlib/after_extra_plus/version/latest",
+        url = api_url_root .. "/framework/after-ex-plus/version/latest",
         method = "GET",
         sink = ltn12.sink.table(t),
     })
@@ -493,11 +493,9 @@ local function getLatestVersion()
     local ltn12 = require("ltn12")
     local cjson = require("cjson")
 
-    local api_url_root = "http://service-fef6it46-1259234056.gz.apigw.tencentcs.com:80"
-
     local t = {}
     local r, c, h = http.request({
-        url = api_url_root .. "/thlib/after_extra_plus/version/latest",
+        url = api_url_root .. "/framework/after-ex-plus/version/latest",
         method = "GET",
         sink = ltn12.sink.table(t),
     })
