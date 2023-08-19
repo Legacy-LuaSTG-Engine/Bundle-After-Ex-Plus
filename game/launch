@@ -70,7 +70,7 @@ lstg.DoFile("lib/Lkeycode.lua")
 -- 游戏设置
 
 lstg.DoFile("lib/Luserdata.lua")
-lstg.DoFile("lib/Lsetting.lua")
+require("foundation.data.legacy.setting")
 
 if setting.showcfg == nil or setting.showcfg == true then -- 应该是给外部设置工具用的，比如龙隐谈有单独的设置工具
 	-- 重新加载配置
