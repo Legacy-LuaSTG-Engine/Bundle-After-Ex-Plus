@@ -91,23 +91,25 @@ function Remove-Game-UserData {
 # 打包过程
 
 Write-Output ("当前工作目录：" + $WorkSpace)
-# 复制游戏本体
-    Remove-Directory-If-Exist                                                       -Path       ($GameOutput)
-    New-Directory-If-Not-Exist                                                      -Path       ($GameOutput)
+Remove-Directory-If-Exist                                                       -Path       ($GameOutput)
+New-Directory-If-Not-Exist                                                      -Path       ($GameOutput)
+# 复制引擎
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\xaudio2_9redist.dll") -TargetPath ($GameOutput + "\xaudio2_9redist.dll")
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\d3dcompiler_47.dll" ) -TargetPath ($GameOutput + "\d3dcompiler_47.dll" )
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\LuaSTGSub.exe"      ) -TargetPath ($GameOutput + "\LuaSTGSub.exe"      )
+# 复制配置脚本
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\launch"             ) -TargetPath ($GameOutput + "\launch"             )
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\config.json"        ) -TargetPath ($GameOutput + "\config.json"        )
-    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages"           ) -TargetPath ($GameOutput + "\packages"           )
-    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\packages\thlib-experiment")
-    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\packages\thlib-legacy-post-effect")
-    #Remove-File-Force                                                               -Path       ($GameOutput + "\packages\thlib-resources\.git")
-    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins"            ) -TargetPath ($GameOutput + "\plugins"            )
-    Remove-File-If-Exist                                                            -Path       ($GameOutput + "\plugins\plugins.json")
-    Remove-Directory-If-Exist                                                       -Path       ($GameOutput + "\plugins\JyuSeoiJanPlayer")
-    #Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\PlayerExtensions\.git")
-    #Remove-File-Force                                                               -Path       ($GameOutput + "\plugins\StageBackgroundExtensions\.git")
+# 复制包
+    New-Directory-If-Not-Exist                                                           -Path       ($GameOutput + "\packages"                )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\luasocket"      ) -TargetPath ($GameOutput + "\packages\luasocket"      )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-resources") -TargetPath ($GameOutput + "\packages\thlib-resources")
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-scripts"  ) -TargetPath ($GameOutput + "\packages\thlib-scripts"  )
+# 复制插件
+    New-Directory-If-Not-Exist                                                                    -Path       ($GameOutput + "\plugins"                          )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins\ColliderShapeDebugger"    ) -TargetPath ($GameOutput + "\plugins\ColliderShapeDebugger"    )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins\PlayerExtensions"         ) -TargetPath ($GameOutput + "\plugins\PlayerExtensions"         )
+    Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins\StageBackgroundExtensions") -TargetPath ($GameOutput + "\plugins\StageBackgroundExtensions")
 # 创建空白文件夹
     New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\mod")
     New-Directory-If-Not-Exist                                                      -Path       ($GameOutput + "\userdata")
