@@ -1,43 +1,5 @@
 local cjson_util = require("cjson.util")
-
-default_setting = {
-	username = 'User',
-	locale = "zh_cn",
-	timezone = 8,
-	resx = 640,
-	resy = 480,
-	windowed = true,
-	vsync = false,
-	sevolume = 100,
-	bgmvolume = 100,
-	keys = {
-		up = KEY.UP,
-		down = KEY.DOWN,
-		left = KEY.LEFT,
-		right = KEY.RIGHT,
-		slow = KEY.SHIFT,
-		shoot = KEY.Z,
-		spell = KEY.X,
-		special = KEY.C,
-	},
-	keys2 = {
-		up = KEY.NUMPAD5,
-		down = KEY.NUMPAD2,
-		left = KEY.NUMPAD1,
-		right = KEY.NUMPAD3,
-		slow = KEY.A,
-		shoot = KEY.S,
-		spell = KEY.D,
-		special = KEY.F,
-	},
-	keysys = {
-		repfast = KEY.CTRL,
-		repslow = KEY.SHIFT,
-		menu = KEY.ESCAPE,
-		snapshot = KEY.HOME,
-		retry = KEY.R,
-	},
-}
+local default_setting = require("foundation.data.legacy.default_setting")
 
 local function get_file_name()
 	return lstg.LocalUserData.GetRootDirectory() .. "/setting.json"

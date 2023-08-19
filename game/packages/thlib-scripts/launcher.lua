@@ -6,6 +6,7 @@
 --------------------------------------------------------------------------------
 
 local i18n = require("lib.i18n")
+local default_setting = require("foundation.data.legacy.default_setting")
 
 local i18n_str = i18n.string
 
