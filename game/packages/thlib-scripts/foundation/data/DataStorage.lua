@@ -167,13 +167,15 @@ function M:load()
     end
 end
 
-function M:save()
+---@param fmt boolean
+---@overload fun(self:foundation.data.DataStorage)
+function M:save(fmt)
     local r, s = pcall(cjson.encode, copy_proxy(self.data))
     if r then
         local f, e = io.open(self.path, "wb")
         if f then
-            if string.format_json then
-                f:write(string.format_json(s)) -- TODO: 有必要格式化为人类可读的形式吗
+            if fmt and string.format_json then
+                f:write(string.format_json(s))
             else
                 f:write(s)
             end
