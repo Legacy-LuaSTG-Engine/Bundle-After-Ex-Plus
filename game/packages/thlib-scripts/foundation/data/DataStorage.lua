@@ -1,3 +1,5 @@
+local cjson_util = require("cjson.util")
+
 ---@class foundation.data.DataStorage
 local M = {}
 
@@ -174,8 +176,8 @@ function M:save(fmt)
     if r then
         local f, e = io.open(self.path, "wb")
         if f then
-            if fmt and string.format_json then
-                f:write(string.format_json(s))
+            if fmt then
+                f:write(cjson_util.format_json(s))
             else
                 f:write(s)
             end

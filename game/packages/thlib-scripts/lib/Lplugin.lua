@@ -3,6 +3,8 @@
 --- by 璀境石
 --------------------------------------------------------------------------------
 
+local cjson_util = require("cjson.util")
+
 --------------------------------------------------------------------------------
 --- 工具
 
@@ -129,7 +131,7 @@ function lstg.plugin.SaveConfig(cfg)
     local f, msg
     f, msg = io.open(PLUGIN_PATH .. CONFIG_FILE, "wb")
     if f then
-        f:write(string.format_json(cjson.encode(cfg)))
+        f:write(cjson_util.format_json(cjson.encode(cfg)))
         f:close()
     else
         error(msg)
