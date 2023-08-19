@@ -125,7 +125,8 @@ New-Directory-If-Not-Exist                                                      
     Copy-Directory-And-Remove-Old -SourcePath ($ToolInput)                          -TargetPath ($ToolOutput)
     Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\pack_all.ps1")
     Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\fonted\fonted.log")
-    Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\外部设置工具\config.json")
+    #Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\外部设置工具\config.json")
+    Remove-Directory-If-Exist                                                       -Path       ($ToolOutput + "\外部设置工具")
 # 打包
     Set-Location -Path $BuildRoot
     Remove-File-If-Exist -Path ($WorkSpace + "\cache.zip")
