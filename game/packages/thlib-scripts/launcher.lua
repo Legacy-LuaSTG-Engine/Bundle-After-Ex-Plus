@@ -33,7 +33,7 @@ end
 
 --------------------------------------------------------------------------------
 
----@return string[]
+---@return string[], number
 local function enumMods()
     local list = {}
     local pos = 1
@@ -118,7 +118,8 @@ function SelectMod:init(exit_f)
             table.insert(ws_, w_button)
         end
         self._view:setWidgets(ws_)
-        self._view._index = pos_
+        --self._view._index = pos_
+        self._view:setCursorIndex(pos_)
     end
 
     self:_updateViewState() -- 先更新一次
