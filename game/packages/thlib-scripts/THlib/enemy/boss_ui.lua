@@ -923,6 +923,7 @@ function infobar:render()
         x = self.x - 9
         y = self.y - 15 - dy
         if m >= 0 then
+            SetImageState("boss_cardleft", "", Color(0xFFFFFFFF))
             for i = 0, m - 1 do
                 for j = 1, 8 do
                     Render('boss_cardleft', x + j * 12, y - i * 12, 0, 0.5)
@@ -930,7 +931,6 @@ function infobar:render()
             end
             y = y - m * 12
             for i = 1, m2 do
-                SetImageState("boss_cardleft", "", Color(0xFFFFFFFF))
                 Render("boss_cardleft", x + i * 12, y, 0, 0.5)
             end
             local t, at, x2, y2
