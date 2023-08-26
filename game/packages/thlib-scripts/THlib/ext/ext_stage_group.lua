@@ -20,6 +20,8 @@ stage.group = M
 ---@type table<string, stage.group.Group> | string[]
 M.groups = {}
 
+stage.groups = M.groups
+
 ---@class stage.group.Group -- : stage.Stage[]
 local group_class = {
     -- 关卡组名称
@@ -67,15 +69,21 @@ local stage_class = {
 ---@param allow_practice boolean
 ---@param difficulty number
 ---@return stage.group.Group
+---@overload fun(title: string, stages:string[], name:string): stage.group.Group
+---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>): stage.group.Group
+---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean): stage.group.Group
+---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean, difficulty:number): stage.group.Group
 function M.New(title, stages, name, item_init, allow_practice, difficulty)
     assert(type(title) == "string")
-    assert(type{stages} == "table")
+    assert(type(stages) == "table")
     assert(type(name) == "string")
     if item_init then
-        assert(type{item_init} == "table")
+        assert(type(item_init) == "table")
     end
     allow_practice = not (not allow_practice) -- 转换为 boolean
-    assert(type{difficulty} == "number")
+    if difficulty then
+        assert(type(difficulty) == "number")
+    end
 
     ---@param sg stage.group.Group
     local function appendStages(sg)
