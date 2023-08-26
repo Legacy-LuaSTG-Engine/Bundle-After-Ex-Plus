@@ -101,3 +101,4 @@ stage.group.DefStageFunc('SC Debugger@SC Debugger', 'init', function(self)
     end)
 end)
 stage.group.DefStageFunc('SC Debugger@SC Debugger', 'frame', stage.group.frame_sc_pr)
+s.sc_pr_stage = true

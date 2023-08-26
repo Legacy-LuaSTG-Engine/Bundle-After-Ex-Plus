@@ -145,7 +145,21 @@ function ChangeGameStage()
         if scoredata.hiscore == nil then
             scoredata.hiscore = {}
         end
-        lstg.tmpvar.hiscore = scoredata.hiscore[stage.next_stage.stage_name .. "@" .. tostring(lstg.var.player_name)]
+        local str
+        if stage.next_stage.sc_pr_stage then
+            local sc_index
+            if lstg.var.sc_pr then
+                sc_index = lstg.var.sc_pr.index
+            else
+                sc_index = lstg.var.sc_index
+            end
+            str = "SpellCard Practice" .. '@' .. tostring(sc_index) .. '@' .. tostring(lstg.var.player_name)
+        elseif lstg.var.is_practice then
+            str = stage.next_stage.name .. '@' .. tostring(lstg.var.player_name)
+        else
+            str = stage.next_stage.group.name .. '@' .. tostring(lstg.var.player_name)
+        end
+        lstg.tmpvar.hiscore = scoredata.hiscore[str]
         --SaveScoreData() -- 下面固定调用，所以这里可以不重复调用
     end
 

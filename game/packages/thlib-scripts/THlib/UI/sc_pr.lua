@@ -122,3 +122,4 @@ stage.group.DefStageFunc('Spell Practice@Spell Practice', 'init', function(self)
     end)
 end)
 stage.group.DefStageFunc('Spell Practice@Spell Practice', 'frame', stage.group.frame_sc_pr)
+s.sc_pr_stage = true
