@@ -50,6 +50,8 @@ M.preserve_res = false
 ---@param as_entrance boolean
 ---@param is_menu boolean
 ---@return stage.Stage
+---@overload fun(stage_name:string): stage.Stage
+---@overload fun(stage_name:string, as_entrance:boolean): stage.Stage
 function M.New(stage_name, as_entrance, is_menu)
     assert(type(stage_name) == "string")
     ---@type stage.Stage
