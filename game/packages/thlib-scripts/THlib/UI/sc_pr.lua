@@ -46,7 +46,7 @@ local function getPreviousBossScene()
 end
 
 stage.group.New('menu', {}, "Spell Practice", { lifeleft = 0, power = 400, faith = 50000, bomb = 0 }, false)
-stage.group.AddStage('Spell Practice', 'Spell Practice@Spell Practice', { lifeleft = 0, power = 400, faith = 50000, bomb = 0 }, false)
+local s = stage.group.AddStage('Spell Practice', 'Spell Practice@Spell Practice', { lifeleft = 0, power = 400, faith = 50000, bomb = 0 }, false)
 stage.group.DefStageFunc('Spell Practice@Spell Practice', 'init', function(self)
     _init_item(self)
     New(mask_fader, 'open')
@@ -121,3 +121,5 @@ stage.group.DefStageFunc('Spell Practice@Spell Practice', 'init', function(self)
         stage.group.FinishStage()
     end)
 end)
+stage.group.DefStageFunc('Spell Practice@Spell Practice', 'frame', stage.group.frame_sc_pr)
+s.sc_pr_stage = true

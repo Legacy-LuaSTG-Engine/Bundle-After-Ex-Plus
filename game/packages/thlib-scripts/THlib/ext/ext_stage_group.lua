@@ -12,7 +12,7 @@ gamecontinueflag = false
 local deathmusic = 'deathmusic'--疮痍曲
 
 function stage.group.New(title, stages, name, item_init, allow_practice, difficulty)
-    local sg = { ['title'] = title, number = #stages }
+    local sg = { ['title'] = title, number = #stages, name = name }
     for i = 1, #stages do
         sg[i] = stages[i]
         local s = stage.New(stages[i])
@@ -45,12 +45,13 @@ function stage.group.AddStage(groupname, stagename, item_init, allow_practice)
         sg.number = sg.number + 1
         table.insert(sg, stagename)
         local s = stage.New(stagename)
-        if groupname == 'Spell Practice' or groupname == 'SC Debugger' then
-            --by OLC,为了使符卡debug模式更加符合符卡练习的模式
-            s.frame = stage.group.frame_sc_pr
-        else
-            s.frame = stage.group.frame
-        end
+        -- if groupname == 'Spell Practice' or groupname == 'SC Debugger' then
+        --     --by OLC,为了使符卡debug模式更加符合符卡练习的模式
+        --     s.frame = stage.group.frame_sc_pr
+        -- else
+        --     s.frame = stage.group.frame
+        -- end
+        s.frame = stage.group.frame --需要符卡练习的关卡额外修改
         s.render = stage.group.render
         s.number = sg.number
         s.group = sg
