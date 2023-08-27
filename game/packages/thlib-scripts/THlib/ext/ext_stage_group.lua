@@ -16,11 +16,15 @@ local M = {}
 
 stage.group = M
 
---- TODO: 需要重新设计
----@type table<string, stage.group.Group> | string[]
+---@type stage.group.Group[]
 M.groups = {}
 
-stage.groups = M.groups
+--- TODO: 需要移除
+---@type table<string, stage.group.Group> | string[]
+local legacy_groups = {}
+
+--- TODO: 需要移除
+stage.groups = legacy_groups
 
 ---@class stage.group.Group -- : stage.Stage[]
 local group_class = {
@@ -61,6 +65,18 @@ local stage_class = {
     --- 显示在关卡组练习列表
     allow_practice = false,
 }
+
+---@param name string
+---@return stage.group.Group|nil
+function M.Find(name)
+    assert(type(name) == "string")
+    for _, sg in ipairs(M.groups) do
+        if sg.name == name then
+            return sg
+        end
+    end
+    return nil
+end
 
 ---@param title string
 ---@param stages string[]
@@ -106,10 +122,9 @@ function M.New(title, stages, name, item_init, allow_practice, difficulty)
         end
     end
 
-    if M.groups[name] then
+    local sg = M.Find(name)
+    if sg then
         -- 已有关卡组，直接返回，并检查一致性
-        local sg = M.groups[name]
-        ---@cast sg -string
         assert(sg.title == title)
         -- 限制该参数的使用
         assert(#stages == 0) -- appendStages(sg)
@@ -124,7 +139,7 @@ function M.New(title, stages, name, item_init, allow_practice, difficulty)
         return sg
     else
         ---@type stage.group.Group
-        local sg = {}
+        sg = {}
         sg.name = name
         sg.title = title
         sg.number = 0
@@ -137,10 +152,11 @@ function M.New(title, stages, name, item_init, allow_practice, difficulty)
         sg.difficulty = difficulty or 1
         sg.stages = {}
         appendStages(sg)
+        table.insert(M.groups, sg)
         -- TODO: 需要重新设计
-        M.groups[name] = sg
+        legacy_groups[name] = sg
         -- TODO: 需要重新设计
-        table.insert(M.groups, name)
+        table.insert(legacy_groups, name)
         return sg
     end
 end
@@ -158,10 +174,9 @@ function M.AddStage(groupname, stagename, item_init, allow_practice)
     end
     allow_practice = not (not allow_practice) -- 转换为 boolean
 
-    assert(M.groups[groupname])
+    local sg = M.Find(groupname)
+    assert(sg)
 
-    local sg = M.groups[groupname]
-    ---@cast sg -string
     ---@type stage.group.Stage|nil
     local s
     for _, sgs in ipairs(sg.stages) do
@@ -170,6 +185,7 @@ function M.AddStage(groupname, stagename, item_init, allow_practice)
             break
         end
     end
+
     if not s then
         local ss = stage.New(stagename)
         ---@cast ss -stage.Stage, +stage.group.Stage
@@ -380,11 +396,8 @@ function M.Start(group_name)
 
     assert(type(group_name) == "string")
 
-    assert(M.groups[group_name], string.format("stage group '%s' not found", group_name))
-
-    local sg = M.groups[group_name]
-    ---@cast sg -string
-
+    local sg = M.Find(group_name)
+    assert(sg, string.format("stage group '%s' not found", group_name))
     assert(#sg.stages > 0, "stage group is empty")
 
     lstg.var.is_practice = false
