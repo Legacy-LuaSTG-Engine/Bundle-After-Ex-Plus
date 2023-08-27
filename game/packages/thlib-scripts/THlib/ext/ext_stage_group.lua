@@ -89,7 +89,7 @@ end
 ---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>): stage.group.Group
 ---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean): stage.group.Group
 ---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean, difficulty:number): stage.group.Group
-function M.New(title, stages, name, item_init, allow_practice, difficulty)
+function M.OldNew(title, stages, name, item_init, allow_practice, difficulty)
     assert(type(title) == "string")
     assert(type(stages) == "table")
     assert(type(name) == "string")
@@ -159,6 +159,23 @@ function M.New(title, stages, name, item_init, allow_practice, difficulty)
         table.insert(legacy_groups, name)
         return sg
     end
+end
+
+---@param name string
+---@param menu_stage_name string
+---@param item_init table<string, number>
+---@param allow_practice boolean
+---@param difficulty number
+---@overload fun(name:string, menu_stage_name: string): stage.group.Group
+---@overload fun(name:string, menu_stage_name: string, item_init:table<string, number>): stage.group.Group
+---@overload fun(name:string, menu_stage_name: string, item_init:table<string, number>, allow_practice:boolean): stage.group.Group
+function M.New(name, menu_stage_name, item_init, allow_practice, difficulty, ...)
+    -- TODO: 兼容代码，早期关卡组创建，第一个参数不是名称
+    if type(menu_stage_name) == "table" then
+        ---@diagnostic disable-next-line: param-type-mismatch
+        return M.OldNew(name, menu_stage_name, item_init, allow_practice, difficulty, ...)
+    end
+    return M.OldNew(menu_stage_name, {}, name, item_init, allow_practice, difficulty)
 end
 
 ---@param groupname string
