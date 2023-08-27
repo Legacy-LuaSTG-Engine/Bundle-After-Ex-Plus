@@ -143,8 +143,8 @@ end
 
 --------------------------
 
-
 bullet = Class(object)
+
 function bullet:init(imgclass, index, stay, destroyable)
     self.logclass = self.class
     self.imgclass = imgclass
@@ -179,6 +179,7 @@ function bullet:kill()
         self.imgclass.del(self)
     end
 end
+
 function bullet:del()
     --	self.imgclass.del(self)
     local w = lstg.world
@@ -189,6 +190,7 @@ function bullet:del()
         New(BulletBreak, self.x, self.y, self._index)
     end
 end
+
 function bullet:render()
     if self._blend and self._a and self._r and self._g and self._b then
         SetImgState(self, self._blend, self._a, self._r, self._g, self._b)
@@ -198,6 +200,15 @@ function bullet:render()
         SetImgState(self, '', 255, 255, 255, 255)
     end
 end
+
+--- 快速跳过淡入效果（或者叫雾化效果）  
+--- 原理是立即切换到子弹逻辑，并根据子弹“尺寸”应用图层  
+--- 用法：bullet.skip_fade_in(some_object)  
+function bullet:skip_fade_in()
+    self.class = self.logclass
+    self.layer = LAYER_ENEMY_BULLET - self.imgclass.size * 0.001 + self._index * 0.00001
+end
+
 ----------------------------------------------------------------
 img_class = Class(object)
 function img_class:frame()
