@@ -25,8 +25,10 @@ end
 function stage_init:render()
     ui.DrawMenuBG()
 end
-stage.group.New('menu', {}, "SC Debugger", { lifeleft = 7, power = 400, faith = 50000, bomb = 2 }, false)
+
+stage.group.New("SC Debugger", "menu", { lifeleft = 7, power = 400, faith = 50000, bomb = 2 }, false)
 local s = stage.group.AddStage('SC Debugger', 'SC Debugger@SC Debugger', { lifeleft = 7, power = 400, faith = 50000, bomb = 2 }, false)
+s.sc_pr_stage = true
 stage.group.DefStageFunc('SC Debugger@SC Debugger', 'init', function(self)
     _init_item(self)
     New(mask_fader, 'open')
@@ -101,4 +103,3 @@ stage.group.DefStageFunc('SC Debugger@SC Debugger', 'init', function(self)
     end)
 end)
 stage.group.DefStageFunc('SC Debugger@SC Debugger', 'frame', stage.group.frame_sc_pr)
-s.sc_pr_stage = true

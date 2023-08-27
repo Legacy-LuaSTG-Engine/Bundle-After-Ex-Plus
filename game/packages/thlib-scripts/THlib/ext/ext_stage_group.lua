@@ -643,7 +643,7 @@ end
 ----------------------------------------
 ---示例代码
 
--- stage.group.New('menu', {}, "Normal", {lifeleft=2,power=400,bomb=2}, true, 4)
+-- stage.group.New("Normal", "menu", {lifeleft=2,power=400,bomb=2}, true, 4)
 -- stage.group.AddStage('Normal', 'Stage 1@Normal', {lifeleft=8,power=400,bomb=8}, true)
 -- stage.group.DefStageFunc('Stage 1@Normal', 'init', function(self)
 --     stage.group.initTask(self, function()

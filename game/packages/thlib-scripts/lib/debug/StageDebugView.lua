@@ -141,10 +141,10 @@ function StageDebugView:refresh()
 
     ---@type string[]
     local group_list = {}
-    if type(stage) == "table" and type(stage.groups) == "table" then
-        for _, group_name in ipairs(stage.groups) do
-            if group_name ~= "Spell Practice" then
-                table.insert(group_list, group_name)
+    if type(stage) == "table" and type(stage.group) == "table" then
+        for _, group in ipairs(stage.group.groups) do
+            if group.name ~= "Spell Practice" then
+                table.insert(group_list, group.name)
             end
         end
     end
@@ -162,14 +162,15 @@ function StageDebugView:refresh()
     ---@type string[][]
     local group_stage_name_list = {}
     for _, group_name in ipairs(group_list) do
-        local sg = stage.groups[group_name]
+        local sg = stage.group.Find(group_name)
+        ---@cast sg -nil
         ---@type string[]
         local stage_list = {}
         ---@type string[]
         local stage_name_list = {}
-        for _, stage_name in ipairs(sg) do
-            table.insert(stage_list, stage_name)
-            table.insert(stage_name_list, string.match(stage_name, "^[%w_][%w_ ]*"))
+        for _, s in ipairs(sg.stages) do
+            table.insert(stage_list, s.name)
+            table.insert(stage_name_list, string.match(s.name, "^[%w_][%w_ ]*"))
         end
         table.insert(group_stage_list, stage_list)
         table.insert(group_stage_name_list, stage_name_list)
@@ -232,8 +233,6 @@ local function closePauseMenu()
     if ext then
         if ext.pause_menu and ext.pause_menu.FlyOut then
             ext.pause_menu:FlyOut()
-        else
-            ext.pause_menu = nil -- 老版本 THlib 的写法
         end
     end
 end
@@ -247,7 +246,7 @@ function StageDebugView:startStageGroup()
     end
     if #self.group_list > 0 then
         local group_name = self.group_list[self.group_index]
-        stage.group.Start(stage.groups[group_name]) -- 你妈的，坑人
+        stage.group.Start(group_name)
         closePauseMenu()
     end
 end

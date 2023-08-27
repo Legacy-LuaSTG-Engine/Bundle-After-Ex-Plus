@@ -132,7 +132,7 @@ function stage_menu:init()
                     stage.IsSCpractice = true--判定进入符卡练习的flag add by OLC
                     stage.group.PracticeStart('Spell Practice@Spell Practice')
                 else
-                    stage.group.Start(stage.groups[last_menu.group_name])
+                    stage.group.Start(last_menu.group_name)
                 end
             end)
         end })
