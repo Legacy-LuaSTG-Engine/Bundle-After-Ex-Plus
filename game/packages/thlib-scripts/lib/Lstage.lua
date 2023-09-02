@@ -3,6 +3,8 @@
 --- rewrite by 璀境石
 ----------------------------------------
 
+local SceneManager = require("foundation.SceneManager")
+
 ---@generic T
 ---@param C T
 ---@return T
@@ -125,10 +127,7 @@ end
 
 function M.QuitGame()
     lstg.quit_flag = true
-end
-
-function M.QuitFlagExist()
-    return lstg.quit_flag
+    SceneManager.setExitSignal(true)
 end
 
 ----------------------------------------
