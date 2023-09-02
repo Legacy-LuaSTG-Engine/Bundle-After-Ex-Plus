@@ -1,8 +1,9 @@
 local cjson_util = require("cjson.util")
 local default_setting = require("foundation.legacy.default_setting")
+local LocalFileStorage = require("foundation.LocalFileStorage")
 
 local function get_file_name()
-	return lstg.LocalUserData.GetRootDirectory() .. "/setting.json"
+	return LocalFileStorage.getRootDirectory() .. "/setting.json"
 end
 
 local function safe_encode_json(t)

@@ -3,6 +3,7 @@
 --------------------------------------------------------------------------------
 
 local DataStorage = require("foundation.DataStorage")
+local LocalFileStorage = require("foundation.LocalFileStorage")
 
 -- 用户名里虽然能塞各种奇怪的字符，但路径不允许
 
@@ -31,7 +32,7 @@ local function getSafeUserName()
 end
 
 local function getFileName()
-    local path = lstg.LocalUserData.GetDatabaseDirectory() .. "/" .. setting.mod
+    local path = LocalFileStorage.getDataStorageDirectory() .. "/" .. setting.mod
     lstg.FileManager.CreateDirectory(path)
     return path .. "/" .. getSafeUserName() .. ".json"
 end

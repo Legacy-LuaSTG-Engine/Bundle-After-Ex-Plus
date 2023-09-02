@@ -1,5 +1,6 @@
 local debugger = require("lib.Ldebug")
 local SceneManager = require("foundation.SceneManager")
+local LocalFileStorage = require("foundation.LocalFileStorage")
 
 function GameInit()
 end
@@ -23,7 +24,7 @@ function RenderFunc()
     -- 截图
     ---@diagnostic disable-next-line: deprecated
     if setting and setting.keysys and lstg.GetLastKey() == setting.keysys.snapshot then
-        lstg.LocalUserData.Snapshot()
+        LocalFileStorage.snapshot()
     end
 end
 

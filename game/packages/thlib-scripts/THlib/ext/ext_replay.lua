@@ -2,6 +2,8 @@
 ---luastg replay
 ---======================================
 
+local LocalFileStorage = require("foundation.LocalFileStorage")
+
 ----------------------------------------
 ---replay
 
@@ -76,7 +78,7 @@ function ext.replay.SaveReplay(stageNames, slot, playerName, finish)
 end
 
 function ext.reload()
-    replayManager = plus.ReplayManager(lstg.LocalUserData.GetReplayDirectory() .. "/" .. setting.mod)
+    replayManager = plus.ReplayManager(LocalFileStorage.getReplayDirectory() .. "/" .. setting.mod)
 end
 
 ext.reload()--加载一次replay管理器
