@@ -22,7 +22,7 @@ local S = {}
 
 S.stage_name = "__default__"
 
-S.is_menu = false
+S.is_menu = true
 
 function S:init() end
 
