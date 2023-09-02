@@ -290,7 +290,7 @@ end
 ---extra game call-back function
 
 ---@class game.GameScene : foundation.Scene
-local GameScene = {}
+local GameScene = SceneManager.add("GameScene")
 
 function GameScene:onCreate()
 end
@@ -339,5 +339,4 @@ function GameScene:onDeactivated()
     --]]
 end
 
-SceneManager.add("GameScene", GameScene)
 SceneManager.setNext("GameScene")

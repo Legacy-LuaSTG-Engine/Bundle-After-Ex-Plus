@@ -66,7 +66,7 @@ function AfterRender()
 end
 
 ---@class game.DefaultScene : foundation.Scene
-local DefaultScene = {}
+local DefaultScene = SceneManager.add("DefaultScene")
 
 DefaultScene.initialized = false
 
@@ -87,9 +87,9 @@ function DefaultScene:onCreate()
     InitScoreData() -- 装载玩家存档
 
     SetViewMode("world")
-    if stage.next_stage == nil then
-        error('Entrance stage not set.')
-    end
+    --if stage.next_stage == nil then
+    --    error('Entrance stage not set.')
+    --end
     SetResourceStatus("stage")
 
     DefaultScene.initialized = true
@@ -109,11 +109,4 @@ function DefaultScene:onRender()
     AfterRender()
 end
 
-function DefaultScene:onActivated()
-end
-
-function DefaultScene:onDeactivated()
-end
-
-SceneManager.add("DefaultScene", DefaultScene)
 SceneManager.setNext("DefaultScene")

@@ -88,15 +88,28 @@ end
 
 ---@param scene_name string
 ---@param scene_type foundation.Scene
+---@return foundation.Scene
+---@overload fun(scene_name:string): foundation.Scene
 function SceneManager.add(scene_name, scene_type)
     assert(type(scene_name) == "string")
     assert(string.len(scene_name) > 0)
-    assert(type(scene_type) == "table")
     if scene_set[scene_name] then
         lstg.Log(3, string.format("scene '%s' already exists", scene_name))
     end
+    if scene_type then
+        assert(type(scene_type) == "table")
+    else
+        scene_type = {}
+        scene_type.onCreate = Scene.onCreate
+        scene_type.onDestroy = Scene.onDestroy
+        scene_type.onUpdate = Scene.onUpdate
+        scene_type.onRender = Scene.onRender
+        scene_type.onActivated = Scene.onActivated
+        scene_type.onDeactivated = Scene.onDeactivated
+    end
     lstg.Log(2, string.format("add scene '%s' to scene manager", scene_name))
     scene_set[scene_name] = scene_type
+    return scene_type
 end
 
 return SceneManager
