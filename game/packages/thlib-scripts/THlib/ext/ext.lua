@@ -315,8 +315,6 @@ function GameScene:onUpdate()
 end
 
 function GameScene:onRender()
-    UpdateScreenResources()
-    SetWorldFlag(1)
     BeforeRender()
     stage.current_stage:render()
     ObjRender()

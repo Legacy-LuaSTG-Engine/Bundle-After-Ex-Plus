@@ -17,6 +17,10 @@ end
 
 function RenderFunc()
     lstg.BeginScene()
+    -- TODO: 应该改为引擎提供默认常用贴图
+    if UpdateScreenResources then
+        UpdateScreenResources()
+    end
     SceneManager.render()
     debugger.draw()
     lstg.EndScene()

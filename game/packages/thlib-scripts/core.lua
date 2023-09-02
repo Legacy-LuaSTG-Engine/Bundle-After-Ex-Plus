@@ -103,7 +103,6 @@ function DefaultScene:onUpdate()
 end
 
 function DefaultScene:onRender()
-    UpdateScreenResources()
     BeforeRender()
     stage.current_stage:render()
     ObjRender()
