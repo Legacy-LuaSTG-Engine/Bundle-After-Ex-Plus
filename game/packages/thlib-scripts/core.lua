@@ -21,7 +21,7 @@ lstg.DoFile("lib/Linput.lua")--按键状态更新
 lstg.DoFile("lib/Ltask.lua")--task
 lstg.DoFile("lib/Lstage.lua")--stage关卡系统
 lstg.DoFile("lib/Ltext.lua")--文字渲染
-require("foundation.data.legacy.scoredata")
+require("foundation.legacy.scoredata")
 lstg.DoFile("lib/Lplugin.lua")--用户插件
 
 require("lib.debug.AllView")

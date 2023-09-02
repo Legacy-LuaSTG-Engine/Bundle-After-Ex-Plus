@@ -2,7 +2,7 @@
 --- 遗留的存档系统，非常恐怖的全局变量 
 --------------------------------------------------------------------------------
 
-local DataStorage = require("foundation.data.DataStorage")
+local DataStorage = require("foundation.DataStorage")
 
 -- 用户名里虽然能塞各种奇怪的字符，但路径不允许
 
@@ -36,7 +36,7 @@ local function getFileName()
     return path .. "/" .. getSafeUserName() .. ".json"
 end
 
----@type foundation.data.DataStorage
+---@type foundation.DataStorage
 local global_data_storage
 
 ---@class legacy.scoredata

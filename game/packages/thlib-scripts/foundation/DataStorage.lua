@@ -1,6 +1,6 @@
 local cjson_util = require("cjson.util")
 
----@class foundation.data.DataStorage
+---@class foundation.DataStorage
 local M = {}
 
 ---@generic T
@@ -170,7 +170,7 @@ function M:load()
 end
 
 ---@param fmt boolean
----@overload fun(self:foundation.data.DataStorage)
+---@overload fun(self:foundation.DataStorage)
 function M:save(fmt)
     local r, s = pcall(cjson.encode, copy_proxy(self.data))
     if r then
@@ -226,10 +226,10 @@ end
 ---@generic T
 ---@param path string
 ---@param default_definitions T
----@return foundation.data.DataStorage
----@overload fun(path:string): foundation.data.DataStorage
+---@return foundation.DataStorage
+---@overload fun(path:string): foundation.DataStorage
 function M.open(path, default_definitions)
-    ---@type foundation.data.DataStorage
+    ---@type foundation.DataStorage
     local I = {}
     setmetatable(I, { __index = M })
     I:initialize(path, default_definitions)
