@@ -7,6 +7,7 @@
 
 local i18n = require("lib.i18n")
 local default_setting = require("foundation.legacy.default_setting")
+local SceneManager = require("foundation.SceneManager")
 
 local i18n_str = i18n.string
 
@@ -1394,10 +1395,13 @@ function PluginManager.create(exit_f)
 end
 
 --------------------------------------------------------------------------------
-
 --- 启动器场景
-local stage_launcher = stage.New('launcher_scene', true, true)
-function stage_launcher:init()
+
+---@class game.LauncherScene : foundation.Scene
+local LauncherScene = SceneManager.add("LauncherScene")
+
+function LauncherScene:onCreate()
+    self.timer = 0
     lstg.SetSplash(true)
 
     -- 背景
@@ -1474,7 +1478,7 @@ function stage_launcher:init()
         self.color_value_d = -1 / 30
         task.New(self, function()
             task.Wait(30)
-            stage.Set("launcher_loading_scene", "none")
+            SceneManager.setNext("LauncherLoadingScene")
         end)
     end
 
@@ -1583,21 +1587,44 @@ function stage_launcher:init()
     subui.sound.playConfirm()
     pushMenuStack(menu_main)
 end
-function stage_launcher:frame()
-    subui.updateInput()
-    self.color_value = math.max(0, math.min(self.color_value + self.color_value_d, 1))
+
+function LauncherScene:onDestroy()
 end
-function stage_launcher:render()
+
+function LauncherScene:onUpdate()
+    -- 设置标题
+    lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
+    -- 获取输入
+    GetInput()
+    subui.updateInput()
+    -- 更新，这个场景不需要碰撞检测
+    self.timer = self.timer + 1
+    task.Do(self)
+    self.color_value = math.max(0, math.min(self.color_value + self.color_value_d, 1))
+    lstg.ObjFrame()
+    -- 后更新
+    lstg.UpdateXY()
+    lstg.AfterFrame()
+end
+
+function LauncherScene:onRender()
     subui.updateResources()
     SetViewMode("ui")
     local rgb = 16 * self.color_value
     RenderClearViewMode(lstg.Color(255, rgb, rgb, rgb))
     SetViewMode("world")
+    lstg.ObjRender()
 end
 
---- 这个场景未来应该可以写一个加载动画
-local stage_launcher_loading = stage.New('launcher_loading_scene', false, true)
-function stage_launcher_loading:init()
+SceneManager.setNext("LauncherScene")
+
+--------------------------------------------------------------------------------
+--- 启动器加载场景
+
+---@class game.LauncherLoadingScene : foundation.Scene
+local LauncherLoadingScene = SceneManager.add("LauncherLoadingScene")
+
+function LauncherLoadingScene:onCreate()
     if lstg.FileManager and lstg.FileManager.AddSearchPath then
         if lstg.FileManager.FileExist(string.format("mod/%s.zip", setting.mod)) then
             lstg.LoadPack(string.format("mod/%s.zip", setting.mod))
@@ -1631,4 +1658,5 @@ function stage_launcher_loading:init()
     InitScoreData()
     ext.reload()
     stage.Set("init", "none")
+    SceneManager.setNext("GameScene") -- 此时 ext 也加载了，使用 GameScene 会更好
 end
