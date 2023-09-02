@@ -155,7 +155,7 @@ StopWatch = lstg.StopWatch
 GetSEVolume = lstg.GetSEVolume
 SetSESpeed = lstg.SetSESpeed
 GetSESpeed = lstg.GetSESpeed
-NextObject = lstg.NextObject -- Internal/内部方法
+--NextObject = lstg.NextObject -- Internal/内部方法
 ResetObject = lstg.ResetObject
 SetBGMLoop = lstg.SetBGMLoop
 GetBGMSpeed = lstg.GetBGMSpeed
@@ -163,7 +163,7 @@ SetBGMSpeed = lstg.SetBGMSpeed
 GetBGMVolume = lstg.GetBGMVolume
 GetMusicFFT = lstg.GetMusicFFT
 SetTexturePreMulAlphaState = lstg.SetTexturePreMulAlphaState
-ObjTable = lstg.ObjTable -- Internal/内部方法
+--ObjTable = lstg.ObjTable -- Internal/内部方法
 
 -- Completely deprecated API, are empty function
 -- 彻底废弃的 API，已经是空函数
