@@ -1,5 +1,5 @@
 local cjson_util = require("cjson.util")
-local default_setting = require("foundation.data.legacy.default_setting")
+local default_setting = require("foundation.legacy.default_setting")
 
 local function get_file_name()
 	return lstg.LocalUserData.GetRootDirectory() .. "/setting.json"
