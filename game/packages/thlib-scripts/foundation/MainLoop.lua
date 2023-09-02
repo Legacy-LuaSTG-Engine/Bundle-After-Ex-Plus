@@ -19,6 +19,12 @@ function RenderFunc()
     SceneManager.render()
     debugger.draw()
     lstg.EndScene()
+    -- TODO: 整理一下这里的代码
+    -- 截图
+    ---@diagnostic disable-next-line: deprecated
+    if setting and setting.keysys and lstg.GetLastKey() == setting.keysys.snapshot then
+        lstg.LocalUserData.Snapshot()
+    end
 end
 
 function FocusLoseFunc()
