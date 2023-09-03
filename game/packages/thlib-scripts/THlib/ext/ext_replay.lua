@@ -83,6 +83,8 @@ end
 
 ext.reload()--加载一次replay管理器
 
+local variable_replay = require("foundation.variable_manager.replay")
+
 ----------------------------------------
 ---关卡切换增强功能
 ---用于支持replay
@@ -167,6 +169,11 @@ function stage.Set(stageName, mode, path)
         SaveScoreData()
     end
 
+    if (not stage.current_stage.is_menu) and (not is_replay) then
+        local stage_variable_replay = variable_replay.get_valuetable()
+        local stage_name = stage.current_stage.stage_name
+        replayStages[stage_name].variableReplay = Serialize(stage_variable_replay)
+    end
     -- 转场
     if mode == "save" then
         -- 设置随机数种子
@@ -222,6 +229,9 @@ function stage.Set(stageName, mode, path)
         --加载数据
         --lstg.var = DeSerialize(nextRecordStage.stageExtendInfo)--不能这么加载，因为场景里还有东西，在下一帧加载
         lstg.nextvar = DeSerialize(nextRecordStage.stageExtendInfo)
+
+        local next_stage_variable_replay = DeSerialize(nextRecordStage.variableReplay)
+        variable_replay.set_next_vartable(next_stage_variable_replay)
         --assert(lstg.var.ran_seed == nextRecordStage.randomSeed)  -- 这两个应该相等
 
         --初始化随机数
