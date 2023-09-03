@@ -130,8 +130,10 @@ function stage.Set(stageName, mode, path)
     end
 
     -- 关闭上一个场景的录像读写
+    local is_replay = false --接下来不能使用ext.Replay.IsReplay()来判断之前是不是在播放replay
     replayWriter = nil
     if replayReader then
+        is_replay = true
         replayReader:Close()
         replayReader = nil
     end
@@ -143,7 +145,7 @@ function stage.Set(stageName, mode, path)
     ext.ResetTicker() -- 重置计数器
 
     -- 刷新最高分
-    if (not stage.current_stage.is_menu) and (not ext.replay.IsReplay()) then
+    if (not stage.current_stage.is_menu) and (not is_replay) then
         local str
         if stage.current_stage.sc_pr_stage then
             local sc_index
