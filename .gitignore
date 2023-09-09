@@ -8,6 +8,7 @@ game/mod/*
 #plugins
 game/plugins/JyuSeoiJanPlayer/*
 game/plugins/究极无敌完美无瑕原作文化帖文机(适配aex+.zip
+game/plugins/MaterialExperience/*
 
 # temp
 game/engine.log
