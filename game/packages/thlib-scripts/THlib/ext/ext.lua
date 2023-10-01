@@ -259,7 +259,7 @@ function DoFrameEx()
                 ext.pause_menu_order = nil
             end
         else
-            if lstg.var.timeslow then
+            if lstg.var.timeslow and lstg.var.timeslow > 0 and lstg.var.timeslow ~= 1 then
                 local tmp = min(4, max(1, lstg.var.timeslow))
                 if ext.slowTicker % (ext.time_slow_level[tmp]) == 0 then
                     DoFrame(true, false)
@@ -272,7 +272,7 @@ function DoFrameEx()
     else
         --正常游戏时
         ext.slowTicker = ext.slowTicker + 1
-        if lstg.var.timeslow and lstg.var.timeslow > 0 then
+        if lstg.var.timeslow and lstg.var.timeslow > 0 and lstg.var.timeslow ~= 1 then
             local tmp = min(4, max(1, lstg.var.timeslow))
             if ext.slowTicker % (ext.time_slow_level[tmp]) == 0 then
                 DoFrame(true, false)
