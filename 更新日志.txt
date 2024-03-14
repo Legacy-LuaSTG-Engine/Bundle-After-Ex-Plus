@@ -59,6 +59,7 @@
             修改：分离菜单场景和游戏场景，关卡系统（stage、stage.group）以后仅用于游戏场景
             废弃：废弃 lstg.LocalUserData 类，使用 foundation.LocalFileStorage 替代
             修复：设置了 lstg.var.timeslow 后 F3 调试菜单无法加速游戏逻辑
+            新增：foundation.Easing 库，包含 30 种插值曲线，用于对两个数值进行插值（感谢 OLC）
 
     aex+ v0.8.21-beta
         项目结构
