@@ -447,7 +447,8 @@ end
 
 --------------------------------------------------------------------------------
 
-local api_url_root = "http://api.luastg-sub.com"
+local api_url_root = "https://api.luastg-sub.com"
+local api_url_latest_framework_version = api_url_root .. "/framework/after-ex-plus/version/latest"
 
 local function isVersionHigher(v, v2)
     if type(v) ~= "string" or type(v2) ~= "string" then
@@ -491,24 +492,27 @@ local function checkNewVersion()
     return false, ""
 end
 
+---@param t any
+local function validateVersionData(t)
+    return type(t) == "table" and type(t.name) == "string" and type(t.version) == "string" and type(t.description) == "string"
+end
+
 local function getLatestVersion()
-    local http = require("socket.http")
-    local ltn12 = require("ltn12")
-    local cjson = require("cjson")
-
-    local t = {}
-    local r, c, h = http.request({
-        url = api_url_root .. "/framework/after-ex-plus/version/latest",
-        method = "GET",
-        sink = ltn12.sink.table(t),
-    })
-
-    if r and c == 200 then
-        local json_text = table.concat(t)
-        local json_data = cjson.decode(json_text)
-        return true, json_data.description
+    -- 他奶奶的，luasocket 不支持 https，还得靠 curl
+    local tmp = os.tmpname()
+    local cmd = ("..\\tools\\curl\\curl.exe --get --output \"%s\" %s"):format(tmp, api_url_latest_framework_version)
+    os.execute(cmd)
+    local f = io.open(tmp, "r")
+    if f then
+        local s = f:read("*a")
+        f:close()
+        f = nil
+        os.remove(tmp)
+        local r, t = pcall(cjson.decode, s)
+        if r and validateVersionData(t) then
+            return true, t.description
+        end
     end
-
     return false, ""
 end
 
