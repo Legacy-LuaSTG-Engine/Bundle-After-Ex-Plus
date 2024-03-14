@@ -37,6 +37,7 @@
                     make_scoredata_table
                     DefineDefaultScoreData
                 理论上不会影响现有代码，除非有开发者故意不小心需要使用这些函数
+                （备注：后续这些函数因为显式存档的修改已全数删除）
             修改：将原 lib/Lsetting.lua 中的 visitTable 全局函数改为局部函数，减少对全局环境的污染
                 理论上不会影响现有代码，除非有开发者故意不小心需要使用这些函数
             修改：修改用户数据表的元表逻辑，使其暴露更少的细节，并对以下序列化、反序列化函数做出相应的修改
@@ -46,6 +47,18 @@
             新增：为了适配 scoredata 保存模式修改，符卡展开、符卡收取、刷新最高分等关键点已添加主动保存代码
             新增：为了降低 scoredata 保存模式修改带来的影响，现在切换关卡时会自动进行存档
             新增：新增一个空白关卡，在主菜单退出游戏时会先切换到该关卡，以触发切换关卡自动存档
+            修复：启动器 launcher 进入选择 mod 界面时，没有滚动列表到光标位置
+            修复：boss ui 剩余符卡数量显示有时候会消失的 bug（感谢 OLC 和 TNW）
+            修改：符卡练习关卡直接定义关卡 frame 回调，而不是在 stage.group.New 中硬编码判断（感谢 TNW）
+            修改：分离实战、关卡练习、符卡练习的最高分统计（感谢 TNW）
+            修改：完善关卡 stage 和关卡组 stage.group 的 API 文档
+            修改：stage.group.Start 允许使用关卡组名称作为参数
+            修改：stage.group.New 新增第一个参数为关卡组名称 name 的重载
+            新增：标准方法 bullet.skip_fade_in 用于跳过子弹雾化特效
+            新增：场景系统 foundation.Scene、foundation.SceneManager、foundation.MainLoop 
+            修改：分离菜单场景和游戏场景，关卡系统（stage、stage.group）以后仅用于游戏场景
+            废弃：废弃 lstg.LocalUserData 类，使用 foundation.LocalFileStorage 替代
+            修复：设置了 lstg.var.timeslow 后 F3 调试菜单无法加速游戏逻辑
 
     aex+ v0.8.21-beta
         项目结构
