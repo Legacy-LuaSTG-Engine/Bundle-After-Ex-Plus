@@ -1,4 +1,4 @@
-stage_init = stage.New('init', true, true)
+local stage_init = stage.New('init', true, true)
 function stage_init:init()
     New(mask_fader, 'open')
 end

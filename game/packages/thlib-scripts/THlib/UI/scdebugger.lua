@@ -2,7 +2,7 @@
 lstg.var._boss_class_name = _boss_class_name
 lstg.var._boss_class_sc_index = _boss_class_sc_index
 
-stage_init = stage.New('init', true, true)
+local stage_init = stage.New('init', true, true)
 function stage_init:init()
     menu_items = {}
     for i, v in ipairs(player_list) do
