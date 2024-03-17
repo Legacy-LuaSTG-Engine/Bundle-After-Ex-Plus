@@ -48,7 +48,6 @@ function task.Do(target)
     ---@type thread[]?
     local tasks = rawget(target, field)
     if tasks then
-        ---@cast tasks -thread[]?, +thread[]
         for _, co in ipairs(tasks) do
             if status(co) ~= "dead" then
                 target_stack_n = target_stack_n + 1
