@@ -241,12 +241,10 @@ end
 
 function item.DropItem(x, y, drop)
     local m
-    if lstg.var.power == 400 then
-        m = drop[1]
-    elseif drop[1] >= 400 then
-        m = drop[1]
+    if drop[1] >= 400 then
+        m = 1
     else
-        m = drop[1] / 100 + drop[1] % 100
+        m = int(drop[1] / 100) + drop[1] % 100
     end
     local n = m + drop[2] + drop[3]
     if n < 1 then
@@ -258,7 +256,7 @@ function item.DropItem(x, y, drop)
         local a = ran:Float(0, 360)
         New(item_power_full, x + r2 * cos(a), y + r2 * sin(a))
     else
-        drop[4] = drop[1] / 100
+        drop[4] = int(drop[1] / 100)
         drop[1] = drop[1] % 100
         for i = 1, drop[4] do
             local r2 = sqrt(ran:Float(1, 4)) * r
@@ -318,7 +316,7 @@ function item.PlayerInit()
     lstg.var.score_draw = 0
     lstg.var.bombchip = 0
     lstg.var.coun_num = 0
-    lstg.var.pointrate = item.PointRateFunc(lstg.var)
+    lstg.var.pointrate = item.PointRateFunc()
     lstg.var.collectitem = { 0, 0, 0, 0, 0, 0 }
     lstg.var.itembar = { 0, 0, 0 }
     lstg.var.block_spell = false
@@ -457,7 +455,7 @@ function item.PlayerGraze()
     --    lstg.var.score=lstg.var.score+50
 end
 
-function item.PointRateFunc(var)
-    local r = 10000 + int(var.graze / 10) * 10 + int(lstg.var.faith / 10) * 10
+function item.PointRateFunc()
+    local r = 10000 + int(lstg.var.graze / 10) * 10 + int(lstg.var.faith / 10) * 10
     return r
 end
