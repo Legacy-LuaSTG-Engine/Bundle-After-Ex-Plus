@@ -45,10 +45,13 @@ local function enumMods()
         if string.sub(filename, -4, -1) == ".zip" then
             -- 压缩包 mod
             lstg.LoadPack(filename)
-            local root_exist = lstg.FileManager.GetArchive(filename):FileExist("root.lua")
-            lstg.UnloadPack(filename)
-            if root_exist then
-                mod_name = string.sub(filename, 5, -5)
+            local archive = lstg.FileManager.GetArchive(filename)
+            if archive then
+                local root_exist = archive:FileExist("root.lua")
+                lstg.UnloadPack(filename)
+                if root_exist then
+                    mod_name = string.sub(filename, 5, -5)
+                end
             end
         elseif v[2] then
             -- 文件夹 mod
