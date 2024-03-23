@@ -1,4 +1,4 @@
-stage_init = stage.New('init', true, true)
+local stage_init = stage.New('init', true, true)
 function stage_init:init()
     New(mask_fader, 'open')
 end
@@ -26,6 +26,7 @@ MusicRecord("spellcard", 'THlib/music/spellcard.ogg', 75, 0xc36e80 / 44100 / 4)
 stage_menu = stage.New('menu', false, true)
 
 function stage_menu:init()
+    local stage_menu_self = self
     local menu_title, menu_player_select, menu_difficulty_select, menu_difficulty_select_pr, menu_replay_loader, menu_replay_saver, menu_items, menu_sc_pr
     local menu_list = {}
     local menu_practice = {}
@@ -36,13 +37,13 @@ function stage_menu:init()
     end
     --
     local function ExitGame()
-        task.New(stage_menu, function()
+        task.New(stage_menu_self, function()
             for i = 1, 60 do
                 SetBGMVolume('menu', 1 - i / 60)
                 task.Wait()
             end
         end)
-        task.New(stage_menu, function()
+        task.New(stage_menu_self, function()
             menu.FlyOut(menu_title, 'right')
             task.Wait(30)
             New(mask_fader, 'close')
@@ -116,13 +117,13 @@ function stage_menu:init()
             menu.FlyOut(menu_player_select, 'left')
             lstg.var.player_name = player_list[i][2]
             lstg.var.rep_player = player_list[i][3]
-            task.New(stage_menu, function()
+            task.New(stage_menu_self, function()
                 for i = 1, 60 do
                     SetBGMVolume('menu', 1 - i / 60)
                     task.Wait()
                 end
             end)
-            task.New(stage_menu, function()
+            task.New(stage_menu_self, function()
                 task.Wait(30)
                 New(mask_fader, 'close')
                 task.Wait(30)
@@ -203,13 +204,13 @@ function stage_menu:init()
             menu.FlyIn(menu_title, 'left')
             menu.FlyOut(menu_replay_loader, 'right')
         else
-            task.New(stage_menu, function()
+            task.New(stage_menu_self, function()
                 for i = 1, 60 do
                     SetBGMVolume('menu', 1 - i / 60)
                     task.Wait()
                 end
             end)
-            task.New(stage_menu, function()
+            task.New(stage_menu_self, function()
                 menu.FlyOut(menu_replay_loader, 'left')
                 task.Wait(30)
                 New(mask_fader, 'close')
@@ -252,14 +253,14 @@ function stage_menu:init()
         if self.save_replay then
             menu_replay_saver = New(replay_saver, self.save_replay, self.finish, function()
                 menu.FlyOut(menu_replay_saver, 'right')
-                task.New(stage_menu, function()
+                task.New(stage_menu_self, function()
                     task.Wait(30)
-                    task.New(stage_menu, task_menu_init)
+                    task.New(stage_menu_self, task_menu_init)
                 end)
             end)
             menu.FlyIn(menu_replay_saver, 'left')
         else
-            task.New(stage_menu, task_menu_init)
+            task.New(stage_menu_self, task_menu_init)
         end
     end
 

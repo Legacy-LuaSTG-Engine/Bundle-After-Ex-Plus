@@ -1,4 +1,4 @@
-stage_init = stage.New('init', true, true)
+local stage_init = stage.New('init', true, true)
 function stage_init:init()
     menu_items = {}
     for i, v in ipairs(player_list) do
