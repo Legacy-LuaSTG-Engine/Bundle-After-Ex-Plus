@@ -136,6 +136,7 @@ end
 local _ = {
     stageName = "",
     stageExtendInfo = "",
+    variableReplay = "",
     score = 0,
     randomSeed = 0,
     stageTime = 0,
@@ -163,6 +164,7 @@ local _ = {
 local _ = {
     stageName = "",
     stageExtendInfo = "",
+    variableReplay = "",
     score = 0,
     randomSeed = 0,
     stageTime = 0,
@@ -214,7 +216,7 @@ end
 --!    userName = "用户名", userExtendInfo = "用户额外信息",
 --!    stages = {
 --!      {
---!        stageName = "关卡名称", stageExtendInfo = "", score = 0, randomSeed = 0,
+--!        stageName = "关卡名称", stageExtendInfo = "", variableReplay = "", score = 0, randomSeed = 0,
 --!        stageTime = 0, stageDate = 0, stagePlayer=lstg.var.rep_player，
 --！       frameCount = 300, frameDataPosition = 12345
 --!      }
@@ -260,6 +262,8 @@ function ReplayManager.ReadReplayInfo(path)
                 stage.stageName = r:ReadString(stageNameLength)
                 local stageExtendInfoLength = r:ReadUInt()  -- 额外信息
                 stage.stageExtendInfo = r:ReadString(stageExtendInfoLength)
+                local variableReplayLength = r:ReadUInt()
+                stage.variableReplay = r:ReadString(variableReplayLength)
                 local scoreHigh = r:ReadUInt()  -- 分数的高32位
                 local scoreLow = r:ReadUInt()  -- 分数的低32位
                 stage.score = scoreLow + scoreHigh * 0x100000000
@@ -351,6 +355,12 @@ function ReplayManager.SaveReplayInfo(path, data)
                 if stage.stageExtendInfo then
                     w:WriteUInt(string.len(stage.stageExtendInfo))  -- 额外信息
                     w:WriteString(stage.stageExtendInfo, false)
+                else
+                    w:WriteUInt(0)
+                end
+                if stage.variableReplay then
+                    w:WriteUInt(string.len(stage.variableReplay))
+                    w:WriteString(stage.variableReplay, false)
                 else
                     w:WriteUInt(0)
                 end

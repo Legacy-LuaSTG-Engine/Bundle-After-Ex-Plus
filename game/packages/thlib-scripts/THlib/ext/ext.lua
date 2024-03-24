@@ -120,6 +120,8 @@ function ChangeGameTitle()
     end
 end
 
+local variable_replay = require("foundation.variable_manager.replay")
+
 --- 切关处理
 function ChangeGameStage()
     ResetWorld()
@@ -135,6 +137,8 @@ function ChangeGameStage()
         lstg.var = lstg.nextvar
         lstg.nextvar = nil
     end
+
+    variable_replay.apply_next_vartable()
 
     -- 初始化随机数
     if lstg.var.ran_seed then

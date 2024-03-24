@@ -83,6 +83,8 @@ end
 
 ext.reload()--加载一次replay管理器
 
+local variable_replay = require("foundation.variable_manager.replay")
+
 ----------------------------------------
 ---关卡切换增强功能
 ---用于支持replay
@@ -130,8 +132,10 @@ function stage.Set(stageName, mode, path)
     end
 
     -- 关闭上一个场景的录像读写
+    local is_replay = false --接下来不能使用ext.Replay.IsReplay()来判断之前是不是在播放replay
     replayWriter = nil
     if replayReader then
+        is_replay = true
         replayReader:Close()
         replayReader = nil
     end
@@ -143,7 +147,7 @@ function stage.Set(stageName, mode, path)
     ext.ResetTicker() -- 重置计数器
 
     -- 刷新最高分
-    if (not stage.current_stage.is_menu) and (not ext.replay.IsReplay()) then
+    if (not stage.current_stage.is_menu) and (not is_replay) then
         local str
         if stage.current_stage.sc_pr_stage then
             local sc_index
@@ -165,6 +169,11 @@ function stage.Set(stageName, mode, path)
         SaveScoreData()
     end
 
+    if (not stage.current_stage.is_menu) and (not is_replay) then
+        local stage_variable_replay = variable_replay.get_valuetable()
+        local stage_name = stage.current_stage.stage_name
+        replayStages[stage_name].variableReplay = Serialize(stage_variable_replay)
+    end
     -- 转场
     if mode == "save" then
         -- 设置随机数种子
@@ -220,6 +229,9 @@ function stage.Set(stageName, mode, path)
         --加载数据
         --lstg.var = DeSerialize(nextRecordStage.stageExtendInfo)--不能这么加载，因为场景里还有东西，在下一帧加载
         lstg.nextvar = DeSerialize(nextRecordStage.stageExtendInfo)
+
+        local next_stage_variable_replay = DeSerialize(nextRecordStage.variableReplay)
+        variable_replay.set_next_vartable(next_stage_variable_replay)
         --assert(lstg.var.ran_seed == nextRecordStage.randomSeed)  -- 这两个应该相等
 
         --初始化随机数

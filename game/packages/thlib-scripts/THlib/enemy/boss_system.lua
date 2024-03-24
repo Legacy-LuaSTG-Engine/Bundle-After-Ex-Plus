@@ -57,6 +57,8 @@ local function matchVar(list, var)
     return false
 end
 
+local variable_replay = require("foundation.variable_manager.replay")
+
 local CardsSystem = plus.Class()
 boss._cards_system = CardsSystem
 ---@param system boss.system @要执行符卡组的boss挂载系统
@@ -960,8 +962,23 @@ function system:popSpellResult()
         b._timer = b.timer
         b._timeout = b.timeout
     end
-    local t = self.clock:GetElapsed() * time_rate
-    b._real_timer = t
+
+    --增加收卡时间记录进replay  By TNW
+    local sc_realtime = variable_replay.get_value("sc_realtime", {})
+    local stage_sc_index = lstg.tmpvar.stage_sc_index
+    if not stage_sc_index then
+        stage_sc_index = 1
+    end
+    if not ext.replay.IsReplay() then
+        local t = self.clock:GetElapsed() * time_rate
+        b._real_timer = t
+        sc_realtime[stage_sc_index] = int( t * 1000) / 1000 --保留3位小数    todo 应该用字符串等更好的方法
+    else
+        local t = sc_realtime[stage_sc_index]
+        b._real_timer = t
+    end
+    lstg.tmpvar.stage_sc_index = stage_sc_index + 1
+
     b.timeout = nil
     self:finishSpellHist(b._getcard)
     local c = {}
