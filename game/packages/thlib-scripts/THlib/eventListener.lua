@@ -19,7 +19,7 @@ end
 ---创建事件组
 ---@param group string @事件组名称
 function eventListener:create(group)
-    assert(type(group) == "string")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
     self.data[group] = self.data[group] or {}
 end
 
@@ -28,8 +28,8 @@ end
 ---@param name string @事件名称
 ---@return eventListener.event|nil
 function eventListener:find(group, name)
-    assert(type(group) == "string")
-    assert(type(name) == "string")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
+    assert(type(name) == "string", "invalid argument #2 (string expected)")
     if self.data[group] and self.data[group][name] then
         return self.data[group][name]
     end
@@ -38,7 +38,7 @@ end
 ---排序事件组
 ---@param group string @事件组名称
 function eventListener:sort(group)
-    assert(type(group) == "string")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
     table.sort(self.data[group], function(a, b)
         if a.level and b.level then
             return b.level < a.level
@@ -58,10 +58,10 @@ end
 ---@return boolean @是否产生了事件覆盖
 function eventListener:addEvent(group, name, level, func)
     level = level or 0
-    assert(type(group) == "string")
-    assert(type(name) == "string")
-    assert(type(level) == "number")
-    assert(type(func) == "function")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
+    assert(type(name) == "string", "invalid argument #2 (string expected)")
+    assert(type(level) == "number", "invalid argument #3 (number expected)")
+    assert(type(func) == "function", "invalid argument #4 (function expected)")
     if not self.data[group] then
         self:create(group)
     end
@@ -86,8 +86,8 @@ end
 ---@param group string @事件组名称
 ---@param name string @事件名称
 function eventListener:remove(group, name)
-    assert(type(group) == "string")
-    assert(type(name) == "string")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
+    assert(type(name) == "string", "invalid argument #2 (string expected)")
     local data = self:find(group, name)
     if data then
         data.level = nil
@@ -100,7 +100,7 @@ end
 ---执行事件组
 ---@param group string @事件组名称
 function eventListener:Do(group, ...)
-    assert(type(group) == "string")
+    assert(type(group) == "string", "invalid argument #1 (string expected)")
     if not self.data[group] then
         return
     end

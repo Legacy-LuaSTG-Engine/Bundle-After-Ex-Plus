@@ -30,8 +30,8 @@ local scene_set = {
 
 ---@param scene_name string
 function SceneManager.setNext(scene_name)
-    assert(type(scene_name) == "string")
-    assert(string.len(scene_name) > 0)
+    assert(type(scene_name) == "string", "scene name must be a string")
+    assert(string.len(scene_name) > 0, "scene name must not be empty")
     assert(scene_set[scene_name], string.format("scene '%s' not found", scene_name))
     if next_scene_name then
         lstg.Log(3, "next scene is updated to: " .. scene_name)
@@ -91,13 +91,13 @@ end
 ---@return foundation.Scene
 ---@overload fun(scene_name:string): foundation.Scene
 function SceneManager.add(scene_name, scene_type)
-    assert(type(scene_name) == "string")
-    assert(string.len(scene_name) > 0)
+    assert(type(scene_name) == "string", "scene name must be a string")
+    assert(string.len(scene_name) > 0, "scene name must not be empty")
     if scene_set[scene_name] then
         lstg.Log(3, string.format("scene '%s' already exists", scene_name))
     end
     if scene_type then
-        assert(type(scene_type) == "table")
+        assert(type(scene_type) == "table", "scene type must be a table")
     else
         scene_type = {}
         scene_type.onCreate = Scene.onCreate

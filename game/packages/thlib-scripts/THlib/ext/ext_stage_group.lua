@@ -69,7 +69,7 @@ local stage_class = {
 ---@param name string
 ---@return stage.group.Group|nil
 function M.Find(name)
-    assert(type(name) == "string")
+    assert(type(name) == "string", "invalid argument #1 (string expected)")
     for _, sg in ipairs(M.groups) do
         if sg.name == name then
             return sg
@@ -90,15 +90,15 @@ end
 ---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean): stage.group.Group
 ---@overload fun(title: string, stages:string[], name:string, item_init:table<string, number>, allow_practice:boolean, difficulty:number): stage.group.Group
 function M.OldNew(title, stages, name, item_init, allow_practice, difficulty)
-    assert(type(title) == "string")
-    assert(type(stages) == "table")
-    assert(type(name) == "string")
+    assert(type(title) == "string", "invalid argument #1 (string expected)")
+    assert(type(stages) == "table", "invalid argument #2 (table expected)")
+    assert(type(name) == "string", "invalid argument #3 (string expected)")
     if item_init then
-        assert(type(item_init) == "table")
+        assert(type(item_init) == "table", "invalid argument #4 (table expected)")
     end
     allow_practice = not (not allow_practice) -- 转换为 boolean
     if difficulty then
-        assert(type(difficulty) == "number")
+        assert(type(difficulty) == "number", "invalid argument #6 (number expected)")
     end
 
     ---@param sg stage.group.Group
@@ -125,17 +125,17 @@ function M.OldNew(title, stages, name, item_init, allow_practice, difficulty)
     local sg = M.Find(name)
     if sg then
         -- 已有关卡组，直接返回，并检查一致性
-        assert(sg.title == title)
+        assert(sg.title == title, string.format("stage group '%s' title not match", name))
         -- 限制该参数的使用
-        assert(#stages == 0) -- appendStages(sg)
+        assert(#stages == 0, "stages should be empty") -- appendStages
         -- TODO: 需要重新设计
         if item_init then
             for k, v in pairs(item_init) do
                 sg.item_init[k] = v
             end
         end
-        assert(allow_practice == sg.allow_practice)
-        assert(sg.difficulty == difficulty)
+        assert(allow_practice == sg.allow_practice, string.format("stage group '%s' allow_practice not match", name))
+        assert(sg.difficulty == difficulty, string.format("stage group '%s' difficulty not match", name))
         return sg
     else
         ---@type stage.group.Group
@@ -184,15 +184,15 @@ end
 ---@param allow_practice boolean
 ---@return stage.group.Stage
 function M.AddStage(groupname, stagename, item_init, allow_practice)
-    assert(type(groupname) == "string")
-    assert(type(stagename) == "string")
+    assert(type(groupname) == "string", "invalid argument #1 (string expected)")
+    assert(type(stagename) == "string", "invalid argument #2 (string expected)")
     if item_init then
-        assert(type(item_init) == "table")
+        assert(type(item_init) == "table", "invalid argument #3 (table expected)")
     end
     allow_practice = not (not allow_practice) -- 转换为 boolean
 
     local sg = M.Find(groupname)
-    assert(sg)
+    assert(sg, string.format("stage group '%s' not found", groupname))
 
     ---@type stage.group.Stage|nil
     local s
@@ -240,11 +240,11 @@ local allow_callback_names = {
 ---@param funcname '"init"' | '"del"' | '"frame"' | '"render"'
 ---@param f fun(self: stage.group.Stage)
 function M.DefStageFunc(stagename, funcname, f)
-    assert(type(stagename) == "string")
-    assert(allow_callback_names[funcname])
-    assert(type(f) == "function")
+    assert(type(stagename) == "string", "invalid argument #1 (string expected)")
+    assert(allow_callback_names[funcname], string.format("invalid argument #2 (invalid function name '%s')", funcname))
+    assert(type(f) == "function", "invalid argument #3 (function expected)")
 
-    assert(stage.stages[stagename])
+    assert(stage.stages[stagename], string.format("stage '%s' not found", stagename))
 
     local s = stage.stages[stagename]
     ---@cast s -stage.Stage, +stage.group.Stage
@@ -411,7 +411,7 @@ function M.Start(group_name)
         group_name = sg.name
     end
 
-    assert(type(group_name) == "string")
+    assert(type(group_name) == "string", "invalid argument #1 (string expected)")
 
     local sg = M.Find(group_name)
     assert(sg, string.format("stage group '%s' not found", group_name))
@@ -425,7 +425,7 @@ end
 
 ---@param stagename string
 function M.PracticeStart(stagename)
-    assert(type(stagename) == "string")
+    assert(type(stagename) == "string", "invalid argument #1 (string expected)")
 
     lstg.var.is_practice = true
     stage.Set(stagename, "save")
@@ -493,8 +493,8 @@ end
 ---@param number number
 ---@overload fun()
 function M.GoToStage(number)
-    assert(type(number) == "number")
-    assert(number > 0)
+    assert(type(number) == "number", "invalid argument #1 (number expected)")
+    assert(number > 0, "invalid argument #1 (number must be greater than 0)")
 
     local self = stage.current_stage
     ---@cast self -stage.Stage, +stage.group.Stage
@@ -529,7 +529,7 @@ end
 ---@overload fun(save_rep: boolean)
 function M.ReturnToTitle(save_rep, finish)
     if finish then
-        assert(finish == 0 or finish == 1)
+        assert(finish == 0 or finish == 1, "invalid argument #2 (finish must be 0 or 1)")
     end
 
     -- 清理一些 flag，并根据条件禁用 replay 保存
@@ -567,7 +567,7 @@ end
 ---@param self stage.group.Stage
 ---@param f fun(self: stage.group.Stage)
 function M.initTask(self, f)
-    assert(type(f) == "function")
+    assert(type(f) == "function", "invalid argument #2 (function expected)")
     _init_item(self)
     difficulty = self.group.difficulty
     New(mask_fader,'open')
@@ -600,9 +600,9 @@ end
 ---@overload fun(self: stage.group.Stage)
 ---@overload fun(self: stage.group.Stage, number: number)
 function M.GoToStageTask(self, number, wait)
-    assert(type(self) == "table")
+    assert(type(self) == "table", "invalid argument #1 (table expected)")
     if number then
-        assert(type(number) == "number")
+        assert(type(number) == "number", "invalid argument #2 (number expected)")
     end
     local function f()
         New(mask_fader, 'close')

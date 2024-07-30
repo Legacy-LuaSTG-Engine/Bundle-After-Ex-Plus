@@ -199,7 +199,7 @@ end
 ---@param priority number
 ---@param callback fun()
 function lstg.plugin.RegisterEvent(type, name, priority, callback)
-    assert(_event[type])
+    assert(_event[type], "invalid event type")
     local lst = _event[type]
     -- 先找找看是否存在
     local flag = false
@@ -226,7 +226,7 @@ end
 
 ---@param type '"beforeTHlib"' | '"afterTHlib"' | '"afterMod"'
 function lstg.plugin.DispatchEvent(type)
-    assert(_event[type])
+    assert(_event[type], "invalid event type")
     for _, v in ipairs(_event[type]) do
         v.callback()
     end

@@ -40,7 +40,7 @@ end
 
 function ext.replay.GetReplayStageName(idx)
     --Print('Index',idx)
-    assert(replayInfo ~= nil)
+    assert(replayInfo ~= nil, 'Replay not loaded')
     if not replayInfo.stages[idx] then
         return ''
     end
@@ -63,7 +63,7 @@ function ext.replay.SaveReplay(stageNames, slot, playerName, finish)
     local stages = {}
     finish = finish or 0
     for _, v in ipairs(stageNames) do
-        assert(replayStages[v])
+        assert(replayStages[v], 'Stage not found')
         table.insert(stages, replayStages[v])
     end
 
@@ -195,7 +195,7 @@ function stage.Set(stageName, mode, path)
         if path ~= replayFilename then
             replayFilename = path
             replayInfo = plus.ReplayManager.ReadReplayInfo(path)  -- 重新读取录像信息以保证准确性
-            assert(#replayInfo.stages > 0)
+            assert(#replayInfo.stages > 0, "Replay file is empty")
         end
 
         -- 决定场景顺序
@@ -208,7 +208,7 @@ function stage.Set(stageName, mode, path)
                     break
                 end
             end
-            assert(replayStageIdx ~= nil)
+            assert(replayStageIdx ~= nil, "Stage not found in replay file")
         else
             replayStageIdx = 1
         end

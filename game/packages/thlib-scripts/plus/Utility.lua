@@ -130,7 +130,7 @@ local BIT_NUMBERS = {
 --! @param b 第二个参数，十进制表示
 --! @return 返回布尔值，真则这两个二进制数按位与为真
 function plus.BAND(a, b)
-    assert(a >= 0 and a < 4294967296 and b >= 0 and b < 4294967296)
+    assert(a >= 0 and a < 4294967296 and b >= 0 and b < 4294967296, "invalid argument.")
 
     local ret = 0
     for i = 1, 32 do

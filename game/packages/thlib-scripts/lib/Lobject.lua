@@ -201,20 +201,20 @@ end
 ---@param c T
 function lstg.RegisterGameObjectClass(c)
     -- 校验类型
-    assert(type(c) == "table")
-    assert(c.is_class)
+    assert(type(c) == "table", "bad argument #1 to 'RegisterGameObjectClass' (table expected)")
+    assert(c.is_class, "bad argument #1 to 'RegisterGameObjectClass' (not a class)")
     local init_t = type(c.init)
     local del_t = type(c.del)
     local frame_t = type(c.frame)
     local render_t = type(c.render)
     local colli_t = type(c.colli)
     local kill_t = type(c.kill)
-    assert(init_t == "function" or init_t == "nil")
-    assert(del_t == "function" or del_t == "nil")
-    assert(frame_t == "function" or frame_t == "nil")
-    assert(render_t == "function" or render_t == "nil")
-    assert(colli_t == "function" or colli_t == "nil")
-    assert(kill_t == "function" or kill_t == "nil")
+    assert(init_t == "function" or init_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid init function)")
+    assert(del_t == "function" or del_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid del function)")
+    assert(frame_t == "function" or frame_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid frame function)")
+    assert(render_t == "function" or render_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid render function)")
+    assert(colli_t == "function" or colli_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid colli function)")
+    assert(kill_t == "function" or kill_t == "nil", "bad argument #1 to 'RegisterGameObjectClass' (invalid kill function)")
     -- 注册回调函数
     c[1] = c.init
     c[2] = c.del
@@ -278,8 +278,8 @@ function Class(...)
     else
         -- 带一个或更多参数调用，模拟继承，并验证基类类型
         local base = args[1]
-        assert(type(base) == "table")
-        assert(base.is_class)
+        assert(type(base) == "table", "bad argument #1 to 'Class' (table expected)")
+        assert(base.is_class, "bad argument #1 to 'Class' (not a class)")
         super.init = base.init
         super.del = base.del
         super.frame = base.frame
@@ -290,7 +290,7 @@ function Class(...)
         -- 复制其他成员
         if argc >= 2 then
             local define = args[2]
-            assert(type(define) == "table")
+            assert(type(define) == "table", "bad argument #2 to 'Class' (table expected)")
             for k, v in pairs(define) do
                 super[k] = v
             end
