@@ -128,7 +128,7 @@ lib.circle = circle
 local function circle2(ra, rb, a1, a2, x, y)
     x, y = x or 0, y or 0
     local x0 = x + ra * cos(a1) * cos(a2) - rb * sin(a1) * sin(a2)
-    local y0 = y + ra * cos(a1) * sin(a2) - rb * sin(a1) * cos(a2)
+    local y0 = y + ra * cos(a1) * sin(a2) + rb * sin(a1) * cos(a2)
     return x0, y0
 end
 lib.circle2 = circle2
