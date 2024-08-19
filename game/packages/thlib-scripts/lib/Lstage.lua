@@ -55,7 +55,7 @@ M.preserve_res = false
 ---@overload fun(stage_name:string): stage.Stage
 ---@overload fun(stage_name:string, as_entrance:boolean): stage.Stage
 function M.New(stage_name, as_entrance, is_menu)
-    assert(type(stage_name) == "string")
+    assert(type(stage_name) == "string", "stage name must be a string")
     ---@type stage.Stage
     local result = {
         init = S.init,
@@ -75,7 +75,7 @@ end
 --- 加载 THlib 后，会被重载以适应 replay 系统
 ---@param stage_name string
 function M.Set(stage_name)
-    assert(type(stage_name) == "string")
+    assert(type(stage_name) == "string", "stage name must be a string")
     M.next_stage = M.stages[stage_name]
     assert(M.next_stage, "stage does not exist")
     -- TODO: 这个是干什么的？

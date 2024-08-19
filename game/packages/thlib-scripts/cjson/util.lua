@@ -9,9 +9,9 @@ local M = {}
 ---@return string
 ---@overload fun(str:string): string
 function M.format_json(str, indent)
-    assert(type(str) == "string")
+    assert(type(str) == "string", "bad argument #1 to 'format_json' (string expected)")
     if indent then
-        assert(type(indent) == "string")
+        assert(type(indent) == "string", "bad argument #2 to 'format_json' (string expected)")
     else
         indent = '    '
     end

@@ -400,7 +400,7 @@ function ReplayManager:Refresh()
             local _, _, id = string.find(name, self._filefmt)
             if id then
                 id = tonumber(id)
-                assert(self._slots[id] == nil)
+                assert(self._slots[id] == nil, "duplicate slot id: " .. id)
                 if not (id <= 0 or id > self._slotmax) then
                     plus.TryCatch {
                         try = function()

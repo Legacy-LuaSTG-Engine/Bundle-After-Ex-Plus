@@ -53,7 +53,7 @@ function InitScoreData()
     global_data_storage = DataStorage.open(getFileName())
     ---@type legacy.scoredata
     local root = global_data_storage:root()
-    assert(type(root) == "table")
+    assert(type(root) == "table", "scoredata root is not a table")
     ---@diagnostic disable-next-line: lowercase-global
     scoredata = root
 end
