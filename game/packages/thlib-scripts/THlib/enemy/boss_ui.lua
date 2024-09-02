@@ -1482,5 +1482,5 @@ function boss:SetUIDisplay(hp, name, cd, spell, pos, pointer)
     self.ui.drawtime = cd
     self.ui.drawspell = spell
     self.ui.needposition = pos
-    self.ui.drawpointer = pointer or 1
+    self.ui.drawpointer = pointer
 end
