@@ -93,7 +93,7 @@ if false then
 
     local my_class_1 = lstg.CreateGameObjectClass() -- 或者 Class(object)
     -- 我们不这么做
-    --function my_class_1(x, y)
+    --function my_class_1:init(x, y)
     --    self.x = x
     --    self.y = y
     --end
