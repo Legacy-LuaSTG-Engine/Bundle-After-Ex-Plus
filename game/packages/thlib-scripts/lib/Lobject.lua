@@ -225,24 +225,24 @@ function lstg.RegisterGameObjectClass(c)
     -- 性能优化，如果它没有重载函数，则不再调用这些回调函数
     if isDefaultCallbackExist(c) then
         c.default_function = 0
-    end
-    if c.init == empty_callback then
-        c.default_function = c.default_function + DEFAULT_MASK_INIT
-    end
-    if c.del == empty_callback then
-        c.default_function = c.default_function + DEFAULT_MASK_DEL
-    end
-    if c.frame == empty_callback then
-        c.default_function = c.default_function + DEFAULT_MASK_FRAME
-    end
-    if c.render == lstg.DefaultRenderFunc then
-        c.default_function = c.default_function + DEFAULT_MASK_RENDER
-    end
-    if c.colli == empty_callback then
-        c.default_function = c.default_function + DEFAULT_MASK_COLLI
-    end
-    if c.kill == empty_callback then
-        c.default_function = c.default_function + DEFAULT_MASK_KILL
+        if c.init == empty_callback then
+            c.default_function = c.default_function + DEFAULT_MASK_INIT
+        end
+        if c.del == empty_callback then
+            c.default_function = c.default_function + DEFAULT_MASK_DEL
+        end
+        if c.frame == empty_callback then
+            c.default_function = c.default_function + DEFAULT_MASK_FRAME
+        end
+        if c.render == lstg.DefaultRenderFunc then
+            c.default_function = c.default_function + DEFAULT_MASK_RENDER
+        end
+        if c.colli == empty_callback then
+            c.default_function = c.default_function + DEFAULT_MASK_COLLI
+        end
+        if c.kill == empty_callback then
+            c.default_function = c.default_function + DEFAULT_MASK_KILL
+        end
     end
     -- 这是一个游戏对象类，保存引用以便后续统一重新注册
     if not all_class[c] then
