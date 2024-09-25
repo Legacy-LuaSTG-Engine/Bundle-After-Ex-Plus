@@ -429,7 +429,7 @@ function system:frame()
         if b.timer < b.t1 then
             b.dmg_factor = 0
         elseif b.sc_pro > 0 then
-            b.dmg_factor = 0.1
+            b.dmg_factor = min(0.1, (b.timer - b.t1) / (b.t2 - b.t1))
         elseif b.timer < b.t2 then
             b.dmg_factor = (b.timer - b.t1) / (b.t2 - b.t1)
         elseif b.timer < b.t3 then
