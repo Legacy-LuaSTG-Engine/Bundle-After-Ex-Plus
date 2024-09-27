@@ -7,26 +7,44 @@ local lstg = lstg
 local KEY_ATTRIBUTE_PROXIES_LIST = "___attribute_proxies"
 local KEY_ATTRIBUTE_PROXIES_STORAGE = "___attribute_proxies_storage"
 
+if false then
+    ---@class foundation.AttributeProxy.Proxy
+    ---@field key string
+    ---@field init fun(self: any, key: string): void
+    ---@field getter fun(self: any, key: string): any
+    ---@field setter fun(self: any, key: string, value: any): void
+    local Proxy = {}
+end
 
 ---@class foundation.AttributeProxy
 local M = {}
 
+---@param key string
+---@return any
 function M:getStorageValue(key)
     return rawget(self, KEY_ATTRIBUTE_PROXIES_STORAGE)[key]
 end
 
+---@param key string
+---@param value any
 function M:setStorageValue(key, value)
     rawget(self, KEY_ATTRIBUTE_PROXIES_STORAGE)[key] = value
 end
 
+---@param key string
+---@return any
 function M:___basicGetter(key)
     return M.getStorageValue(self, key)
 end
 
+---@param key string
+---@param value any
 function M:___basicSetter(key, value)
     M.setStorageValue(self, key, value)
 end
 
+---@param key string
+---@return any
 function M:___metatableIndex(key)
     local proxy = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)[key]
     if proxy then
@@ -35,6 +53,8 @@ function M:___metatableIndex(key)
     return lstg.GetAttr(self, key)
 end
 
+---@param key string
+---@param value any
 function M:___metatableNewIndex(key, value)
     local proxy = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)[key]
     if proxy then
@@ -44,6 +64,7 @@ function M:___metatableNewIndex(key, value)
     lstg.SetAttr(self, key, value)
 end
 
+---@param proxies table<any, foundation.AttributeProxy.Proxy>
 function M:applyProxies(proxies)
     local current_proxies = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)
     if not current_proxies then
@@ -63,7 +84,16 @@ function M:applyProxies(proxies)
     end
 end
 
+---@param key string
+---@param getter function
+---@param setter function
+---@param init function
+---@return foundation.AttributeProxy.Proxy
+---@overload fun(key: string): foundation.AttributeProxy.Proxy
+---@overload fun(key: string, getter: function): foundation.AttributeProxy.Proxy
+---@overload fun(key: string, getter: function, setter: function): foundation.AttributeProxy.Proxy
 function M.createProxy(key, getter, setter, init)
+    ---@type foundation.AttributeProxy.Proxy
     return {
         key = key,
         getter = getter or M.___basicGetter,

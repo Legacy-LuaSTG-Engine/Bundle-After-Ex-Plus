@@ -1,49 +1,13 @@
 --region Imports
 local math = math
+local table = table
 local coroutine = coroutine
-local rawget = rawget
-local rawset = rawset
 local lstg = lstg
 local task = task
 local AttributeProxy = require("foundation.AttributeProxy")
 local Easing = require("foundation.Easing")
---endregion
-
---region Local Functions
-local function InScope(var, minvar, maxvar)
-    return var >= minvar and var <= maxvar
-end
-
-local function GetIntersction(x1, y1, rot1, x2)
-    local t = (x2 - x1) / lstg.cos(rot1)
-    local y = y1 + t * lstg.sin(rot1)
-    return x2, y
-end
-
-local function IsInRect(x, y, l, r, b, t)
-    return x >= l and x <= r and y >= b and y <= t
-end
-
-local function CCW(x1, y1, x2, y2, x3, y3)
-    return (y3 - y1) * (x2 - x1) > (y2 - y1) * (x3 - x1)
-end
-
-local function CheckIntersect(x1, y1, x2, y2, x3, y3, x4, y4)
-    return CCW(x1, y1, x3, y3, x4, y4) ~= CCW(x2, y2, x3, y3, x4, y4) and
-        CCW(x1, y1, x2, y2, x3, y3) ~= CCW(x1, y1, x2, y2, x4, y4)
-end
-
-local function CheckLineIntersectRect(x1, y1, x2, y2, l, r, b, t) -- will miss the line that only passes through the vertex
-    if IsInRect(x1, y1, l, r, b, t) then
-        return true
-    end
-    if IsInRect(x2, y2, l, r, b, t) then
-        return true
-    end
-    return CheckIntersect(x1, y1, x2, y2, l, b, r, t) or
-        CheckIntersect(x1, y1, x2, y2, l, t, r, b)
-end
-
+local QuickSort = require("foundation.QuickSort")
+local laserCollider = require("THlib.laser.laserCollider")
 --endregion
 
 --region Class Definition
@@ -74,37 +38,56 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.group = GROUP_INDES
     self.layer = LAYER_ENEMY_BULLET
     self.rect = true
-    self.colli = false
-    rawset(self, "node", node)
-    rawset(self, "head", head)
-    rawset(self, "graze_countdown", 0)
-    rawset(self, "alpha", 0)
-    rawset(self, "_blend", "mul+add")
-    rawset(self, "_a", 255)
-    rawset(self, "_r", 255)
-    rawset(self, "_g", 255)
-    rawset(self, "_b", 255)
-    rawset(self, "___killed", false)
-    rawset(self, "task", {})
-    rawset(self, "___changing_task", {})
+    ---@diagnostic disable
+    self.node = node
+    self.head = head
+    self.graze_countdown = 0
+    self.shooting_speed = 0
+    self.___shooting_offset = 0
+    self.alpha = 0
+    self._blend = "mul+add"
+    self._a = 255
+    self._r = 255
+    self._g = 255
+    self._b = 255
+    self.task = {}
+    self.___killed = false
+    self.___colliders = {}
+    self.___offset_colliders = {}
+    self.___recovery_colliders = {}
+    self.___changing_task = {}
+    --
+    self.onDelCollider = class.onDelCollider
+    self.onKillCollider = class.onKillCollider
+    ---@diagnostic enable
     class.applyDefaultLaserStyle(self, 1, index)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
     class.setPositionAndRotation(self, x, y, rot)
     class.setRectByPart(self, l1, l2, l3, w)
+    class.updateColliders(self)
+    self.colli = false
     return self
 end
 
 function class:frame()
-    if rawget(self, "___killed") then
-        class.applyChanging(self)
+    if self.___killed then
+        class.updateChangingTask(self)
+        if self.shooting_speed ~= 0 then
+            self.___shooting_offset = self.___shooting_offset - self.shooting_speed
+            class.updateColliders(self)
+        end
         return
     end
-    task.Do(self)
-    class.applyChanging(self)
     if self.graze_countdown > 0 then
         self.graze_countdown = self.graze_countdown - 1
     elseif self._graze then
         self._graze = false
+    end
+    task.Do(self)
+    class.updateChangingTask(self)
+    if self.shooting_speed ~= 0 then
+        self.___shooting_offset = self.___shooting_offset - self.shooting_speed
+        class.updateColliders(self)
     end
     local open_bound = self.bound
     local bound_status = lstg.GetAttr(self, "bound")
@@ -112,176 +95,409 @@ function class:frame()
     if open_bound and is_out_of_bound then
         if not bound_status then
             lstg.SetAttr(self, "bound", true)
+            for i = 1, #self.___colliders do
+                local c = self.___colliders[i]
+                if lstg.IsValid(c) then
+                    lstg.SetAttr(c, "bound", true)
+                end
+            end
         end
     elseif bound_status then
         lstg.SetAttr(self, "bound", false)
+        for i = 1, #self.___colliders do
+            local c = self.___colliders[i]
+            if lstg.IsValid(c) then
+                lstg.SetAttr(c, "bound", false)
+            end
+        end
     end
 end
 
 function class:render()
-    local width = self.w
-    local length = self.length
-    if width > 0 and length > 0 then
-        local blend = self._blend
-        local rot = self.rot
-        local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
-        local w = width / 2 / self.img_wm * self.img_w / self.img_wm
-        --
-        local proxy_x, proxy_y = class.calculationPositionProxy(self)
-        local head_x = proxy_x - length / 2 * lstg.cos(rot)
-        local head_y = proxy_y - length / 2 * lstg.sin(rot)
-        local x, y = head_x, head_y
-        --
-        local dx = self.l1 * lstg.cos(rot)
-        local dy = self.l1 * lstg.sin(rot)
-        lstg.SetImageState(self.img1, blend, color)
-        lstg.Render(self.img1, x, y, rot, self.l1 / self.img1_l, w)
-        x = x + dx
-        y = y + dy
-        --
-        dx = self.l2 * lstg.cos(rot)
-        dy = self.l2 * lstg.sin(rot)
-        lstg.SetImageState(self.img2, blend, color)
-        lstg.Render(self.img2, x, y, rot, self.l2 / self.img2_l, w)
-        x = x + dx
-        y = y + dy
-        --
-        dx = self.l3 * lstg.cos(rot)
-        dy = self.l3 * lstg.sin(rot)
-        lstg.SetImageState(self.img3, blend, color)
-        lstg.Render(self.img3, x, y, rot, self.l3 / self.img3_l, w)
-        x = x + dx
-        y = y + dy
-        if self.node > 0 and self.head > 0 then
-            color = lstg.Color(self._a, self._r, self._g, self._b)
-            if self.node > 0 then
-                lstg.SetImageState(self.img4, blend, color)
-                lstg.Render(self.img4, head_x, head_y, 18 * self.timer, self.node / 8)
-                lstg.Render(self.img4, head_x, head_y, -18 * self.timer, self.node / 8)
-            end
-            if self.head > 0 then
-                lstg.SetImageState(self.img5, blend, color)
-                lstg.Render(self.img5, x, y, 0, self.head / 8)
-                lstg.Render(self.img5, x, y, 0, 0.75 * self.head / 8)
-            end
-        end
+    local parts = class.getLaserColliderParts(self)
+    for i = 1, #parts do
+        class.renderLaserColliderPart(self, parts[i])
+    end
+    if self.node > 0 then
+        local x, y = class.getAnchorPosition(self, EnumAnchor.Tail)
+        local color = lstg.Color(self._a, self._r, self._g, self._b)
+        lstg.SetImageState(self.img4, self._blend, color)
+        lstg.Render(self.img4, x, y, 18 * self.timer, self.node / 8)
+        lstg.Render(self.img4, x, y, -18 * self.timer, self.node / 8)
     end
 end
 
 function class:del()
-    if not rawget(self, "___killed") then
+    if not self.___killed then
         PreserveObject(self)
-        rawset(self, "___killed", true)
+        self.___killed = true
         self.colli = false
         local alpha = self.alpha
         local d = self.w
         task.Clear(self)
         task.New(self, function()
-            for i = 1, 30 do
+            for _ = 1, 30 do
                 self.alpha = self.alpha - alpha / 30
                 self.w = self.w - d / 30
                 task.Wait()
             end
             lstg.Del(self)
         end)
+    else
+        for i = 1, #self.___colliders do
+            local c = self.___colliders[i]
+            if lstg.IsValid(c) then
+                lstg.Del(c)
+            end
+        end
+        for i = 1, #self.___recovery_colliders do
+            local c = self.___recovery_colliders[i]
+            if lstg.IsValid(c) then
+                lstg.Del(c)
+            end
+        end
     end
 end
 
 function class:kill()
-    if not rawget(self, "___killed") then
+    if not self.___killed then
         PreserveObject(self)
-        rawset(self, "___killed", true)
-        local x1, y1, x2, y2, x, y
-        local w = lstg.world
-        local x0, y0, rot = self.x, self.y, self.rot
-        local len = self.l1 + self.l2 + self.l3
-        local tx0, ty0 = x0 + len * lstg.cos(rot), y0 + len * lstg.sin(rot)
-        if x0 > tx0 then
-            x0, tx0, y0, ty0 = tx0, x0, ty0, y0
-        end
-        --
-        local bx, by = GetIntersction(x0, y0, rot, w.boundl)
-        local lx, ly = GetIntersction(x0, y0, rot, w.boundl)
-        local tx, ty = GetIntersction(x0, y0, rot, w.boundr)
-        local rx, ry = GetIntersction(x0, y0, rot, w.boundr)
-        --
-        local flag = InScope(x0, w.boundl, w.boundr)
-        flag = flag or InScope(tx0, w.boundl, w.boundr)
-        flag = flag or InScope(y0, w.boundb, w.boundt)
-        flag = flag or InScope(ty0, w.boundb, w.boundt)
-        flag = flag or InScope(bx, w.boundl, w.boundr)
-        flag = flag or InScope(tx, w.boundl, w.boundr)
-        flag = flag or InScope(ly, w.boundb, w.boundt)
-        flag = flag or InScope(ry, w.boundb, w.boundt)
-        if flag then
-            if by < ly then
-                if x0 < bx then
-                    x1, y1 = bx, by
-                else
-                    x1, y1 = x0, y0
-                end
-            else
-                if x0 < lx then
-                    x1, y1 = lx, ly
-                else
-                    x1, y1 = x0, y0
-                end
-            end
-            if ry < ty then
-                if tx0 < rx then
-                    x2, y2 = tx0, ty0
-                else
-                    x2, y2 = rx, ry
-                end
-            else
-                if tx0 < tx then
-                    x2, y2 = tx0, ty0
-                else
-                    x2, y2 = tx, ty
-                end
-            end
-            len = lstg.Dist(x1, y1, x2, y2)
-            if self.x <= x1 then
-                x, y = x1, y1
-            else
-                x, y, rot = x2, y2, rot + 180
-            end
-            local cx, cy = lstg.cos(rot), lstg.sin(rot)
-            for l = 0, len, 12 do
-                lstg.New(item_faith_minor, x + l * cx, y + l * cy)
-                if l % 2 == 0 and self.index then
-                    lstg.New(BulletBreak, x + l * cx, y + l * cy, self.index)
-                end
-            end
-        end
+        self.___killed = true
         self.colli = false
         local alpha = self.alpha
         local d = self.w
-        local tasks = rawget(self, "___changing_task")
+        local tasks = self.___changing_task
         tasks[EnumChangeIndex.Alpha] = coroutine.create(function()
-            for i = 1, 30 do
-                self.alpha = self.alpha - i / 30
+            for i = 30, 1, -1 do
+                self.alpha = alpha * i / 30
                 coroutine.yield()
             end
-            Del(self)
+            self.alpha = 0
+            lstg.Del(self)
         end)
         tasks[EnumChangeIndex.Width] = coroutine.create(function()
-            for i = 1, 30 do
-                self.w = self.w - d / 30
+            for i = 30, 1, -1 do
+                self.w = d * i / 30
                 coroutine.yield()
             end
+            self.w = 0
         end)
+    else
+        for i = 1, #self.___colliders do
+            local c = self.___colliders[i]
+            if lstg.IsValid(c) then
+                lstg.Del(c)
+            end
+        end
+        for i = 1, #self.___recovery_colliders do
+            local c = self.___recovery_colliders[i]
+            if lstg.IsValid(c) then
+                lstg.Del(c)
+            end
+        end
     end
 end
 
 --endregion
 
---region Methods
+--region Main Methods
+function class:onDelCollider(collider, offset)
+    if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
+        return
+    end
+    if not self.___killed then
+        PreserveObject(collider)
+    end
+    if collider.___killed then
+        return
+    end
+    collider.___killed = true
+    if self.style_index then
+        lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
+    end
+end
+
+function class:onKillCollider(collider, offset)
+    if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
+        return
+    end
+    if not self.___killed then
+        PreserveObject(collider)
+    end
+    if collider.___killed then
+        return
+    end
+    collider.___killed = true
+    lstg.New(item_faith_minor, collider.x, collider.y)
+    if self.style_index then
+        lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
+    end
+end
+
+function class:checkIsOutOfBound()
+    local w = lstg.world
+    local is_out_of_bound = true
+    for i = 1, #self.___colliders do
+        local c = self.___colliders[i]
+        if lstg.IsValid(c) and lstg.BoxCheck(c, w.boundl, w.boundr, w.boundb, w.boundt) then
+            is_out_of_bound = false
+            break
+        end
+    end
+    return is_out_of_bound
+end
+
+function class:updateColliders()
+    local colliders = self.___colliders
+    local length = self.length
+    if length <= 0 then
+        for i = 1, #colliders do
+            local c = colliders[i]
+            colliders[i] = nil
+            colliders[c] = nil
+            if lstg.IsValid(c) then
+                lstg.Del(c)
+            end
+        end
+        return
+    end
+    --
+    local tail_x, tail_y = class.getAnchorPosition(self, EnumAnchor.Tail)
+    local total_offset = self.___shooting_offset
+    local rot = self.rot
+    local rot_cos = lstg.cos(rot)
+    local rot_sin = lstg.sin(rot)
+    local half_width = self.w / 2
+    local colli = self.colli
+    local fix_tail_offset = math.floor(total_offset / 16) * 16
+    local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
+    local have_changed = false
+    for part_offset = fix_tail_offset, fix_head_offset, 16 do
+        local collider = self.___offset_colliders[part_offset]
+        if not collider then
+            collider = class.generateCollider(self, part_offset)
+            colliders[#colliders + 1] = collider
+            have_changed = true
+        end
+    end
+    if have_changed then
+        QuickSort(colliders, function(a, b)
+            return a.___collider_offset > b.___collider_offset
+        end)
+    end
+    for i = #colliders, 1, -1 do
+        local collider = colliders[i]
+        if not (lstg.IsValid(collider) and class.updateCollider(self, collider,
+                tail_x, tail_y, length, total_offset, half_width, colli, rot, rot_cos, rot_sin)) then
+            class.recoveryCollider(self, collider)
+            table.remove(colliders, i)
+        end
+    end
+end
+
+function class:recoveryCollider(collider)
+    if not (self.___colliders[collider] and lstg.IsValid(collider)) then
+        return
+    end
+    collider.___killed = true
+    self.___colliders[collider] = nil
+    self.___offset_colliders[collider.___collider_offset] = nil
+    self.___recovery_colliders[#self.___recovery_colliders + 1] = collider
+    self.___recovery_colliders[collider] = true
+end
+
+function class:generateCollider(offset)
+    local collider = table.remove(self.___recovery_colliders)
+    if collider then
+        collider.___killed = false
+        collider.___collider_offset = offset
+        self.___recovery_colliders[collider] = nil
+    else
+        collider = laserCollider.create(self, offset)
+    end
+    self.___colliders[collider] = true
+    self.___offset_colliders[offset] = collider
+    return collider
+end
+
+function class:updateCollider(collider, tail_x, tail_y, total_length, total_offset, half_width, colli, rot, rot_cos, rot_sin)
+    local collider_offset = collider.___collider_offset
+    local offset = collider_offset - total_offset
+    local offset_begin = offset - 8
+    local offset_end = offset + 8
+    if offset_begin > total_length or offset_end < 0 then
+        return false
+    end
+    offset_begin = math.max(0, offset_begin)
+    offset_end = math.min(total_length, offset_end)
+    offset = (offset_begin + offset_end) / 2
+    local length = offset_end - offset_begin
+    collider.x = tail_x + offset * rot_cos
+    collider.y = tail_y + offset * rot_sin
+    collider.rot = rot
+    collider.a = length / 2
+    collider.b = half_width
+    collider.colli = colli and length > 0 and not self.___killed
+    return true
+end
+
+function class:getLaserColliderParts()
+    local colliders = self.___colliders
+    local parts = {}
+    local part = {}
+    for i = 1, #colliders do
+        local c = colliders[i]
+        if not c.___killed then
+            part[#part + 1] = c
+        else
+            if #part > 0 then
+                parts[#parts + 1] = part
+                part = {}
+            end
+        end
+    end
+    if #part > 0 then
+        parts[#parts + 1] = part
+    end
+    return parts
+end
+
+function class:renderLaserColliderPart(part)
+    if not part or #part == 0 then
+        return
+    end
+    local width = self.w
+    local head_node = part[1]
+    local tail_node = part[#part]
+    local length
+    if head_node == tail_node then
+        length = head_node.a * 2
+    else
+        length = (head_node.a + tail_node.a) * 2 + math.max(0, #part - 2) * 16
+    end
+    if width > 0 and length > 0 then
+        local blend = self._blend
+        local rot = self.rot
+        local rot_cos = lstg.cos(rot)
+        local rot_sin = lstg.sin(rot)
+        local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
+        local w = width / 2 / self.img_wm * self.img_w / self.img_wm
+        local total_length = self.length
+        local l1 = self.l1 / total_length * length
+        local l2 = self.l2 / total_length * length
+        local l3 = self.l3 / total_length * length
+        local x = tail_node.x - tail_node.a * rot_cos
+        local y = tail_node.y - tail_node.a * rot_sin
+        lstg.SetImageState(self.img1, blend, color)
+        lstg.Render(self.img1, x, y, rot, l1 / self.img1_l, w)
+        x = x + l1 * rot_cos
+        y = y + l1 * rot_sin
+        lstg.SetImageState(self.img2, blend, color)
+        lstg.Render(self.img2, x, y, rot, l2 / self.img2_l, w)
+        x = x + l2 * rot_cos
+        y = y + l2 * rot_sin
+        lstg.SetImageState(self.img3, blend, color)
+        lstg.Render(self.img3, x, y, rot, l3 / self.img3_l, w)
+        if self.head > 0 then
+            x = x + l3 * rot_cos
+            y = y + l3 * rot_sin
+            color = lstg.Color(self._a, self._r, self._g, self._b)
+            lstg.SetImageState(self.img5, self._blend, color)
+            lstg.Render(self.img5, x, y, 0, self.head / 8)
+            lstg.Render(self.img5, x, y, 0, 0.75 * self.head / 8)
+        end
+    end
+end
+
+function class:updateChangingTask()
+    local tasks = self.___changing_task
+    if not tasks then
+        return
+    end
+    for i = 1, EnumChangeIndex.Total do
+        local co = tasks[i]
+        if co then
+            local success, result = coroutine.resume(co)
+            if not success then
+                error(result)
+            end
+            if coroutine.status(co) == "dead" then
+                tasks[i] = nil
+            end
+        end
+    end
+end
+
+function class:getAnchorPosition(anchor)
+    local self_anchor = self.anchor
+    if self_anchor == anchor then
+        return self.x, self.y
+    end
+    local x = self.x
+    local y = self.y
+    local length = self.length
+    local rot = self.rot
+    local rot_cos = length / 2 * lstg.cos(rot)
+    local rot_sin = length / 2 * lstg.sin(rot)
+    if self_anchor == EnumAnchor.Tail then
+        if anchor == EnumAnchor.Head then
+            x = x + 2 * rot_cos
+            y = y + 2 * rot_sin
+        elseif anchor == EnumAnchor.Center then
+            x = x + rot_cos
+            y = y + rot_sin
+        end
+    elseif self_anchor == EnumAnchor.Center then
+        if anchor == EnumAnchor.Head then
+            x = x + rot_cos
+            y = y + rot_sin
+        elseif anchor == EnumAnchor.Tail then
+            x = x - rot_cos
+            y = y - rot_sin
+        end
+    elseif self_anchor == EnumAnchor.Head then
+        if anchor == EnumAnchor.Center then
+            x = x - rot_cos
+            y = y - rot_sin
+        elseif anchor == EnumAnchor.Tail then
+            x = x - 2 * rot_cos
+            y = y - 2 * rot_sin
+        end
+    end
+    return x, y
+end
+
+function class:applyDefaultLaserStyle(id, index)
+    id = math.max(math.min(math.floor(id), laser_texture_num - 1), 1)
+    index = math.max(math.min(math.floor(index), 16), 1)
+    local data = laser_data[id]
+    self.style_id = id
+    self.style_index = index
+    self.img1_l = data[1]
+    self.img2_l = data[2]
+    self.img3_l = data[3]
+    self.img_w = data[4]
+    self.img_wm = data[6]
+    self.img1 = "laser" .. id .. "1" .. index
+    self.img2 = "laser" .. id .. "2" .. index
+    self.img3 = "laser" .. id .. "3" .. index
+    self.img4 = "laser_node" .. math.ceil(index / 2)
+    self.img5 = "ball_mid_b" .. math.ceil(index / 2)
+end
+
+--endregion
+
+--region Extension Methods
 function class:toWidth(time, width, easing_func)
+    if time <= 0 then
+        self.w = width
+        self.___changing_task[EnumChangeIndex.Width] = nil
+        return
+    end
     easing_func = easing_func or Easing.linear
     local begin = self.w
     local dp = width - begin
-    local tasks = rawget(self, "___changing_task")
+    local tasks = self.___changing_task
     tasks[EnumChangeIndex.Width] = coroutine.create(function()
         for i = 1, time do
             self.w = begin + dp * easing_func(i / time)
@@ -291,10 +507,15 @@ function class:toWidth(time, width, easing_func)
 end
 
 function class:toAlpha(time, alpha, easing_func)
+    if time <= 0 then
+        self.alpha = alpha
+        self.___changing_task[EnumChangeIndex.Alpha] = nil
+        return
+    end
     easing_func = easing_func or Easing.linear
     local begin = self.alpha
     local dp = alpha - begin
-    local tasks = rawget(self, "___changing_task")
+    local tasks = self.___changing_task
     tasks[EnumChangeIndex.Alpha] = coroutine.create(function()
         for i = 1, time do
             self.alpha = begin + dp * easing_func(i / time)
@@ -304,6 +525,13 @@ function class:toAlpha(time, alpha, easing_func)
 end
 
 function class:toLength(time, l1, l2, l3, easing_func)
+    if time <= 0 then
+        self.l1 = l1
+        self.l2 = l2
+        self.l3 = l3
+        self.___changing_task[EnumChangeIndex.Length] = nil
+        return
+    end
     easing_func = easing_func or Easing.linear
     local begin_l1 = self.l1
     local begin_l2 = self.l2
@@ -311,7 +539,7 @@ function class:toLength(time, l1, l2, l3, easing_func)
     local dp1 = l1 - begin_l1
     local dp2 = l2 - begin_l2
     local dp3 = l3 - begin_l3
-    local tasks = rawget(self, "___changing_task")
+    local tasks = self.___changing_task
     tasks[EnumChangeIndex.Length] = coroutine.create(function()
         for i = 1, time do
             self.l1 = begin_l1 + dp1 * easing_func(i / time)
@@ -322,74 +550,11 @@ function class:toLength(time, l1, l2, l3, easing_func)
     end)
 end
 
-function class:applyChanging()
-    local tasks = rawget(self, "___changing_task")
-    if not tasks then
-        return
-    end
-    for i = 1, EnumChangeIndex.Total do
-        local task = tasks[i] -- coroutine
-        if task then
-            local success, result = coroutine.resume(task)
-            if not success then
-                error(result)
-            end
-            if coroutine.status(task) == "dead" then
-                tasks[i] = nil
-            end
-        end
-    end
-end
-
-function class:applyDefaultLaserStyle(id, index)
-    id = math.max(math.min(math.floor(id), laser_texture_num - 1), 1)
-    index = math.max(math.min(math.floor(index), 16), 1)
-    local data = laser_data[id]
-    rawset(self, "img1_l", data[1])
-    rawset(self, "img2_l", data[2])
-    rawset(self, "img3_l", data[3])
-    rawset(self, "img_w", data[4])
-    rawset(self, "img_wm", data[6])
-    rawset(self, "img1", "laser" .. id .. "1" .. index)
-    rawset(self, "img2", "laser" .. id .. "2" .. index)
-    rawset(self, "img3", "laser" .. id .. "3" .. index)
-    rawset(self, "img4", "laser_node" .. math.ceil(index / 2))
-    rawset(self, "img5", "ball_mid_b" .. math.ceil(index / 2))
-end
-
-function class:checkIsOutOfBound()
-    local w = lstg.world
-    local rot = self.rot
-    local length = self.length
-    local proxy_x, proxy_y = class.calculationPositionProxy(self)
-    local head_x = proxy_x - length / 2 * lstg.cos(rot)
-    local head_y = proxy_y - length / 2 * lstg.sin(rot)
-    local tail_x = proxy_x + length / 2 * lstg.cos(rot)
-    local tail_y = proxy_y + length / 2 * lstg.sin(rot)
-    return not CheckLineIntersectRect(head_x, head_y, tail_x, tail_y, w.boundl, w.boundr, w.boundb, w.boundt)
-end
-
-function class:calculationPositionProxy()
-    local x = self.x
-    local y = self.y
-    local anchor = self.anchor
-    local length = self.length
-    local rot = self.rot
-    if anchor == EnumAnchor.Head then
-        x = x - length * lstg.cos(rot) / 2
-        y = y - length * lstg.sin(rot) / 2
-    elseif anchor == EnumAnchor.Tail then
-        x = x + length * lstg.cos(rot) / 2
-        y = y + length * lstg.sin(rot) / 2
-    end
-    return x, y
-end
-
 function class:setPositionAndRotation(x, y, rot)
     AttributeProxy.setStorageValue(self, "x", x)
     AttributeProxy.setStorageValue(self, "y", y)
     AttributeProxy.setStorageValue(self, "rot", rot)
-    class.applyPosition(self)
+    class.updateColliders(self)
 end
 
 function class:setRectByPart(l1, l2, l3, width)
@@ -399,19 +564,7 @@ function class:setRectByPart(l1, l2, l3, width)
     if width then
         AttributeProxy.setStorageValue(self, "w", width)
     end
-    class.applyPosition(self)
-    class.applyCollision(self)
-end
-
-function class:applyPosition()
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
-end
-
-function class:applyCollision()
-    lstg.SetAttr(self, "a", self.length / 2)
-    lstg.SetAttr(self, "b", self.w / 2)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -429,8 +582,8 @@ end
 
 function proxy_x:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)
-    local x, _ = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, key, x)
+    lstg.SetAttr(self, key, value)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -444,8 +597,8 @@ end
 
 function proxy_y:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)
-    local _, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, key, y)
+    lstg.SetAttr(self, key, value)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -459,10 +612,8 @@ end
 
 function proxy_rot:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)
-    local x, y = class.calculationPositionProxy(self)
     lstg.SetAttr(self, key, value)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -477,10 +628,7 @@ end
 function proxy_l1:setter(key, value)
     value = math.max(value, 0)
     AttributeProxy.setStorageValue(self, key, value)
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
-    lstg.SetAttr(self, "a", self.length / 2)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -495,10 +643,7 @@ end
 function proxy_l2:setter(key, value)
     value = math.max(value, 0)
     AttributeProxy.setStorageValue(self, key, value)
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
-    lstg.SetAttr(self, "a", self.length / 2)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -513,10 +658,7 @@ end
 function proxy_l3:setter(key, value)
     value = math.max(value, 0)
     AttributeProxy.setStorageValue(self, key, value)
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
-    lstg.SetAttr(self, "a", self.length / 2)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -526,8 +668,8 @@ local proxy_length = AttributeProxy.createProxy("length")
 attribute_proxies["length"] = proxy_length
 function proxy_length:getter(key)
     return AttributeProxy.getStorageValue(self, "l1")
-        + AttributeProxy.getStorageValue(self, "l2")
-        + AttributeProxy.getStorageValue(self, "l3")
+            + AttributeProxy.getStorageValue(self, "l2")
+            + AttributeProxy.getStorageValue(self, "l3")
 end
 
 function proxy_length:setter(key, value)
@@ -536,10 +678,7 @@ function proxy_length:setter(key, value)
         AttributeProxy.setStorageValue(self, "l1", 0)
         AttributeProxy.setStorageValue(self, "l2", 0)
         AttributeProxy.setStorageValue(self, "l3", 0)
-        local x, y = class.calculationPositionProxy(self)
-        lstg.SetAttr(self, "x", x)
-        lstg.SetAttr(self, "y", y)
-        lstg.SetAttr(self, "a", 0)
+        class.updateColliders(self)
         return
     end
     local l1 = AttributeProxy.getStorageValue(self, "l1")
@@ -558,10 +697,7 @@ function proxy_length:setter(key, value)
     AttributeProxy.setStorageValue(self, "l1", l1)
     AttributeProxy.setStorageValue(self, "l2", l2)
     AttributeProxy.setStorageValue(self, "l3", l3)
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
-    lstg.SetAttr(self, "a", value / 2)
+    class.updateColliders(self)
 end
 
 --endregion
@@ -576,7 +712,32 @@ end
 function proxy_w:setter(key, value)
     value = math.max(value, 0)
     AttributeProxy.setStorageValue(self, key, value)
-    lstg.SetAttr(self, "b", value / 2)
+    class.updateColliders(self)
+end
+
+--endregion
+
+--region colli
+local proxy_colli = AttributeProxy.createProxy("colli")
+attribute_proxies["colli"] = proxy_colli
+
+function proxy_colli:init(key)
+    AttributeProxy.setStorageValue(self, key, true)
+    lstg.SetAttr(self, key, false)
+end
+
+function proxy_colli:setter(key, value)
+    local old_value = AttributeProxy.getStorageValue(self, key)
+    if value == old_value then
+        return
+    end
+    AttributeProxy.setStorageValue(self, key, value)
+    for i = 1, #self.___colliders do
+        local c = self.___colliders[i]
+        if lstg.IsValid(c) then
+            lstg.SetAttr(c, key, value)
+        end
+    end
 end
 
 --endregion
@@ -599,10 +760,12 @@ function proxy_anchor:init(key)
 end
 
 function proxy_anchor:setter(key, value)
+    local old_value = AttributeProxy.getStorageValue(self, key)
+    if value == old_value then
+        return
+    end
     AttributeProxy.setStorageValue(self, key, value)
-    local x, y = class.calculationPositionProxy(self)
-    lstg.SetAttr(self, "x", x)
-    lstg.SetAttr(self, "y", y)
+    class.updateColliders(self)
 end
 
 --endregion
