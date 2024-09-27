@@ -212,7 +212,8 @@ function class:onDelCollider(collider, offset)
         return
     end
     collider.___killed = true
-    if self.style_index then
+    local w = lstg.world
+    if self.style_index and lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
     end
 end
@@ -228,9 +229,12 @@ function class:onKillCollider(collider, offset)
         return
     end
     collider.___killed = true
-    lstg.New(item_faith_minor, collider.x, collider.y)
-    if self.style_index then
-        lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
+    local w = lstg.world
+    if lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
+        lstg.New(item_faith_minor, collider.x, collider.y)
+        if self.style_index then
+            lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
+        end
     end
 end
 
