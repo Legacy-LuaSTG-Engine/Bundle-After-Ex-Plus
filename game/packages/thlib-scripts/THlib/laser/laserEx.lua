@@ -132,16 +132,24 @@ function class:del()
         PreserveObject(self)
         self.___killed = true
         self.colli = false
+        task.Clear(self)
         local alpha = self.alpha
         local d = self.w
-        task.Clear(self)
-        task.New(self, function()
-            for _ = 1, 30 do
-                self.alpha = self.alpha - alpha / 30
-                self.w = self.w - d / 30
-                task.Wait()
+        local tasks = self.___changing_task
+        tasks[EnumChangeIndex.Alpha] = coroutine.create(function()
+            for i = 30, 1, -1 do
+                self.alpha = alpha * i / 30
+                coroutine.yield()
             end
+            self.alpha = 0
             lstg.Del(self)
+        end)
+        tasks[EnumChangeIndex.Width] = coroutine.create(function()
+            for i = 30, 1, -1 do
+                self.w = d * i / 30
+                coroutine.yield()
+            end
+            self.w = 0
         end)
     else
         for i = 1, #self.___colliders do
@@ -164,6 +172,7 @@ function class:kill()
         PreserveObject(self)
         self.___killed = true
         self.colli = false
+        task.Clear(self)
         local alpha = self.alpha
         local d = self.w
         local tasks = self.___changing_task
