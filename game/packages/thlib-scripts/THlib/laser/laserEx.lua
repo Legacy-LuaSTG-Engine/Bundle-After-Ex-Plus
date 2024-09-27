@@ -313,11 +313,12 @@ end
 function class:generateCollider(offset)
     local collider = table.remove(self.___recovery_colliders)
     if collider then
+        collider.group = self.group
         collider.___killed = false
         collider.___collider_offset = offset
         self.___recovery_colliders[collider] = nil
     else
-        collider = laserCollider.create(self, offset)
+        collider = laserCollider.create(self, self.group, offset)
     end
     self.___colliders[collider] = true
     self.___offset_colliders[offset] = collider
@@ -735,6 +736,26 @@ function proxy_colli:setter(key, value)
     if value == old_value then
         return
     end
+    AttributeProxy.setStorageValue(self, key, value)
+    for i = 1, #self.___colliders do
+        local c = self.___colliders[i]
+        if lstg.IsValid(c) then
+            lstg.SetAttr(c, key, value)
+        end
+    end
+end
+
+--endregion
+
+--region group
+local proxy_group = AttributeProxy.createProxy("group")
+attribute_proxies["group"] = proxy_group
+function proxy_group:init(key)
+    AttributeProxy.setStorageValue(self, key, GROUP_ENEMY_BULLET)
+    lstg.SetAttr(self, key, GROUP_INDES)
+end
+
+function proxy_group:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)
     for i = 1, #self.___colliders do
         local c = self.___colliders[i]

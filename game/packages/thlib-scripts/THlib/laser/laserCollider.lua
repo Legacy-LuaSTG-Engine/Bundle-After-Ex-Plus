@@ -6,12 +6,12 @@ local AttributeProxy = require("foundation.AttributeProxy")
 --region Class Definition
 local class = lstg.CreateGameObjectClass()
 
-function class.create(master, offset)
+function class.create(master, group, offset)
     local self = lstg.New(class)
     if not self then
         return
     end
-    self.group = GROUP_ENEMY_BULLET
+    self.group = group or GROUP_ENEMY_BULLET
     self.layer = LAYER_ENEMY_BULLET
     self.rect = true
     self.hide = true
