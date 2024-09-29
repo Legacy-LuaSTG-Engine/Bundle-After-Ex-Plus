@@ -35,23 +35,34 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     if not self then
         return
     end
-    self.group = GROUP_INDES
+    self.group = GROUP_ENEMY_BULLET
     self.layer = LAYER_ENEMY_BULLET
+    self.x = x
+    self.y = y
+    self.rot = rot
     self.rect = true
+    self.colli = false
     ---@diagnostic disable
+    self.l1 = l1
+    self.l2 = l2
+    self.l3 = l3
+    self.w = w
     self.node = node
     self.head = head
+    self.anchor = EnumAnchor.Tail
     self.graze_countdown = 0
     self.shooting_speed = 0
-    self.___shooting_offset = 0
     self.alpha = 0
+    --
     self._blend = "mul+add"
     self._a = 255
     self._r = 255
     self._g = 255
     self._b = 255
     self.task = {}
+    --
     self.___killed = false
+    self.___shooting_offset = 0
     self.___colliders = {}
     self.___offset_colliders = {}
     self.___recovery_colliders = {}
@@ -62,10 +73,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     ---@diagnostic enable
     class.applyDefaultLaserStyle(self, 1, index)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
-    class.setPositionAndRotation(self, x, y, rot)
-    class.setRectByPart(self, l1, l2, l3, w)
     class.updateColliders(self)
-    self.colli = false
     return self
 end
 
@@ -74,7 +82,6 @@ function class:frame()
         class.updateChangingTask(self)
         if self.shooting_speed ~= 0 then
             self.___shooting_offset = self.___shooting_offset - self.shooting_speed
-            class.updateColliders(self)
         end
         return
     end
@@ -87,7 +94,6 @@ function class:frame()
     class.updateChangingTask(self)
     if self.shooting_speed ~= 0 then
         self.___shooting_offset = self.___shooting_offset - self.shooting_speed
-        class.updateColliders(self)
     end
     local open_bound = self.bound
     local bound_status = lstg.GetAttr(self, "bound")
@@ -590,8 +596,8 @@ class.___attribute_proxies = attribute_proxies
 --region x
 local proxy_x = AttributeProxy.createProxy("x")
 attribute_proxies["x"] = proxy_x
-function proxy_x:init(key)
-    AttributeProxy.setStorageValue(self, key, lstg.GetAttr(self, key))
+function proxy_x:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_x:setter(key, value)
@@ -605,8 +611,8 @@ end
 --region y
 local proxy_y = AttributeProxy.createProxy("y")
 attribute_proxies["y"] = proxy_y
-function proxy_y:init(key)
-    AttributeProxy.setStorageValue(self, key, lstg.GetAttr(self, key))
+function proxy_y:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_y:setter(key, value)
@@ -620,8 +626,8 @@ end
 --region rot
 local proxy_rot = AttributeProxy.createProxy("rot")
 attribute_proxies["rot"] = proxy_rot
-function proxy_rot:init(key)
-    AttributeProxy.setStorageValue(self, key, lstg.GetAttr(self, key))
+function proxy_rot:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_rot:setter(key, value)
@@ -635,8 +641,8 @@ end
 --region l1
 local proxy_l1 = AttributeProxy.createProxy("l1")
 attribute_proxies["l1"] = proxy_l1
-function proxy_l1:init(key)
-    AttributeProxy.setStorageValue(self, key, 0)
+function proxy_l1:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_l1:setter(key, value)
@@ -650,8 +656,8 @@ end
 --region l2
 local proxy_l2 = AttributeProxy.createProxy("l2")
 attribute_proxies["l2"] = proxy_l2
-function proxy_l2:init(key)
-    AttributeProxy.setStorageValue(self, key, 0)
+function proxy_l2:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_l2:setter(key, value)
@@ -665,8 +671,8 @@ end
 --region l3
 local proxy_l3 = AttributeProxy.createProxy("l3")
 attribute_proxies["l3"] = proxy_l3
-function proxy_l3:init(key)
-    AttributeProxy.setStorageValue(self, key, 0)
+function proxy_l3:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_l3:setter(key, value)
@@ -719,8 +725,8 @@ end
 --region w
 local proxy_w = AttributeProxy.createProxy("w")
 attribute_proxies["w"] = proxy_w
-function proxy_w:init(key)
-    AttributeProxy.setStorageValue(self, key, 0)
+function proxy_w:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
 end
 
 function proxy_w:setter(key, value)
@@ -731,12 +737,26 @@ end
 
 --endregion
 
+--region ___shooting_offset
+local proxy_shooting_offset = AttributeProxy.createProxy("___shooting_offset")
+attribute_proxies["___shooting_offset"] = proxy_shooting_offset
+function proxy_shooting_offset:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or 0)
+end
+
+function proxy_shooting_offset:setter(key, value)
+    AttributeProxy.setStorageValue(self, key, value)
+    class.updateColliders(self)
+end
+
+--endregion
+
 --region colli
 local proxy_colli = AttributeProxy.createProxy("colli")
 attribute_proxies["colli"] = proxy_colli
 
-function proxy_colli:init(key)
-    AttributeProxy.setStorageValue(self, key, true)
+function proxy_colli:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value)
     lstg.SetAttr(self, key, false)
 end
 
@@ -759,8 +779,8 @@ end
 --region group
 local proxy_group = AttributeProxy.createProxy("group")
 attribute_proxies["group"] = proxy_group
-function proxy_group:init(key)
-    AttributeProxy.setStorageValue(self, key, GROUP_ENEMY_BULLET)
+function proxy_group:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or GROUP_ENEMY_BULLET)
     lstg.SetAttr(self, key, GROUP_INDES)
 end
 
@@ -779,8 +799,8 @@ end
 --region bound
 local proxy_bound = AttributeProxy.createProxy("bound")
 attribute_proxies["bound"] = proxy_bound
-function proxy_bound:init(key)
-    AttributeProxy.setStorageValue(self, key, true)
+function proxy_bound:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value == nil or value)
     lstg.SetAttr(self, key, false)
 end
 
@@ -789,8 +809,8 @@ end
 --region anchor
 local proxy_anchor = AttributeProxy.createProxy("anchor")
 attribute_proxies["anchor"] = proxy_anchor
-function proxy_anchor:init(key)
-    AttributeProxy.setStorageValue(self, key, EnumAnchor.Tail)
+function proxy_anchor:init(key, value)
+    AttributeProxy.setStorageValue(self, key, value or EnumAnchor.Tail)
 end
 
 function proxy_anchor:setter(key, value)
@@ -807,9 +827,6 @@ end
 --region _graze
 local proxy_graze = AttributeProxy.createProxy("_graze")
 attribute_proxies["_graze"] = proxy_graze
-function proxy_graze:init(key)
-    AttributeProxy.setStorageValue(self, key, false)
-end
 
 function proxy_graze:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)

@@ -9,11 +9,25 @@ local KEY_ATTRIBUTE_PROXIES_STORAGE = "___attribute_proxies_storage"
 
 if false then
     ---@class foundation.AttributeProxy.Proxy
-    ---@field key string
-    ---@field init fun(self: any, key: string): void
-    ---@field getter fun(self: any, key: string): any
-    ---@field setter fun(self: any, key: string, value: any): void
-    local Proxy = {}
+    local Proxy = {
+        key = ""
+    }
+
+    ---@param key string
+    ---@param value any
+    ---@overload fun(key: string)
+    function Proxy:init(key, value)
+    end
+
+    ---@param key string
+    ---@return any
+    function Proxy:getter(self, key)
+    end
+
+    ---@param key string
+    ---@param value any
+    function Proxy:setter(self, key, value)
+    end
 end
 
 ---@class foundation.AttributeProxy
@@ -77,8 +91,16 @@ function M:applyProxies(proxies)
         })
     end
     for _, proxy in pairs(proxies) do
+        local value = self[proxy.key]
         current_proxies[proxy.key] = proxy
-        if proxy.init then
+        if value ~= nil then
+            rawset(self, proxy.key, nil)
+            if proxy.init then
+                proxy.init(self, proxy.key, value)
+            else
+                self[proxy.key] = value
+            end
+        elseif proxy.init then
             proxy.init(self, proxy.key)
         end
     end
