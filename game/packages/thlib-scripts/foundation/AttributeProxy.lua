@@ -1,4 +1,3 @@
-local rawget = rawget
 local rawset = rawset
 local pairs = pairs
 local setmetatable = setmetatable
@@ -15,18 +14,21 @@ if false then
 
     ---@param key string
     ---@param value any
+    ---@param storage table<string, any>
     ---@overload fun(key: string)
-    function Proxy:init(key, value)
+    function Proxy:init(key, value, storage)
     end
 
     ---@param key string
+    ---@param storage table<string, any>
     ---@return any
-    function Proxy:getter(self, key)
+    function Proxy:getter(self, key, storage)
     end
 
     ---@param key string
     ---@param value any
-    function Proxy:setter(self, key, value)
+    ---@param storage table<string, any>
+    function Proxy:setter(self, key, value, storage)
     end
 end
 
@@ -36,33 +38,21 @@ local M = {}
 ---@param key string
 ---@return any
 function M:getStorageValue(key)
-    return rawget(self, KEY_ATTRIBUTE_PROXIES_STORAGE)[key]
+    return self[KEY_ATTRIBUTE_PROXIES_STORAGE][key]
 end
 
 ---@param key string
 ---@param value any
 function M:setStorageValue(key, value)
-    rawget(self, KEY_ATTRIBUTE_PROXIES_STORAGE)[key] = value
-end
-
----@param key string
----@return any
-function M:___basicGetter(key)
-    return M.getStorageValue(self, key)
-end
-
----@param key string
----@param value any
-function M:___basicSetter(key, value)
-    M.setStorageValue(self, key, value)
+    self[KEY_ATTRIBUTE_PROXIES_STORAGE][key] = value
 end
 
 ---@param key string
 ---@return any
 function M:___metatableIndex(key)
-    local proxy = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)[key]
+    local proxy = self[KEY_ATTRIBUTE_PROXIES_LIST][key]
     if proxy then
-        return proxy.getter(self, key)
+        return proxy.getter(self, key, self[KEY_ATTRIBUTE_PROXIES_STORAGE])
     end
     return lstg.GetAttr(self, key)
 end
@@ -70,9 +60,9 @@ end
 ---@param key string
 ---@param value any
 function M:___metatableNewIndex(key, value)
-    local proxy = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)[key]
+    local proxy = self[KEY_ATTRIBUTE_PROXIES_LIST][key]
     if proxy then
-        proxy.setter(self, key, value)
+        proxy.setter(self, key, value, self[KEY_ATTRIBUTE_PROXIES_STORAGE])
         return
     end
     lstg.SetAttr(self, key, value)
@@ -80,7 +70,7 @@ end
 
 ---@param proxies table<any, foundation.AttributeProxy.Proxy>
 function M:applyProxies(proxies)
-    local current_proxies = rawget(self, KEY_ATTRIBUTE_PROXIES_LIST)
+    local current_proxies = self[KEY_ATTRIBUTE_PROXIES_LIST]
     if not current_proxies then
         current_proxies = {}
         rawset(self, KEY_ATTRIBUTE_PROXIES_LIST, current_proxies)
@@ -90,18 +80,22 @@ function M:applyProxies(proxies)
             __newindex = M.___metatableNewIndex,
         })
     end
+    local storage = self[KEY_ATTRIBUTE_PROXIES_STORAGE]
     for _, proxy in pairs(proxies) do
+        if proxies.key == KEY_ATTRIBUTE_PROXIES_LIST or proxies.key == KEY_ATTRIBUTE_PROXIES_STORAGE then
+            error(string.format("Invalid proxy key: %q", proxy.key))
+        end
         local value = self[proxy.key]
         current_proxies[proxy.key] = proxy
         if value ~= nil then
             rawset(self, proxy.key, nil)
             if proxy.init then
-                proxy.init(self, proxy.key, value)
+                proxy.init(self, proxy.key, value, storage)
             else
                 self[proxy.key] = value
             end
         elseif proxy.init then
-            proxy.init(self, proxy.key)
+            proxy.init(self, proxy.key, storage)
         end
     end
 end
@@ -118,8 +112,8 @@ function M.createProxy(key, getter, setter, init)
     ---@type foundation.AttributeProxy.Proxy
     return {
         key = key,
-        getter = getter or M.___basicGetter,
-        setter = setter or M.___basicSetter,
+        getter = getter or M.getStorageValue,
+        setter = setter or M.setStorageValue,
         init = init,
     }
 end

@@ -52,6 +52,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.anchor = EnumAnchor.Tail
     self.graze_countdown = 0
     self.shooting_speed = 0
+    self.offset_at_head = true
     self.alpha = 0
     --
     self._blend = "mul+add"
@@ -283,6 +284,9 @@ function class:updateColliders()
     --
     local tail_x, tail_y = class.getAnchorPosition(self, EnumAnchor.Tail)
     local total_offset = self.___shooting_offset
+    if self.offset_at_head then
+        total_offset = total_offset - length
+    end
     local rot = self.rot
     local rot_cos = lstg.cos(rot)
     local rot_sin = lstg.sin(rot)
@@ -596,12 +600,16 @@ class.___attribute_proxies = attribute_proxies
 --region x
 local proxy_x = AttributeProxy.createProxy("x")
 attribute_proxies["x"] = proxy_x
-function proxy_x:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_x:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_x:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_x:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     lstg.SetAttr(self, key, value)
     class.updateColliders(self)
 end
@@ -611,12 +619,16 @@ end
 --region y
 local proxy_y = AttributeProxy.createProxy("y")
 attribute_proxies["y"] = proxy_y
-function proxy_y:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_y:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_y:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_y:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     lstg.SetAttr(self, key, value)
     class.updateColliders(self)
 end
@@ -626,12 +638,16 @@ end
 --region rot
 local proxy_rot = AttributeProxy.createProxy("rot")
 attribute_proxies["rot"] = proxy_rot
-function proxy_rot:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_rot:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_rot:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_rot:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     lstg.SetAttr(self, key, value)
     class.updateColliders(self)
 end
@@ -641,13 +657,17 @@ end
 --region l1
 local proxy_l1 = AttributeProxy.createProxy("l1")
 attribute_proxies["l1"] = proxy_l1
-function proxy_l1:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_l1:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_l1:setter(key, value)
+function proxy_l1:setter(key, value, storage)
     value = math.max(value, 0)
-    AttributeProxy.setStorageValue(self, key, value)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -656,13 +676,17 @@ end
 --region l2
 local proxy_l2 = AttributeProxy.createProxy("l2")
 attribute_proxies["l2"] = proxy_l2
-function proxy_l2:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_l2:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_l2:setter(key, value)
+function proxy_l2:setter(key, value, storage)
     value = math.max(value, 0)
-    AttributeProxy.setStorageValue(self, key, value)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -671,13 +695,17 @@ end
 --region l3
 local proxy_l3 = AttributeProxy.createProxy("l3")
 attribute_proxies["l3"] = proxy_l3
-function proxy_l3:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_l3:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_l3:setter(key, value)
+function proxy_l3:setter(key, value, storage)
     value = math.max(value, 0)
-    AttributeProxy.setStorageValue(self, key, value)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -686,24 +714,22 @@ end
 --region length
 local proxy_length = AttributeProxy.createProxy("length")
 attribute_proxies["length"] = proxy_length
-function proxy_length:getter(key)
-    return AttributeProxy.getStorageValue(self, "l1")
-            + AttributeProxy.getStorageValue(self, "l2")
-            + AttributeProxy.getStorageValue(self, "l3")
+function proxy_length:getter(key, storage)
+    return storage["l1"] + storage["l2"] + storage["l3"]
 end
 
-function proxy_length:setter(key, value)
+function proxy_length:setter(key, value, storage)
     value = math.max(value, 0)
     if value == 0 then
-        AttributeProxy.setStorageValue(self, "l1", 0)
-        AttributeProxy.setStorageValue(self, "l2", 0)
-        AttributeProxy.setStorageValue(self, "l3", 0)
+        storage["l1"] = 0
+        storage["l2"] = 0
+        storage["l3"] = 0
         class.updateColliders(self)
         return
     end
-    local l1 = AttributeProxy.getStorageValue(self, "l1")
-    local l2 = AttributeProxy.getStorageValue(self, "l2")
-    local l3 = AttributeProxy.getStorageValue(self, "l3")
+    local l1 = storage["l1"]
+    local l2 = storage["l2"]
+    local l3 = storage["l3"]
     local sum = l1 + l2 + l3
     if sum ~= 0 then
         l1 = l1 / sum * value
@@ -714,9 +740,9 @@ function proxy_length:setter(key, value)
         l2 = value / 3
         l3 = value / 3
     end
-    AttributeProxy.setStorageValue(self, "l1", l1)
-    AttributeProxy.setStorageValue(self, "l2", l2)
-    AttributeProxy.setStorageValue(self, "l3", l3)
+    storage["l1"] = l1
+    storage["l2"] = l2
+    storage["l3"] = l3
     class.updateColliders(self)
 end
 
@@ -725,13 +751,35 @@ end
 --region w
 local proxy_w = AttributeProxy.createProxy("w")
 attribute_proxies["w"] = proxy_w
-function proxy_w:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_w:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_w:setter(key, value)
+function proxy_w:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
     value = math.max(value, 0)
-    AttributeProxy.setStorageValue(self, key, value)
+    storage[key] = value
+    class.updateColliders(self)
+end
+
+--endregion
+
+--region offset_at_head
+local proxy_offset_at_head = AttributeProxy.createProxy("offset_at_head")
+attribute_proxies["offset_at_head"] = proxy_offset_at_head
+function proxy_offset_at_head:init(key, value, storage)
+    storage[key] = value == nil or value
+end
+
+function proxy_offset_at_head:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -740,12 +788,16 @@ end
 --region ___shooting_offset
 local proxy_shooting_offset = AttributeProxy.createProxy("___shooting_offset")
 attribute_proxies["___shooting_offset"] = proxy_shooting_offset
-function proxy_shooting_offset:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or 0)
+function proxy_shooting_offset:init(key, value, storage)
+    storage[key] = value or 0
 end
 
-function proxy_shooting_offset:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_shooting_offset:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -755,17 +807,17 @@ end
 local proxy_colli = AttributeProxy.createProxy("colli")
 attribute_proxies["colli"] = proxy_colli
 
-function proxy_colli:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_colli:init(key, value, storage)
+    storage[key] = value
     lstg.SetAttr(self, key, false)
 end
 
-function proxy_colli:setter(key, value)
-    local old_value = AttributeProxy.getStorageValue(self, key)
+function proxy_colli:setter(key, value, storage)
+    local old_value = storage[key]
     if value == old_value then
         return
     end
-    AttributeProxy.setStorageValue(self, key, value)
+    storage[key] = value
     for i = 1, #self.___colliders do
         local c = self.___colliders[i]
         if lstg.IsValid(c) then
@@ -779,13 +831,17 @@ end
 --region group
 local proxy_group = AttributeProxy.createProxy("group")
 attribute_proxies["group"] = proxy_group
-function proxy_group:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or GROUP_ENEMY_BULLET)
+function proxy_group:init(key, value, storage)
+    storage[key] = value or GROUP_ENEMY_BULLET
     lstg.SetAttr(self, key, GROUP_INDES)
 end
 
-function proxy_group:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_group:setter(key, value, storage)
+    local old_value = storage[key]
+    if value == old_value then
+        return
+    end
+    storage[key] = value
     for i = 1, #self.___colliders do
         local c = self.___colliders[i]
         if lstg.IsValid(c) then
@@ -799,8 +855,8 @@ end
 --region bound
 local proxy_bound = AttributeProxy.createProxy("bound")
 attribute_proxies["bound"] = proxy_bound
-function proxy_bound:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value == nil or value)
+function proxy_bound:init(key, value, storage)
+    storage[key] = value == nil or value
     lstg.SetAttr(self, key, false)
 end
 
@@ -809,16 +865,16 @@ end
 --region anchor
 local proxy_anchor = AttributeProxy.createProxy("anchor")
 attribute_proxies["anchor"] = proxy_anchor
-function proxy_anchor:init(key, value)
-    AttributeProxy.setStorageValue(self, key, value or EnumAnchor.Tail)
+function proxy_anchor:init(key, value, storage)
+    storage[key] = value or EnumAnchor.Tail
 end
 
-function proxy_anchor:setter(key, value)
-    local old_value = AttributeProxy.getStorageValue(self, key)
+function proxy_anchor:setter(key, value, storage)
+    local old_value = storage[key]
     if value == old_value then
         return
     end
-    AttributeProxy.setStorageValue(self, key, value)
+    storage[key] = value
     class.updateColliders(self)
 end
 
@@ -828,8 +884,8 @@ end
 local proxy_graze = AttributeProxy.createProxy("_graze")
 attribute_proxies["_graze"] = proxy_graze
 
-function proxy_graze:setter(key, value)
-    AttributeProxy.setStorageValue(self, key, value)
+function proxy_graze:setter(key, value, storage)
+    storage[key] = value
     if value then
         self.graze_countdown = 3
     end

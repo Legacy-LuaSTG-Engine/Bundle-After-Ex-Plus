@@ -45,12 +45,12 @@ class.___attribute_proxies = attribute_proxies
 local proxy_killed = AttributeProxy.createProxy("___killed")
 attribute_proxies["___killed"] = proxy_killed
 
-function proxy_killed:setter(key, value)
-    local old_value = AttributeProxy.getStorageValue(self, key)
+function proxy_killed:setter(key, value, storage)
+    local old_value = storage[key]
     if value == old_value then
         return
     end
-    AttributeProxy.setStorageValue(self, key, value)
+    storage[key] = value
     if lstg.IsValid(self.___collider_master) then
         lstg.SetAttr(self, "colli", self.___collider_master.colli and not value)
     else
@@ -64,13 +64,13 @@ end
 local proxy_graze = AttributeProxy.createProxy("_graze")
 attribute_proxies["_graze"] = proxy_graze
 
-function proxy_graze:getter()
+function proxy_graze:getter(key, storage)
     if IsValid(self.___collider_master) then
         return self.___collider_master._graze
     end
 end
 
-function proxy_graze:setter(value)
+function proxy_graze:setter(key, value, storage)
     if IsValid(self.___collider_master) then
         self.___collider_master._graze = value
     end
@@ -82,13 +82,13 @@ end
 local proxy_colli = AttributeProxy.createProxy("colli")
 attribute_proxies["colli"] = proxy_colli
 
-function proxy_colli:getter()
+function proxy_colli:getter(key, storage)
     if IsValid(self.___collider_master) then
         return self.___collider_master.colli and not self.___killed
     end
 end
 
-function proxy_colli:setter(value)
+function proxy_colli:setter(key, value, storage)
     if IsValid(self.___collider_master) then
         lstg.SetAttr(self, "colli", self.___collider_master.colli and value and not self.___killed)
     else
@@ -106,13 +106,13 @@ function proxy_bound:init()
     lstg.SetAttr(self, "bound", false)
 end
 
-function proxy_bound:getter()
+function proxy_bound:getter(key, storage)
     if IsValid(self.___collider_master) then
         return self.___collider_master.bound
     end
 end
 
-function proxy_bound:setter(value)
+function proxy_bound:setter(key, value, storage)
     if IsValid(self.___collider_master) then
         self.___collider_master.bound = value
     else
