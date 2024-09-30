@@ -53,6 +53,8 @@ function proxy_killed:setter(key, value)
     AttributeProxy.setStorageValue(self, key, value)
     if lstg.IsValid(self.___collider_master) then
         lstg.SetAttr(self, "colli", self.___collider_master.colli and not value)
+    else
+        lstg.SetAttr(self, "colli", false)
     end
 end
 
@@ -89,6 +91,8 @@ end
 function proxy_colli:setter(value)
     if IsValid(self.___collider_master) then
         lstg.SetAttr(self, "colli", self.___collider_master.colli and value and not self.___killed)
+    else
+        lstg.SetAttr(self, "colli", false)
     end
 end
 
@@ -111,6 +115,8 @@ end
 function proxy_bound:setter(value)
     if IsValid(self.___collider_master) then
         self.___collider_master.bound = value
+    else
+        lstg.SetAttr(self, "bound", true)
     end
 end
 
