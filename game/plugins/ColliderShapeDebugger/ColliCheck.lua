@@ -15,7 +15,10 @@ local function match_base(class, match)
     end
 end
 
-local toggle, KeyDown192, KeyDown123
+local KEY_COLLIDER = KEY.GRAVE
+local KEY_CHEAT = KEY.F12
+
+local toggleColliderRender, keyDownCollider, keyDownCheat
 
 local class = {}
 Collision_Checker = class
@@ -29,33 +32,33 @@ class.list = {
     { GROUP_INDES,         lstg.Color(255, 255, 165, 10) },
 }
 function class.init()
-    toggle = false
-    KeyDown192 = false
-    KeyDown123 = false
+    toggleColliderRender = false
+    keyDownCollider = false
+    keyDownCheat = false
 end
 
 function class.render()
-    if lstg.GetKeyState(192) then
-        if not KeyDown192 then
-            KeyDown192 = true
-            if toggle == true then
-                toggle = false
+    if lstg.GetKeyState(KEY_COLLIDER) then
+        if not keyDownCollider then
+            keyDownCollider = true
+            if toggleColliderRender == true then
+                toggleColliderRender = false
             else
-                toggle = true
+                toggleColliderRender = true
             end
         end
     else
-        KeyDown192 = false
+        keyDownCollider = false
     end
-    if lstg.GetKeyState(123) then
-        if not KeyDown123 then
-            KeyDown123 = true
+    if lstg.GetKeyState(KEY_CHEAT) then
+        if not keyDownCheat then
+            keyDownCheat = true
             cheat = not (cheat)
         end
     else
-        KeyDown123 = false
+        keyDownCheat = false
     end
-    if toggle == true then
+    if toggleColliderRender == true then
         for i = 1, #class.list do
             local c = class.list[i][2]
             lstg.SetImageState("collision_rect", "", c)
@@ -63,7 +66,6 @@ function class.render()
             lstg.SetImageState("collision_rect2", "", c)
             lstg.SetImageState("collision_rect3", "", c)
             lstg.SetImageState("collision_ring", "", c)
-            local bc = lstg.Color(c.a * 0.6, c.r, c.b, c.g)
             for _, unit in lstg.ObjList(class.list[i][1]) do
                 if unit.colli then
                     local x = lstg.GetAttr(unit, "x")
@@ -92,6 +94,7 @@ function class.render()
                             x3, y3, 0.5, tx, ty, 0.5,
                             tx, ty, 0.5, x4, y4, 0.5)
                     elseif match_base(unit.class, laser_bent) and unit.alpha > 0.999 and unit._colli then
+                        local bc = lstg.Color(c.a * 0.6, c.r, c.b, c.g)
                         unit.data:RenderCollider(bc)
                     else
                         local img = unit.rect and "collision_rect" or "collision_ring"
