@@ -158,12 +158,14 @@ function class:del()
     else
         for i = 1, #self.___colliders do
             local c = self.___colliders[i]
+            self.___colliders[i] = nil
             if lstg.IsValid(c) then
                 lstg.Del(c)
             end
         end
         for i = 1, #self.___recovery_colliders do
             local c = self.___recovery_colliders[i]
+            self.___recovery_colliders[i] = nil
             if lstg.IsValid(c) then
                 lstg.Del(c)
             end
@@ -198,12 +200,14 @@ function class:kill()
     else
         for i = 1, #self.___colliders do
             local c = self.___colliders[i]
+            self.___colliders[i] = nil
             if lstg.IsValid(c) then
                 lstg.Del(c)
             end
         end
         for i = 1, #self.___recovery_colliders do
             local c = self.___recovery_colliders[i]
+            self.___recovery_colliders[i] = nil
             if lstg.IsValid(c) then
                 lstg.Del(c)
             end
@@ -289,21 +293,23 @@ function class:updateColliders()
     local rot_sin = lstg.sin(rot)
     local half_width = self.w / 2
     local colli = self.colli
-    local fix_tail_offset = math.floor(total_offset / 16) * 16
-    local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
-    local have_changed = false
-    for part_offset = fix_tail_offset, fix_head_offset, 16 do
-        local collider = self.___offset_colliders[part_offset]
-        if not collider then
-            collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
-            colliders[#colliders + 1] = collider
-            have_changed = true
+    if not self.___killed then
+        local fix_tail_offset = math.floor(total_offset / 16) * 16
+        local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
+        local have_changed = false
+        for part_offset = fix_tail_offset, fix_head_offset, 16 do
+            local collider = self.___offset_colliders[part_offset]
+            if not collider then
+                collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
+                colliders[#colliders + 1] = collider
+                have_changed = true
+            end
         end
-    end
-    if have_changed then
-        QuickSort(colliders, function(a, b)
-            return a.___collider_offset > b.___collider_offset
-        end)
+        if have_changed then
+            QuickSort(colliders, function(a, b)
+                return a.___collider_offset > b.___collider_offset
+            end)
+        end
     end
     for i = #colliders, 1, -1 do
         local collider = colliders[i]
@@ -328,7 +334,7 @@ end
 
 function class:generateCollider(offset, killed)
     local collider = table.remove(self.___recovery_colliders)
-    if collider then
+    if lstg.IsValid(collider) then
         collider.group = self.group
         collider.___collider_offset = offset
         self.___recovery_colliders[collider] = nil
