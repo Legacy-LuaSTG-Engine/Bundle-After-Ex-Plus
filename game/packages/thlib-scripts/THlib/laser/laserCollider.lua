@@ -8,16 +8,13 @@ local class = lstg.CreateGameObjectClass()
 
 function class.create(master, group, offset)
     local self = lstg.New(class)
-    if not self then
-        return
-    end
-    self.group = group or GROUP_ENEMY_BULLET
-    self.layer = LAYER_ENEMY_BULLET
-    self.rect = true
-    self.hide = true
+    self.group = group or GROUP_ENEMY_BULLET    -- Collider group
+    self.layer = LAYER_ENEMY_BULLET             -- Collider layer
+    self.rect = true                            -- Use rectangle collider
+    self.hide = true                            -- Collider do not render
     ---@diagnostic disable
-    self.___collider_master = master
-    self.___collider_offset = offset
+    self.___collider_master = master            -- Master object
+    self.___collider_offset = offset            -- Offset
     ---@diagnostic enable
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
     return self

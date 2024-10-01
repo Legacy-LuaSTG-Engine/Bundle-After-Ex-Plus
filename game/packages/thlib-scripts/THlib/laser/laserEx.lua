@@ -32,45 +32,42 @@ class.EnumChangeIndex = EnumChangeIndex
 
 function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     local self = lstg.New(class)
-    if not self then
-        return
-    end
-    self.group = GROUP_ENEMY_BULLET
-    self.layer = LAYER_ENEMY_BULLET
-    self.x = x
-    self.y = y
-    self.rot = rot
-    self.rect = true
-    self.colli = false
+    self.group = GROUP_ENEMY_BULLET             -- Child colliders group
+    self.layer = LAYER_ENEMY_BULLET             -- Render layer
+    self.x = x                                  -- Anchor position x
+    self.y = y                                  -- Anchor position y
+    self.rot = rot                              -- Rotation
+    self.colli = false                          -- Main laser do not have collision
     ---@diagnostic disable
-    self.l1 = l1
-    self.l2 = l2
-    self.l3 = l3
-    self.w = w
-    self.node = node
-    self.head = head
-    self.anchor = EnumAnchor.Tail
-    self.graze_countdown = 0
-    self.shooting_speed = 0
-    self.offset_at_head = true
-    self.alpha = 0
+    self.l1 = l1                                -- Length of the first part
+    self.l2 = l2                                -- Length of the second part
+    self.l3 = l3                                -- Length of the third part
+    self.w = w                                  -- Width
+    self.node = node                            -- Node size
+    self.head = head                            -- Head size
+    self.anchor = EnumAnchor.Tail               -- Anchor position
+    self.graze_countdown = 0                    -- Graze countdown
+    self.shooting_speed = 0                     -- Shooting speed ( -offset per frame )
+    self.killed_at_spawn = false                -- Child colliders are killed at spawn
+    self.offset_at_head = true                  -- Offset at head
+    self.alpha = 0                              -- Render Alpha
     --
-    self._blend = "mul+add"
-    self._a = 255
-    self._r = 255
-    self._g = 255
-    self._b = 255
-    self.task = {}
+    self._blend = "mul+add"                     -- Blend mode
+    self._a = 255                               -- Color alpha
+    self._r = 255                               -- Color red
+    self._g = 255                               -- Color green
+    self._b = 255                               -- Color blue
+    self.task = {}                              -- Task list
     --
-    self.___killed = false
-    self.___shooting_offset = 0
-    self.___colliders = {}
-    self.___offset_colliders = {}
-    self.___recovery_colliders = {}
-    self.___changing_task = {}
+    self.___killed = false                      -- Killed flag
+    self.___shooting_offset = 0                 -- Shooting offset
+    self.___colliders = {}                      -- Child colliders
+    self.___offset_colliders = {}               -- Child colliders by offset
+    self.___recovery_colliders = {}             -- Recovery child colliders
+    self.___changing_task = {}                  -- Changing task
     --
-    self.onDelCollider = class.onDelCollider
-    self.onKillCollider = class.onKillCollider
+    self.onDelCollider = class.onDelCollider    -- On delete collider callback
+    self.onKillCollider = class.onKillCollider  -- On kill collider callback
     ---@diagnostic enable
     class.applyDefaultLaserStyle(self, 1, index)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
@@ -298,7 +295,7 @@ function class:updateColliders()
     for part_offset = fix_tail_offset, fix_head_offset, 16 do
         local collider = self.___offset_colliders[part_offset]
         if not collider then
-            collider = class.generateCollider(self, part_offset)
+            collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
             colliders[#colliders + 1] = collider
             have_changed = true
         end
@@ -329,16 +326,16 @@ function class:recoveryCollider(collider)
     self.___recovery_colliders[collider] = true
 end
 
-function class:generateCollider(offset)
+function class:generateCollider(offset, killed)
     local collider = table.remove(self.___recovery_colliders)
     if collider then
         collider.group = self.group
-        collider.___killed = false
         collider.___collider_offset = offset
         self.___recovery_colliders[collider] = nil
     else
         collider = laserCollider.create(self, self.group, offset)
     end
+    collider.___killed = killed == nil or killed
     self.___colliders[collider] = true
     self.___offset_colliders[offset] = collider
     return collider
