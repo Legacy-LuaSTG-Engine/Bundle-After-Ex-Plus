@@ -210,7 +210,10 @@ function DoFrame()
         ChangeGameStage()
         stage.CreateNextStage()
     end
-    --stage和object逻辑
+    -- 上一帧的处理
+    UpdateXY()
+    AfterFrame()
+    -- stage和object逻辑
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
@@ -234,8 +237,6 @@ function DoFrame()
         --由OLC添加，用于检查与自机碰撞，可以做？？？（好吧其实我不知道能做啥= =
         CollisionCheck(GROUP_CPLAYER, GROUP_PLAYER)
     end
-    UpdateXY()
-    AfterFrame()
 end
 
 --- 缓速和加速

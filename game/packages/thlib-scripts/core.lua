@@ -44,6 +44,9 @@ function DoFrame()
     if stage.NextStageExist() then
         stage.Change()
     end
+    --后更新
+    UpdateXY()
+    AfterFrame()
     stage.Update()
     --object frame function
     ObjFrame()
@@ -55,9 +58,6 @@ function DoFrame()
     CollisionCheck(GROUP_ENEMY, GROUP_PLAYER_BULLET)
     CollisionCheck(GROUP_NONTJT, GROUP_PLAYER_BULLET)
     CollisionCheck(GROUP_ITEM, GROUP_PLAYER)
-    --后更新
-    UpdateXY()
-    AfterFrame()
 end
 
 function BeforeRender()
