@@ -200,22 +200,27 @@ end
 
 --- 逻辑帧更新，不和 FrameFunc 一一对应
 function DoFrame()
-    --标题设置
+    -- 标题设置
     ChangeGameTitle()
-    --刷新输入
+    -- 获取输入
     GetInput()
-    --切关处理
+    -- 切关处理
     if stage.NextStageExist() then
         stage.DestroyCurrentStage()
         ChangeGameStage()
         stage.CreateNextStage()
     end
-    --stage和object逻辑
+    -- 上一帧的处理
+    UpdateXY()
+    AfterFrame()
+    -- 关卡更新
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
     end
+    -- 游戏对象更新
     ObjFrame()
+    -- 碰撞检测
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         BoundCheck()
     end
@@ -234,8 +239,6 @@ function DoFrame()
         --由OLC添加，用于检查与自机碰撞，可以做？？？（好吧其实我不知道能做啥= =
         CollisionCheck(GROUP_CPLAYER, GROUP_PLAYER)
     end
-    UpdateXY()
-    AfterFrame()
 end
 
 --- 缓速和加速
