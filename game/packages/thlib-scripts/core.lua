@@ -35,22 +35,23 @@ local SceneManager = require("foundation.SceneManager")
 --- 加载 THlib 后，会被重载以适应 replay 系统
 --- 逻辑帧更新，不和 FrameFunc 一一对应
 function DoFrame()
-    --设置标题
+    -- 设置标题
     --lstg.SetTitle(string.format("%s | %.2f FPS | %d OBJ | %s", setting.mod, lstg.GetFPS(), lstg.GetnObj(), gconfig.window_title))
     lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
-    --获取输入
+    -- 获取输入
     GetInput()
-    --切关处理
+    -- 切关处理
     if stage.NextStageExist() then
         stage.Change()
     end
-    --后更新
+    -- 上一帧的处理
     UpdateXY()
     AfterFrame()
+    -- 关卡更新
     stage.Update()
-    --object frame function
+    -- 游戏对象更新
     ObjFrame()
-    --碰撞检测
+    -- 碰撞检测
     BoundCheck()
     CollisionCheck(GROUP_PLAYER, GROUP_ENEMY_BULLET)
     CollisionCheck(GROUP_PLAYER, GROUP_ENEMY)

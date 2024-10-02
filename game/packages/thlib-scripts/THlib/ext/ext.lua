@@ -200,11 +200,11 @@ end
 
 --- 逻辑帧更新，不和 FrameFunc 一一对应
 function DoFrame()
-    --标题设置
+    -- 标题设置
     ChangeGameTitle()
-    --刷新输入
+    -- 获取输入
     GetInput()
-    --切关处理
+    -- 切关处理
     if stage.NextStageExist() then
         stage.DestroyCurrentStage()
         ChangeGameStage()
@@ -213,12 +213,14 @@ function DoFrame()
     -- 上一帧的处理
     UpdateXY()
     AfterFrame()
-    -- stage和object逻辑
+    -- 关卡更新
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
     end
+    -- 游戏对象更新
     ObjFrame()
+    -- 碰撞检测
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         BoundCheck()
     end
