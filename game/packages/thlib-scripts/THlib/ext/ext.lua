@@ -240,7 +240,7 @@ function DoFrame()
             { GROUP_SPELL, GROUP_NONTJT },
             { GROUP_SPELL, GROUP_ENEMY_BULLET },
             { GROUP_SPELL, GROUP_INDES },
-            -- 用于检查与自机碰撞，可以做？？？（好吧其实我不知道能做啥= =） (by OLC)
+            -- 用于检查与自机碰撞 (by OLC)
             { GROUP_CPLAYER, GROUP_PLAYER },
         });
     end
