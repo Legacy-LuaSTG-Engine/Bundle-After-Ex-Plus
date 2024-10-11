@@ -7,7 +7,7 @@ local task = task
 local AttributeProxy = require("foundation.AttributeProxy")
 local Easing = require("foundation.Easing")
 local QuickSort = require("foundation.QuickSort")
-local laserCollider = require("THlib.laser.laserCollider")
+local laserCollider = require("THlib-v2.bullet.laser.laserCollider")
 --endregion
 
 --region Class Definition
@@ -218,17 +218,22 @@ end
 --endregion
 
 --region Main Methods
-function class:onDelCollider(collider, offset)
+function class:checkPreserveCollider(collider)
     if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
-        return
+        return false
     end
-    if not self.___killed then
-        PreserveObject(collider)
+    if self.___killed then
+        return false
     end
-    if collider.___killed then
-        return
-    end
+    PreserveObject(collider)
     collider.___killed = true
+    return true
+end
+
+function class:onDelCollider(collider, offset)
+    if not class.checkPreserveCollider(self, collider) then
+        return
+    end
     local w = lstg.world
     if self.style_index and lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
@@ -236,16 +241,9 @@ function class:onDelCollider(collider, offset)
 end
 
 function class:onKillCollider(collider, offset)
-    if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
+    if not class.checkPreserveCollider(self, collider) then
         return
     end
-    if not self.___killed then
-        PreserveObject(collider)
-    end
-    if collider.___killed then
-        return
-    end
-    collider.___killed = true
     local w = lstg.world
     if lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(item_faith_minor, collider.x, collider.y)
