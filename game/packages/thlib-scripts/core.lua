@@ -53,12 +53,24 @@ function DoFrame()
     ObjFrame()
     -- 碰撞检测
     BoundCheck()
-    CollisionCheck(GROUP_PLAYER, GROUP_ENEMY_BULLET)
-    CollisionCheck(GROUP_PLAYER, GROUP_ENEMY)
-    CollisionCheck(GROUP_PLAYER, GROUP_INDES)
-    CollisionCheck(GROUP_ENEMY, GROUP_PLAYER_BULLET)
-    CollisionCheck(GROUP_NONTJT, GROUP_PLAYER_BULLET)
-    CollisionCheck(GROUP_ITEM, GROUP_PLAYER)
+    -- TODO: 等 API 文档更新后，去除下一行的禁用警告
+    ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
+    lstg.CollisionCheck({
+        -- 基础
+        { GROUP_PLAYER, GROUP_ENEMY_BULLET },
+        { GROUP_PLAYER, GROUP_ENEMY },
+        { GROUP_PLAYER, GROUP_INDES },
+        { GROUP_ENEMY, GROUP_PLAYER_BULLET },
+        { GROUP_NONTJT, GROUP_PLAYER_BULLET },
+        { GROUP_ITEM, GROUP_PLAYER },
+        -- 可用于自机 bomb (by OLC)
+        { GROUP_SPELL, GROUP_ENEMY },
+        { GROUP_SPELL, GROUP_NONTJT },
+        { GROUP_SPELL, GROUP_ENEMY_BULLET },
+        { GROUP_SPELL, GROUP_INDES },
+        -- 用于检查与自机碰撞，可以做？？？（好吧其实我不知道能做啥= =） (by OLC)
+        { GROUP_CPLAYER, GROUP_PLAYER },
+    });
 end
 
 function BeforeRender()
