@@ -1,3 +1,5 @@
+local table_sort = require("foundation.QuickSort")
+
 ---@class eventListener.event
 local event = {
     group = "",
@@ -39,7 +41,7 @@ end
 ---@param group string @事件组名称
 function eventListener:sort(group)
     assert(type(group) == "string", "invalid argument #1 (string expected)")
-    table.sort(self.data[group], function(a, b)
+    table_sort(self.data[group], function(a, b)
         if a.level and b.level then
             return b.level < a.level
         elseif b.level then

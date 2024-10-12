@@ -1,4 +1,5 @@
 local lstg_debug = require("lib.Ldebug")
+local table_sort = require("foundation.QuickSort")
 local imgui_exist, imgui = pcall(require, "imgui")
 
 ---@param v number
@@ -126,7 +127,7 @@ function StageDebugView:refreshBoss()
             end
         end
     end
-    table.sort(boss_list, function(a, b)
+    table_sort(boss_list, function(a, b)
         return a.class_name < b.class_name
     end)
     self.boss_list = boss_list
@@ -195,7 +196,7 @@ function StageDebugView:refresh()
             table.insert(stage_list, k)
         end
     end
-    table.sort(stage_list, function(a, b)
+    table_sort(stage_list, function(a, b)
         return a < b
     end)
     self.stage_list = stage_list
