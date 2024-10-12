@@ -5,6 +5,7 @@
 
 ---@class lstg @内建函数库
 lstg = lstg or {}
+local lstg = lstg -- optimization for local access
 
 ----------------------------------------
 ---各个模块
@@ -26,6 +27,22 @@ require("foundation.legacy.scoredata")
 lstg.DoFile("lib/Lplugin.lua")--用户插件
 require("lib.debug.AllView")
 require("foundation.MainLoop")
+local createEventDispatcher = require("foundation.EventDispatcher")
+eventListener = createEventDispatcher -- for compatibility
+
+--------------------------------------------------------------------------------
+
+---@alias lstg.GameStateEventGroup "GameState.AfterGetInput" | "GameState.BeforeGameStageChange" | "GameState.AfterGameStageChange" | "GameState.BeforeGameStageUpdate" | "GameState.AfterGameStageUpdate" | "GameState.BeforeObjFrame" | "GameState.AfterObjFrame" | "GameState.BeforeBoundCheck" | "GameState.AfterBoundCheck" | "GameState.BeforeCollisionCheck" | "GameState.AfterCollisionCheck" | "GameState.BeforeRender" | "GameState.AfterRender" | "GameState.BeforeStageRender" | "GameState.AfterStageRender" | "GameState.BeforeObjRender" | "GameState.AfterObjRender"
+
+---@class lstg.GlobalEventDispatcher : foundation.EventDispatcher
+---@field FindEvent fun(self: lstg.GlobalEventDispatcher, eventType: lstg.GameStateEventGroup, name: string): foundation.EventDispatcher.Event
+---@field RegisterEvent fun(self: lstg.GlobalEventDispatcher, eventType: lstg.GameStateEventGroup, name: string, priority: number, callback: function): boolean
+---@field UnregisterEvent fun(self: lstg.GlobalEventDispatcher, eventType: lstg.GameStateEventGroup, name: string)
+---@field DispatchEvent fun(self: lstg.GlobalEventDispatcher, eventType: lstg.GameStateEventGroup, ...)
+local gameEventDispatcher = createEventDispatcher()
+lstg.globalEventDispatcher = gameEventDispatcher
+
+--------------------------------------------------------------------------------
 
 local SceneManager = require("foundation.SceneManager")
 
@@ -40,18 +57,28 @@ function DoFrame()
     lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
     -- 获取输入
     GetInput()
+    gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
     -- 切关处理
     if stage.NextStageExist() then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
         stage.Change()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
     end
     -- 上一帧的处理
     lstg.AfterFrame(2) -- TODO: remove (2)
     -- 关卡更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
     stage.Update()
+    gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
     -- 游戏对象更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
     lstg.ObjFrame(2) -- TODO: remove (2)
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
     -- 碰撞检测
+    gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
     lstg.BoundCheck()
+    gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
+    gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
     -- TODO: 等 API 文档更新后，去除下一行的禁用警告
     ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
     lstg.CollisionCheck({
@@ -70,12 +97,15 @@ function DoFrame()
         -- 用于检查与自机碰撞 (by OLC)
         { GROUP_CPLAYER, GROUP_PLAYER },
     });
+    gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
 end
 
 function BeforeRender()
+    gameEventDispatcher:DispatchEvent("GameState.BeforeRender")
 end
 
 function AfterRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterRender")
 end
 
 ---@class game.DefaultScene : foundation.Scene
@@ -117,8 +147,12 @@ end
 
 function DefaultScene:onRender()
     BeforeRender()
+    gameEventDispatcher:DispatchEvent("GameState.BeforeStageRender")
     stage.current_stage:render()
+    gameEventDispatcher:DispatchEvent("GameState.AfterStageRender")
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjRender")
     ObjRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjRender")
     AfterRender()
 end
 

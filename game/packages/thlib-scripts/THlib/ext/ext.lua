@@ -4,6 +4,7 @@
 ---=====================================
 
 local SceneManager = require("foundation.SceneManager")
+local gameEventDispatcher = lstg.globalEventDispatcher
 
 ----------------------------------------
 ---ext加强库
@@ -204,26 +205,36 @@ function DoFrame()
     ChangeGameTitle()
     -- 获取输入
     GetInput()
+    gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
     -- 切关处理
     if stage.NextStageExist() then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
         stage.DestroyCurrentStage()
         ChangeGameStage()
         stage.CreateNextStage()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
     end
     -- 上一帧的处理
     lstg.AfterFrame(2) -- TODO: remove (2)
     -- 关卡更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
     end
     -- 游戏对象更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
     lstg.ObjFrame(2) -- TODO: remove (2)
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
     -- 碰撞检测
     if GetCurrentSuperPause() <= 0 or stage.nopause then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
         BoundCheck()
+        gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
     end
     if GetCurrentSuperPause() <= 0 then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
         -- TODO: 等 API 文档更新后，去除下一行的禁用警告
         ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
         lstg.CollisionCheck({
@@ -242,6 +253,7 @@ function DoFrame()
             -- 用于检查与自机碰撞 (by OLC)
             { GROUP_CPLAYER, GROUP_PLAYER },
         });
+        gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     end
 end
 
@@ -289,6 +301,7 @@ function DoFrameEx()
 end
 
 function AfterRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterRender")
     -- 暂停菜单渲染
     ext.pause_menu:render()
 end
@@ -323,13 +336,15 @@ end
 
 function GameScene:onRender()
     BeforeRender()
+    gameEventDispatcher:DispatchEvent("GameState.BeforeStageRender")
     stage.current_stage:render()
+    gameEventDispatcher:DispatchEvent("GameState.AfterStageRender")
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjRender")
     ObjRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjRender")
     SetViewMode("world")
     DrawCollider()
-    if Collision_Checker then
-        Collision_Checker.render()
-    end
+    gameEventDispatcher:DispatchEvent("GameState.AfterColliderRender")
     AfterRender()
 end
 
