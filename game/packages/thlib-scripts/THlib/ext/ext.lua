@@ -211,15 +211,14 @@ function DoFrame()
         stage.CreateNextStage()
     end
     -- 上一帧的处理
-    UpdateXY()
-    AfterFrame()
+    lstg.AfterFrame(2)
     -- 关卡更新
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
     end
     -- 游戏对象更新
-    ObjFrame()
+    lstg.ObjFrame(2)
     -- 碰撞检测
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         BoundCheck()

@@ -45,14 +45,13 @@ function DoFrame()
         stage.Change()
     end
     -- 上一帧的处理
-    UpdateXY()
-    AfterFrame()
+    lstg.AfterFrame(2)
     -- 关卡更新
     stage.Update()
     -- 游戏对象更新
-    ObjFrame()
+    lstg.ObjFrame(2)
     -- 碰撞检测
-    BoundCheck()
+    lstg.BoundCheck()
     -- TODO: 等 API 文档更新后，去除下一行的禁用警告
     ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
     lstg.CollisionCheck({
