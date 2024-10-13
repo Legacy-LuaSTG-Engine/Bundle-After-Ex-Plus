@@ -4,6 +4,7 @@
 --------------------------------------------------------------------------------
 
 local cjson_util = require("cjson.util")
+local table_sort = require("foundation.QuickSort")
 
 --------------------------------------------------------------------------------
 --- 工具
@@ -189,7 +190,7 @@ local _event = {
 
 ---@param lst lstg.plugin.Event.Entry[]
 local function sortEvent(lst)
-    table.sort(lst, function(a, b)
+    table_sort(lst, function(a, b)
         return a.priority > b.priority
     end)
 end

@@ -523,7 +523,7 @@ end
 ---@return boolean @是否发生覆盖
 function system:addKeyEvent(key, state, eventName, eventLevel, eventFunc)
     local event = string.format("keyEvent@%s@%s", key, state)
-    return self.listener:addEvent(event, eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent(event, eventName, eventLevel, eventFunc)
 end
 
 ---移除按键事件
@@ -532,7 +532,7 @@ end
 ---@param eventName string @按键事件名
 function system:removeKeyEvent(key, state, eventName)
     local event = string.format("keyEvent@%s@%s", key, state)
-    self.listener:remove(event, eventName)
+    self.listener:UnregisterEvent(event, eventName)
 end
 
 ---执行按键事件
@@ -541,7 +541,7 @@ end
 function system:doKeyEvent(key, state)
     local p = self.player
     local event = string.format("keyEvent@%s@%s", key, state)
-    self.listener:Do(event, p, self)
+    self.listener:DispatchEvent(event, p, self)
 end
 
 ---添加帧逻辑事件（前）
@@ -550,19 +550,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addFrameBeforeEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("frameEvent@before", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("frameEvent@before", eventName, eventLevel, eventFunc)
 end
 
 ---移除帧逻辑事件（前）
 ---@param eventName string @事件名
 function system:removeFrameBeforeEvent(eventName)
-    self.listener:remove("frameEvent@before", eventName)
+    self.listener:UnregisterEvent("frameEvent@before", eventName)
 end
 
 ---执行帧逻辑事件（前）
 function system:doFrameBeforeEvent()
     local p = self.player
-    self.listener:Do("frameEvent@before", p, self)
+    self.listener:DispatchEvent("frameEvent@before", p, self)
 end
 
 ---添加帧逻辑事件
@@ -571,19 +571,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addFrameEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("frameEvent@frame", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("frameEvent@frame", eventName, eventLevel, eventFunc)
 end
 
 ---移除帧逻辑事件
 ---@param eventName string @事件名
 function system:removeFrameEvent(eventName)
-    self.listener:remove("frameEvent@frame", eventName)
+    self.listener:UnregisterEvent("frameEvent@frame", eventName)
 end
 
 ---执行帧逻辑事件
 function system:doFrameEvent()
     local p = self.player
-    self.listener:Do("frameEvent@frame", p, self)
+    self.listener:DispatchEvent("frameEvent@frame", p, self)
 end
 
 ---添加帧逻辑事件（后）
@@ -592,19 +592,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addFrameAfterEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("frameEvent@after", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("frameEvent@after", eventName, eventLevel, eventFunc)
 end
 
 ---移除帧逻辑事件（后）
 ---@param eventName string @事件名
 function system:removeFrameAfterEvent(eventName)
-    self.listener:remove("frameEvent@after", eventName)
+    self.listener:UnregisterEvent("frameEvent@after", eventName)
 end
 
 ---执行帧逻辑事件（后）
 function system:doFrameAfterEvent()
     local p = self.player
-    self.listener:Do("frameEvent@after", p, self)
+    self.listener:DispatchEvent("frameEvent@after", p, self)
 end
 
 ---添加渲染逻辑事件（前）
@@ -613,19 +613,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addRenderBeforeEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("renderEvent@before", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("renderEvent@before", eventName, eventLevel, eventFunc)
 end
 
 ---移除渲染逻辑事件（前）
 ---@param eventName string @事件名
 function system:removeRenderBeforeEvent(eventName)
-    self.listener:remove("renderEvent@before", eventName)
+    self.listener:UnregisterEvent("renderEvent@before", eventName)
 end
 
 ---执行渲染逻辑事件（前）
 function system:doRenderBeforeEvent()
     local p = self.player
-    self.listener:Do("renderEvent@before", p, self)
+    self.listener:DispatchEvent("renderEvent@before", p, self)
 end
 
 ---添加渲染逻辑事件（后）
@@ -634,19 +634,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addRenderAfterEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("renderEvent@after", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("renderEvent@after", eventName, eventLevel, eventFunc)
 end
 
 ---移除渲染逻辑事件（后）
 ---@param eventName string @事件名
 function system:removeRenderAfterEvent(eventName)
-    self.listener:remove("renderEvent@after", eventName)
+    self.listener:UnregisterEvent("renderEvent@after", eventName)
 end
 
 ---执行渲染逻辑事件（后）
 function system:doRenderAfterEvent()
     local p = self.player
-    self.listener:Do("renderEvent@after", p, self)
+    self.listener:DispatchEvent("renderEvent@after", p, self)
 end
 
 ---添加碰撞逻辑事件（前）
@@ -655,19 +655,19 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addColliBeforeEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("colliEvent@before", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("colliEvent@before", eventName, eventLevel, eventFunc)
 end
 
 ---移除碰撞逻辑事件（前）
 ---@param eventName string @事件名
 function system:removeColliBeforeEvent(eventName)
-    self.listener:remove("colliEvent@before", eventName)
+    self.listener:UnregisterEvent("colliEvent@before", eventName)
 end
 
 ---执行碰撞逻辑事件（前）
 function system:doColliBeforeEvent(other)
     local p = self.player
-    self.listener:Do("colliEvent@before", p, self, other)
+    self.listener:DispatchEvent("colliEvent@before", p, self, other)
 end
 
 ---添加碰撞逻辑事件（后）
@@ -676,17 +676,17 @@ end
 ---@param eventFunc function @事件函数
 ---@return boolean @是否发生覆盖
 function system:addColliAfterEvent(eventName, eventLevel, eventFunc)
-    return self.listener:addEvent("colliEvent@after", eventName, eventLevel, eventFunc)
+    return self.listener:RegisterEvent("colliEvent@after", eventName, eventLevel, eventFunc)
 end
 
 ---移除碰撞逻辑事件（后）
 ---@param eventName string @事件名
 function system:removeColliAfterEvent(eventName)
-    self.listener:remove("colliEvent@after", eventName)
+    self.listener:UnregisterEvent("colliEvent@after", eventName)
 end
 
 ---执行碰撞逻辑事件（后）
 function system:doColliAfterEvent(other)
     local p = self.player
-    self.listener:Do("colliEvent@after", p, self, other)
+    self.listener:DispatchEvent("colliEvent@after", p, self, other)
 end

@@ -21,7 +21,7 @@ local KEY_CHEAT = KEY.F12
 local toggleColliderRender, keyDownCollider, keyDownCheat
 
 local class = {}
-Collision_Checker = class
+
 class.list = {
     { GROUP_PLAYER,        lstg.Color(255, 50, 255, 50) },
     { GROUP_PLAYER_BULLET, lstg.Color(255, 127, 127, 192) },
@@ -122,3 +122,11 @@ function class.render()
 end
 
 class.init()
+
+if lstg.globalEventDispatcher then
+    ---@type lstg.GlobalEventDispatcher
+    local gameEventDispatcher = lstg.globalEventDispatcher
+    gameEventDispatcher:RegisterEvent("GameState.AfterColliderRender", "ColliderShapeDebugger.RenderCollider", 0, class.render)
+else
+    Collision_Checker = class
+end

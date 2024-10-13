@@ -10,7 +10,6 @@ Include 'THlib/ex.lua' --ESC的ex库
 Include 'THlib/WalkImageSystem.lua'
 Include 'THlib/DNHWalkImageSystem.lua'
 Include 'THlib/DNHRenderObject.lua'
-Include 'THlib/eventListener.lua'
 Include 'THlib/resourcesRedirect.lua'
 Include 'THlib/misc/misc.lua'
 Include 'THlib/se/se.lua'

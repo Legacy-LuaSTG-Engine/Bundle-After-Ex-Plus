@@ -1,6 +1,6 @@
 {
     "name": "thlib-scripts",
-    "version": "0.8.22",
+    "version": "0.9.0",
     "dependencies": {
         "thlib-resources": "latest"
     },
