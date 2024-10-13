@@ -949,12 +949,18 @@ class.laserUpdater = updater
 
 function updater:init()
     self.list = {}
+    gameEventDispatcher:RegisterEvent("GameState.BeforeGameStageChange",
+            "THlib-v2:Laser.Updater.on_GameState_BeforeGameStageChange", 0, self.on_GameState_BeforeGameStageChange)
     gameEventDispatcher:RegisterEvent("GameState.AfterObjFrame",
             "THlib-v2:Laser.Updater.on_GameState_AfterObjFrame", 0, self.on_GameState_AfterObjFrame)
 end
 
 function updater:addLaser(laser)
     self.list[#self.list + 1] = laser
+end
+
+function updater.on_GameState_BeforeGameStageChange()
+    updater.list = {}
 end
 
 function updater.on_GameState_AfterObjFrame()
