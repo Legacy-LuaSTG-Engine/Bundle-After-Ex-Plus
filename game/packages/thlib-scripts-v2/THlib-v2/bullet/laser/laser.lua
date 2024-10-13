@@ -64,6 +64,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.___colliders = {}                      -- Child colliders
     self.___offset_colliders = {}               -- Child colliders by offset
     self.___recovery_colliders = {}             -- Recovery child colliders
+    self.___collider_only_in_bound = true       -- Only allow colliders in bound
     self.___changing_task = {}                  -- Changing task
     --
     self.onDelCollider = class.onDelCollider    -- On delete collider callback
@@ -291,30 +292,78 @@ function class:updateColliders()
     local rot_sin = lstg.sin(rot)
     local half_width = self.w / 2
     local colli = self.colli
-    if not self.___killed then
-        local fix_tail_offset = math.floor(total_offset / 16) * 16
-        local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
-        local have_changed = false
-        for part_offset = fix_tail_offset, fix_head_offset, 16 do
-            local collider = self.___offset_colliders[part_offset]
-            if not collider then
-                collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
-                colliders[#colliders + 1] = collider
-                have_changed = true
+    if self.___collider_only_in_bound then
+        local bound_l = lstg.world.boundl - 8
+        local bound_r = lstg.world.boundr + 8
+        local bound_b = lstg.world.boundb - 8
+        local bound_t = lstg.world.boundt + 8
+        if not self.___killed then
+            local fix_tail_offset = math.floor(total_offset / 16) * 16
+            local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
+            local have_changed = false
+            for part_offset = fix_tail_offset, fix_head_offset, 16 do
+                local offset = part_offset - total_offset
+                local x = tail_x + offset * rot_cos
+                local y = tail_y + offset * rot_sin
+                if x >= bound_l and x <= bound_r and y >= bound_b and y <= bound_t then
+                    local collider = self.___offset_colliders[part_offset]
+                    if not collider then
+                        collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
+                        colliders[#colliders + 1] = collider
+                        have_changed = true
+                    end
+                end
+            end
+            if have_changed then
+                QuickSort(colliders, function(a, b)
+                    return a.___collider_offset > b.___collider_offset
+                end)
             end
         end
-        if have_changed then
-            QuickSort(colliders, function(a, b)
-                return a.___collider_offset > b.___collider_offset
-            end)
+        for i = #colliders, 1, -1 do
+            local collider = colliders[i]
+            local flag = lstg.IsValid(collider)
+            if flag then
+                local offset = collider.___collider_offset - total_offset
+                local x = tail_x + offset * rot_cos
+                local y = tail_y + offset * rot_sin
+                if x < bound_l or x > bound_r or y < bound_b or y > bound_t then
+                    flag = false
+                end
+                flag = flag and class.updateCollider(self, collider,
+                        tail_x, tail_y, length, total_offset, half_width, colli, rot, rot_cos, rot_sin)
+            end
+            if not flag then
+                class.recoveryCollider(self, collider)
+                table.remove(colliders, i)
+            end
         end
-    end
-    for i = #colliders, 1, -1 do
-        local collider = colliders[i]
-        if not (lstg.IsValid(collider) and class.updateCollider(self, collider,
-                tail_x, tail_y, length, total_offset, half_width, colli, rot, rot_cos, rot_sin)) then
-            class.recoveryCollider(self, collider)
-            table.remove(colliders, i)
+    else
+        if not self.___killed then
+            local fix_tail_offset = math.floor(total_offset / 16) * 16
+            local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
+            local have_changed = false
+            for part_offset = fix_tail_offset, fix_head_offset, 16 do
+                local collider = self.___offset_colliders[part_offset]
+                if not collider then
+                    collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
+                    colliders[#colliders + 1] = collider
+                    have_changed = true
+                end
+            end
+            if have_changed then
+                QuickSort(colliders, function(a, b)
+                    return a.___collider_offset > b.___collider_offset
+                end)
+            end
+        end
+        for i = #colliders, 1, -1 do
+            local collider = colliders[i]
+            if not (lstg.IsValid(collider) and class.updateCollider(self, collider,
+                    tail_x, tail_y, length, total_offset, half_width, colli, rot, rot_cos, rot_sin)) then
+                class.recoveryCollider(self, collider)
+                table.remove(colliders, i)
+            end
         end
     end
 end
