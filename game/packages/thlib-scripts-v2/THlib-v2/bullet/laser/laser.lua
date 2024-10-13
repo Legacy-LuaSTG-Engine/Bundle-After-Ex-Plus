@@ -8,6 +8,8 @@ local AttributeProxy = require("foundation.AttributeProxy")
 local Easing = require("foundation.Easing")
 local QuickSort = require("foundation.QuickSort")
 local laserCollider = require("THlib-v2.bullet.laser.laserCollider")
+---@type lstg.GlobalEventDispatcher
+local gameEventDispatcher = lstg.globalEventDispatcher
 --endregion
 
 --region Class Definition
@@ -66,6 +68,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.___recovery_colliders = {}             -- Recovery child colliders
     self.___collider_only_in_bound = true       -- Only allow colliders in bound
     self.___changing_task = {}                  -- Changing task
+    self.___attribute_dirty = false             -- Attribute dirty
     --
     self.onDelCollider = class.onDelCollider    -- On delete collider callback
     self.onKillCollider = class.onKillCollider  -- On kill collider callback
@@ -73,6 +76,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     class.applyDefaultLaserStyle(self, 1, index)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
     class.updateColliders(self)
+    class.laserUpdater:addLaser(self)
     return self
 end
 
@@ -661,7 +665,7 @@ function proxy_x:setter(key, value, storage)
     end
     storage[key] = value
     lstg.SetAttr(self, key, value)
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -680,7 +684,7 @@ function proxy_y:setter(key, value, storage)
     end
     storage[key] = value
     lstg.SetAttr(self, key, value)
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -699,7 +703,7 @@ function proxy_rot:setter(key, value, storage)
     end
     storage[key] = value
     lstg.SetAttr(self, key, value)
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -718,7 +722,7 @@ function proxy_l1:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -737,7 +741,7 @@ function proxy_l2:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -756,7 +760,7 @@ function proxy_l3:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -774,7 +778,7 @@ function proxy_length:setter(key, value, storage)
         storage["l1"] = 0
         storage["l2"] = 0
         storage["l3"] = 0
-        class.updateColliders(self)
+        self.___attribute_dirty = true
         return
     end
     local l1 = storage["l1"]
@@ -793,7 +797,7 @@ function proxy_length:setter(key, value, storage)
     storage["l1"] = l1
     storage["l2"] = l2
     storage["l3"] = l3
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -812,7 +816,7 @@ function proxy_w:setter(key, value, storage)
     end
     value = math.max(value, 0)
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -830,7 +834,7 @@ function proxy_offset_at_head:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -848,7 +852,7 @@ function proxy_shooting_offset:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -868,12 +872,7 @@ function proxy_colli:setter(key, value, storage)
         return
     end
     storage[key] = value
-    for i = 1, #self.___colliders do
-        local c = self.___colliders[i]
-        if lstg.IsValid(c) then
-            lstg.SetAttr(c, key, value)
-        end
-    end
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -925,7 +924,7 @@ function proxy_anchor:setter(key, value, storage)
         return
     end
     storage[key] = value
-    class.updateColliders(self)
+    self.___attribute_dirty = true
 end
 
 --endregion
@@ -942,6 +941,53 @@ function proxy_graze:setter(key, value, storage)
 end
 
 --endregion
+--endregion
+
+--region Game State Updater
+local updater = {}
+class.laserUpdater = updater
+
+function updater:init()
+    self.list = {}
+    gameEventDispatcher:RegisterEvent("GameState.AfterObjFrame",
+            "THlib-v2:Laser.Updater.on_GameState_AfterObjFrame", 0, self.on_GameState_AfterObjFrame)
+end
+
+function updater:addLaser(laser)
+    self.list[#self.list + 1] = laser
+end
+
+function updater.on_GameState_AfterObjFrame()
+    local list = updater.list
+    local i = 0
+    while i < #list do
+        i = i + 1
+        local obj = list[i]
+        if lstg.IsValid(obj) then
+            local x = lstg.GetAttr(obj, "x")
+            if obj.x ~= x then
+                obj.x = x
+            end
+            local y = lstg.GetAttr(obj, "y")
+            if obj.y ~= y then
+                obj.y = y
+            end
+            local rot = lstg.GetAttr(obj, "rot")
+            if obj.rot ~= rot then
+                obj.rot = rot
+            end
+            if obj.___attribute_dirty then
+                class.updateColliders(obj)
+                obj.___attribute_dirty = false
+            end
+        else
+            table.remove(list, i)
+            i = i - 1
+        end
+    end
+end
+
+updater:init()
 --endregion
 
 return class
