@@ -228,11 +228,6 @@ function DoFrame()
     lstg.ObjFrame(2) -- TODO: remove (2)
     gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
     -- 碰撞检测
-    if GetCurrentSuperPause() <= 0 or stage.nopause then
-        gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
-        BoundCheck()
-        gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
-    end
     if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
         -- TODO: 等 API 文档更新后，去除下一行的禁用警告
@@ -254,6 +249,12 @@ function DoFrame()
             { GROUP_CPLAYER, GROUP_PLAYER },
         });
         gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
+    end
+    -- 出界检测
+    if GetCurrentSuperPause() <= 0 or stage.nopause then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
+        lstg.BoundCheck(2) -- TODO: remove (2)
+        gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
     end
 end
 
