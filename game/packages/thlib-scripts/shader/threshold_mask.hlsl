@@ -67,34 +67,3 @@ PS_Output main(PS_Input input)
     output.col = texture_color;
     return output;
 }
-
-// lua 侧调用（仅用于说明参数如何传递，并非可正常运行的代码）
-/*
-
-lstg.CreateRenderTarget("RenderTarget")
-lstg.CreateRenderTarget("Mask")
-
-lstg.PushRenderTarget("RenderTarget")
-...
-lstg.PopRenderTarget()
-
-lstg.PushRenderTarget("Mask")
-...
-lstg.PopRenderTarget()
-
-lstg.PostEffect(
-    -- 屏幕渲染目标
-    "RenderTarget",
-    -- 着色器资源名称
-    "texture_mask",
-    -- 混合模式
-    "mul+alpha",
-    -- 浮点参数
-    {},
-    -- 纹理与采样器类型参数
-    {
-        { "Mask", 6 },
-    }
-)
-
-*/
