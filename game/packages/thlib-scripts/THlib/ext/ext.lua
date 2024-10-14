@@ -4,6 +4,7 @@
 ---=====================================
 
 local SceneManager = require("foundation.SceneManager")
+local gameEventDispatcher = lstg.globalEventDispatcher
 
 ----------------------------------------
 ---ext加强库
@@ -200,42 +201,61 @@ end
 
 --- 逻辑帧更新，不和 FrameFunc 一一对应
 function DoFrame()
-    --标题设置
+    -- 标题设置
     ChangeGameTitle()
-    --刷新输入
+    -- 获取输入
     GetInput()
-    --切关处理
+    gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
+    -- 切关处理
     if stage.NextStageExist() then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
         stage.DestroyCurrentStage()
         ChangeGameStage()
         stage.CreateNextStage()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
     end
-    --stage和object逻辑
+    -- 上一帧的处理
+    lstg.AfterFrame(2) -- TODO: remove (2)
+    -- 关卡更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
     if GetCurrentSuperPause() <= 0 or stage.nopause then
         ex.Frame()
         stage.Update()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
     end
-    ObjFrame()
-    if GetCurrentSuperPause() <= 0 or stage.nopause then
-        BoundCheck()
-    end
+    -- 游戏对象更新
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
+    lstg.ObjFrame(2) -- TODO: remove (2)
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
+    -- 碰撞检测
     if GetCurrentSuperPause() <= 0 then
-        CollisionCheck(GROUP_PLAYER, GROUP_ENEMY_BULLET)
-        CollisionCheck(GROUP_PLAYER, GROUP_ENEMY)
-        CollisionCheck(GROUP_PLAYER, GROUP_INDES)
-        CollisionCheck(GROUP_ENEMY, GROUP_PLAYER_BULLET)
-        CollisionCheck(GROUP_NONTJT, GROUP_PLAYER_BULLET)
-        CollisionCheck(GROUP_ITEM, GROUP_PLAYER)
-        --由OLC添加，可用于自机bomb
-        CollisionCheck(GROUP_SPELL, GROUP_ENEMY)
-        CollisionCheck(GROUP_SPELL, GROUP_NONTJT)
-        CollisionCheck(GROUP_SPELL, GROUP_ENEMY_BULLET)
-        CollisionCheck(GROUP_SPELL, GROUP_INDES)
-        --由OLC添加，用于检查与自机碰撞，可以做？？？（好吧其实我不知道能做啥= =
-        CollisionCheck(GROUP_CPLAYER, GROUP_PLAYER)
+        gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
+        -- TODO: 等 API 文档更新后，去除下一行的禁用警告
+        ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
+        lstg.CollisionCheck({
+            -- 基础
+            { GROUP_PLAYER, GROUP_ENEMY_BULLET },
+            { GROUP_PLAYER, GROUP_ENEMY },
+            { GROUP_PLAYER, GROUP_INDES },
+            { GROUP_ENEMY, GROUP_PLAYER_BULLET },
+            { GROUP_NONTJT, GROUP_PLAYER_BULLET },
+            { GROUP_ITEM, GROUP_PLAYER },
+            -- 可用于自机 bomb (by OLC)
+            { GROUP_SPELL, GROUP_ENEMY },
+            { GROUP_SPELL, GROUP_NONTJT },
+            { GROUP_SPELL, GROUP_ENEMY_BULLET },
+            { GROUP_SPELL, GROUP_INDES },
+            -- 用于检查与自机碰撞 (by OLC)
+            { GROUP_CPLAYER, GROUP_PLAYER },
+        });
+        gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     end
-    UpdateXY()
-    AfterFrame()
+    -- 出界检测
+    if GetCurrentSuperPause() <= 0 or stage.nopause then
+        gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
+        lstg.BoundCheck(2) -- TODO: remove (2)
+        gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
+    end
 end
 
 --- 缓速和加速
@@ -282,6 +302,7 @@ function DoFrameEx()
 end
 
 function AfterRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterRender")
     -- 暂停菜单渲染
     ext.pause_menu:render()
 end
@@ -316,13 +337,15 @@ end
 
 function GameScene:onRender()
     BeforeRender()
+    gameEventDispatcher:DispatchEvent("GameState.BeforeStageRender")
     stage.current_stage:render()
+    gameEventDispatcher:DispatchEvent("GameState.AfterStageRender")
+    gameEventDispatcher:DispatchEvent("GameState.BeforeObjRender")
     ObjRender()
+    gameEventDispatcher:DispatchEvent("GameState.AfterObjRender")
     SetViewMode("world")
     DrawCollider()
-    if Collision_Checker then
-        Collision_Checker.render()
-    end
+    gameEventDispatcher:DispatchEvent("GameState.AfterColliderRender")
     AfterRender()
 end
 

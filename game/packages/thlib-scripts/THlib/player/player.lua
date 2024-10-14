@@ -1,3 +1,5 @@
+local table_sort = require("foundation.QuickSort")
+
 ---=====================================
 ---player
 ---=====================================
@@ -457,7 +459,7 @@ local function PlayerListSort()
         table.insert(playerDisplayName, v[1])
         pl2id[v[1]] = i
     end
-    table.sort(playerDisplayName)
+    table_sort(playerDisplayName)
     local id2pl = {}--{[pos]=player_list_pos}
     for i, v in ipairs(playerDisplayName) do
         id2pl[i] = pl2id[v]
