@@ -4,7 +4,7 @@
     "persistent_log_file_enable": false,
     "persistent_log_file_directory": "userdata/logs/",
     "persistent_log_file_max_count": 10,
-    "engine_cache_directory": "userdata/",
+    "engine_cache_directory": "",
     "single_application_instance": true,
     "application_instance_id": "0689df8f-7886-4d89-a335-5fba6e855d05",
     "debug_track_window_focus": false
