@@ -34,45 +34,47 @@ class.EnumChangeIndex = EnumChangeIndex
 
 function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     local self = lstg.New(class)
-    self.group = GROUP_ENEMY_BULLET             -- Child colliders group
-    self.layer = LAYER_ENEMY_BULLET             -- Render layer
-    self.x = x                                  -- Anchor position x
-    self.y = y                                  -- Anchor position y
-    self.rot = rot                              -- Rotation
-    self.colli = false                          -- Main laser do not have collision
+    -- Basic attributes
+    self.group = GROUP_ENEMY_BULLET            -- Child colliders group
+    self.layer = LAYER_ENEMY_BULLET            -- Render layer
+    self.x = x or 0                            -- Anchor position x
+    self.y = y or 0                            -- Anchor position y
+    self.rot = rot or 0                        -- Rotation
+    self.colli = false                         -- Current collision status (for child colliders)
     ---@diagnostic disable
-    self.l1 = l1                                -- Length of the first part
-    self.l2 = l2                                -- Length of the second part
-    self.l3 = l3                                -- Length of the third part
-    self.w = w                                  -- Width
-    self.node = node                            -- Node size
-    self.head = head                            -- Head size
-    self.anchor = EnumAnchor.Tail               -- Anchor position
-    self.graze_countdown = 0                    -- Graze countdown
-    self.shooting_speed = 0                     -- Shooting speed ( -offset per frame )
-    self.killed_at_spawn = false                -- Child colliders are killed at spawn
-    self.offset_at_head = true                  -- Offset at head
-    self.alpha = 0                              -- Render Alpha
-    --
-    self._blend = "mul+add"                     -- Blend mode
-    self._a = 255                               -- Color alpha
-    self._r = 255                               -- Color red
-    self._g = 255                               -- Color green
-    self._b = 255                               -- Color blue
-    self.task = {}                              -- Task list
-    --
-    self.___killed = false                      -- Killed flag
-    self.___shooting_offset = 0                 -- Shooting offset
-    self.___colliders = {}                      -- Child colliders
-    self.___offset_colliders = {}               -- Child colliders by offset
-    self.___recovery_colliders = {}             -- Recovery child colliders
-    self.___changing_task = {}                  -- Changing task
-    self.___attribute_dirty = false             -- Attribute dirty
-    --
-    self.onDelCollider = class.onDelCollider    -- On delete collider callback
-    self.onKillCollider = class.onKillCollider  -- On kill collider callback
+    -- Laser attributes
+    self.l1 = l1 or 0                          -- Length of the first part
+    self.l2 = l2 or 0                          -- Length of the second part
+    self.l3 = l3 or 0                          -- Length of the third part
+    self.w = w or 0                            -- Width
+    self.node = node or 0                      -- Node size
+    self.head = head or 0                      -- Head size
+    self.anchor = EnumAnchor.Tail              -- Anchor position
+    self.graze_countdown = 0                   -- Graze countdown
+    self.shooting_speed = 0                    -- Shooting speed ( -offset per frame )
+    self.killed_at_spawn = false               -- Child colliders are killed at spawn
+    self.offset_at_head = true                 -- Offset at head
+    self.alpha = 0                             -- Render Alpha
+    -- Color attributes
+    self._blend = "mul+add"                    -- Blend mode
+    self._a = 255                              -- Color alpha
+    self._r = 255                              -- Color red
+    self._g = 255                              -- Color green
+    self._b = 255                              -- Color blue
+    -- Internal attributes
+    self.___killed = false                     -- Killed flag
+    self.___shooting_offset = 0                -- Shooting offset
+    self.___colliders = {}                     -- Child colliders
+    self.___offset_colliders = {}              -- Child colliders by offset
+    self.___recovery_colliders = {}            -- Recovery child colliders
+    self.___changing_task = {}                 -- Changing task
+    self.___attribute_dirty = false            -- Attribute dirty
+    -- Callbacks
+    self.onDelCollider = class.onDelCollider   -- On delete collider callback
+    self.onKillCollider = class.onKillCollider -- On kill collider callback
     ---@diagnostic enable
-    class.applyDefaultLaserStyle(self, 1, index)
+    -- Finalize
+    class.applyDefaultLaserStyle(self, 1, index or 1)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
     class.updateColliders(self)
     class.laserUpdater:addLaser(self)
@@ -901,9 +903,9 @@ class.laserUpdater = updater
 function updater:init()
     self.list = {}
     gameEventDispatcher:RegisterEvent("GameState.BeforeGameStageChange",
-            "THlib-v2:Laser.Updater.on_GameState_BeforeGameStageChange", 0, self.on_GameState_BeforeGameStageChange)
+        "THlib-v2:Laser.Updater.on_GameState_BeforeGameStageChange", 0, self.on_GameState_BeforeGameStageChange)
     gameEventDispatcher:RegisterEvent("GameState.AfterObjFrame",
-            "THlib-v2:Laser.Updater.on_GameState_AfterObjFrame", 0, self.on_GameState_AfterObjFrame)
+        "THlib-v2:Laser.Updater.on_GameState_AfterObjFrame", 0, self.on_GameState_AfterObjFrame)
 end
 
 function updater:addLaser(laser)
