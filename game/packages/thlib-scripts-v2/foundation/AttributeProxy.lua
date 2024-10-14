@@ -22,13 +22,13 @@ if false then
     ---@param key string
     ---@param storage table<string, any>
     ---@return any
-    function Proxy:getter(self, key, storage)
+    function Proxy:getter(key, storage)
     end
 
     ---@param key string
     ---@param value any
     ---@param storage table<string, any>
-    function Proxy:setter(self, key, value, storage)
+    function Proxy:setter(key, value, storage)
     end
 end
 
