@@ -12,22 +12,22 @@ if false then
         key = ""
     }
 
-    ---@param key string
-    ---@param value any
-    ---@param storage table<string, any>
+    ---@param key string @The key of the attribute.
+    ---@param value any @Current value of the attribute.
+    ---@param storage table<string, any> @The storage table of all attributes.
     ---@overload fun(key: string)
     function Proxy:init(key, value, storage)
     end
 
-    ---@param key string
-    ---@param storage table<string, any>
+    ---@param key string @The key of the attribute.
+    ---@param storage table<string, any> @The storage table of all attributes.
     ---@return any
     function Proxy:getter(key, storage)
     end
 
-    ---@param key string
-    ---@param value any
-    ---@param storage table<string, any>
+    ---@param key string @The key of the attribute.
+    ---@param value any @The new value of the attribute.
+    ---@param storage table<string, any> @The storage table of all attributes.
     function Proxy:setter(key, value, storage)
     end
 end
@@ -35,19 +35,22 @@ end
 ---@class foundation.AttributeProxy
 local M = {}
 
----@param key string
+---Get the value of an attribute from the storage table.
+---@param key string @The key of the attribute.
 ---@return any
 function M:getStorageValue(key)
     return self[KEY_ATTRIBUTE_PROXIES_STORAGE][key]
 end
 
----@param key string
----@param value any
+---Set the value of an attribute in the storage table.
+---@param key string @The key of the attribute.
+---@param value any @The new value of the attribute.
 function M:setStorageValue(key, value)
     self[KEY_ATTRIBUTE_PROXIES_STORAGE][key] = value
 end
 
----@param key string
+---The metatable index function for the attribute proxy.
+---@param key string @The key of the attribute.
 ---@return any
 function M:___metatableIndex(key)
     local proxy = self[KEY_ATTRIBUTE_PROXIES_LIST][key]
@@ -57,7 +60,8 @@ function M:___metatableIndex(key)
     return lstg.GetAttr(self, key)
 end
 
----@param key string
+---The metatable newindex function for the attribute proxy.
+---@param key string @The key of the attribute.
 ---@param value any
 function M:___metatableNewIndex(key, value)
     local proxy = self[KEY_ATTRIBUTE_PROXIES_LIST][key]
@@ -68,6 +72,7 @@ function M:___metatableNewIndex(key, value)
     lstg.SetAttr(self, key, value)
 end
 
+---Apply a list of proxies to the object.
 ---@param proxies table<any, foundation.AttributeProxy.Proxy>
 function M:applyProxies(proxies)
     local current_proxies = self[KEY_ATTRIBUTE_PROXIES_LIST]
@@ -100,6 +105,7 @@ function M:applyProxies(proxies)
     end
 end
 
+---Create a new attribute proxy.
 ---@param key string
 ---@param getter function
 ---@param setter function
