@@ -22,6 +22,3 @@
     texture_overlay.fx
         功能：叠加（overlay）混合模式，来自 PhotoShop
         状态：未移植
-    world_rotate.fx
-        功能：游戏区域（world）画面旋转
-        状态：弃用，因为不依赖屏幕后处理特效也能实现
