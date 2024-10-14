@@ -55,6 +55,25 @@ function posteffect.drawMaskEffect(rendertarget_name, mask_rendertarget_name)
 end
 
 ---@param rendertarget_name string
+---@param mask_rendertarget_name string
+---@param threshold number
+function posteffect.drawThresholdMaskEffect(rendertarget_name, mask_rendertarget_name, threshold)
+    local shader_name = "$fx:threshold-mask"
+    if not lstg.CheckRes(9, shader_name) then
+        lstg.LoadFX(shader_name, "shader/threshold_mask.hlsl")
+    end
+    lstg.PostEffect(
+        rendertarget_name,
+        shader_name,
+        "mul+alpha",
+        {
+            threshold = threshold,
+            mask_texture = mask_rendertarget_name,
+        }
+    )
+end
+
+---@param rendertarget_name string
 ---@param blend lstg.BlendMode
 ---@param radius number
 function posteffect.drawBoxBlur3x3(rendertarget_name, blend, radius)
