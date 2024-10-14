@@ -69,6 +69,34 @@ function posteffect.drawThresholdMaskEffect(rendertarget_name, mask_rendertarget
 end
 
 ---@param rendertarget_name string
+---@param mask_rendertarget_name string
+---@param blend lstg.BlendMode
+---@param threshold number
+---@param range_down number
+---@param color_down lstg.Color
+---@param range_up number
+---@param color_up lstg.Color
+function posteffect.drawThresholdEdgeEffect(rendertarget_name, mask_rendertarget_name, blend, threshold, range_down, color_down, range_up, color_up)
+    local shader_name = "$fx:threshold-edge"
+    if not lstg.CheckRes(9, shader_name) then
+        lstg.LoadFX(shader_name, "shader/threshold_edge.hlsl")
+    end
+    lstg.PostEffect(
+        rendertarget_name,
+        shader_name,
+        blend,
+        {
+            threshold = threshold,
+            range_down = range_down,
+            color_down = color_down,
+            range_up = range_up,
+            color_up = color_up,
+            mask_texture = mask_rendertarget_name,
+        }
+    )
+end
+
+---@param rendertarget_name string
 ---@param blend lstg.BlendMode
 ---@param radius number
 function posteffect.drawBoxBlur3x3(rendertarget_name, blend, radius)

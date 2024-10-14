@@ -106,6 +106,50 @@ function ThresholdMaskScene:draw()
     post_effect.drawThresholdMaskEffect("rt:canvas1", "rt:mask2", threshold)
 end
 
+local ThresholdEdgeScene = {}
+ThresholdEdgeScene.name = "ThresholdEdgeScene"
+function ThresholdEdgeScene:create()
+    local old = lstg.GetResourceStatus()
+    lstg.SetResourceStatus("stage")
+    lstg.CreateRenderTarget("rt:canvas1")
+    lstg.CreateRenderTarget("rt:mask3")
+    loadSprite("canvas2", "canvas2.jpg")
+    loadSprite("mask3", "mask3.png")
+    lstg.SetResourceStatus(old)
+    self.timer = -1
+end
+function ThresholdEdgeScene:destroy()
+    lstg.RemoveResource("stage")
+end
+function ThresholdEdgeScene:update()
+    if not Keyboard.GetKeyState(Keyboard.Space) then
+        self.timer = self.timer + 1
+    end
+end
+function ThresholdEdgeScene:draw()
+    lstg.PushRenderTarget("rt:canvas1")
+    do
+        window:applyCameraSetting()
+        lstg.RenderClear(lstg.Color(255, 0, 0, 0))
+        lstg.Render("canvas2", window.width / 2, window.height / 2)
+    end
+    lstg.PopRenderTarget() -- "rt:canvas1"
+
+    lstg.PushRenderTarget("rt:mask3")
+    do
+        window:applyCameraSetting()
+        lstg.RenderClear(lstg.Color(255, 0, 0, 0))
+        lstg.Render("mask3", window.width / 2, window.height / 2)
+    end
+    lstg.PopRenderTarget() -- "rt:mask3"
+
+    window:applyCameraSetting()
+    lstg.RenderClear(lstg.Color(255, 16, 32, 64))
+    local threshold = 0.5 + 0.5 * lstg.sin(self.timer)
+    post_effect.drawThresholdMaskEffect("rt:canvas1", "rt:mask3", threshold)
+    post_effect.drawThresholdEdgeEffect("rt:canvas1", "rt:mask3", "mul+add", threshold, 0.05, lstg.Color(255, 240, 100, 4), 0.05, lstg.Color(255, 250, 140, 1))
+end
+
 local BoxBlur3x3Scene = {}
 BoxBlur3x3Scene.name = "BoxBlur3x3Scene"
 function BoxBlur3x3Scene:create()
@@ -205,7 +249,14 @@ local function makeInstance(class)
     return instance
 end
 
-local scenes = { MaskScene, ThresholdMaskScene, BoxBlur3x3Scene, BoxBlur5x5Scene, BoxBlur7x7Scene }
+local scenes = {
+    MaskScene,
+    ThresholdMaskScene,
+    ThresholdEdgeScene,
+    BoxBlur3x3Scene,
+    BoxBlur5x5Scene,
+    BoxBlur7x7Scene
+}
 local current_scene_index = 1
 local current_scene = makeInstance(scenes[current_scene_index])
 
