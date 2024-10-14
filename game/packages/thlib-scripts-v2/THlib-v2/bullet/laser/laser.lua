@@ -13,7 +13,6 @@ local gameEventDispatcher = lstg.globalEventDispatcher
 --endregion
 
 --region Class Definition
----@class THlib-v2.Bullet.Laser.StraightLaser
 local class = lstg.CreateGameObjectClass()
 
 --region Enums
@@ -33,22 +32,7 @@ local EnumChangeIndex = {
 class.EnumChangeIndex = EnumChangeIndex
 --endregion
 
----@class THlib-v2.Bullet.Laser.StraightLaser.CreateArgs
-local LaserCreateArgs = {
-    x = 0,
-    y = 0,
-    rot = 0,
-    l1 = 0,
-    l2 = 0,
-    l3 = 0,
-    w = 0,
-    node = 0,
-    head = 0,
-    index = 0,
-}
-
-function class.create(...)
-    local x, y, rot, l1, l2, l3, w, node, head, index = ...
+function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     local self = lstg.New(class)
     self.group = GROUP_ENEMY_BULLET             -- Child colliders group
     self.layer = LAYER_ENEMY_BULLET             -- Render layer
