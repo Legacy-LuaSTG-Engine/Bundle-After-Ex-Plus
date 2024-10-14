@@ -35,21 +35,16 @@ local posteffect = {}
 ---@param rendertarget_name string
 ---@param mask_rendertarget_name string
 function posteffect.drawMaskEffect(rendertarget_name, mask_rendertarget_name)
-    if not lstg.CheckRes(9, "$fx:alpha-mask") then
-        lstg.LoadFX("$fx:alpha-mask", "shader/alpha_mask.hlsl")
+    local shader_name = "$fx:alpha-mask"
+    if not lstg.CheckRes(9, shader_name) then
+        lstg.LoadFX(shader_name, "shader/alpha_mask.hlsl")
     end
     lstg.PostEffect(
-        -- 着色器资源名称
-        "$fx:alpha-mask",
-        -- 屏幕渲染目标，采样器类型
-        rendertarget_name, 6,
-        -- 混合模式
+        rendertarget_name,
+        shader_name,
         "mul+alpha",
-        -- 浮点参数
-        {},
-        -- 纹理与采样器类型参数
         {
-            { mask_rendertarget_name, 6 },
+            mask_texture = mask_rendertarget_name,
         }
     )
 end
