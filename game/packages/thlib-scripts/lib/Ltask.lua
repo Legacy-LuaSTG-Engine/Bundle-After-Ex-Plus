@@ -9,6 +9,7 @@ local rawget = rawget
 local rawset = rawset
 local ipairs = ipairs
 local insert = table.insert
+local remove = table.remove
 local create = coroutine.create
 local status = coroutine.status
 local resume = coroutine.resume
@@ -48,7 +49,8 @@ function task.Do(target)
     ---@type thread[]?
     local tasks = rawget(target, field)
     if tasks then
-        for _, co in ipairs(tasks) do
+        local clean = {}
+        for index, co in ipairs(tasks) do
             if status(co) ~= "dead" then
                 target_stack_n = target_stack_n + 1
                 target_stack[target_stack_n] = target
@@ -67,7 +69,12 @@ function task.Do(target)
                 co_stack_n = co_stack_n - 1
                 target_stack[target_stack_n] = nil
                 target_stack_n = target_stack_n - 1
+            else
+                clean[#clean + 1] = index
             end
+        end
+        for i = #clean, 1, -1 do
+            remove(tasks, i)
         end
     end
 end
