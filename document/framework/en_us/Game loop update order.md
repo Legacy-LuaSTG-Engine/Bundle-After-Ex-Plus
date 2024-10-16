@@ -1,8 +1,8 @@
-# 游戏循环更新顺序  
+# Game loop update order  
 
-LuaSTG Sub 0.21.12 和 LuaSTG After Ex Plus 0.9.0 对游戏循环更新顺序作出了重大修改，这些修改可能会影响依赖某些特性（feature）或 bug 运行的现有代码。但从长远来看，这些修改可以让游戏循环更新顺序更加合理。  
+LuaSTG Sub 0.21.12 and LuaSTG After Ex Plus 0.9.0 have made significant changes to the game loop update order, which may affect existing code that depends on certain features or bugs. However, in the long run, these changes will make the game loop update order more rational.  
 
-## 重点修改内容  
+## Highlights of changes  
 
 * 调整“根据 navi 更新 rot 属性”的位置到每个游戏对象的粒子系统更新之前  
 * 调整“更新 dx、dy 属性”的位置到每个逻辑帧的开始  
@@ -12,144 +12,143 @@ LuaSTG Sub 0.21.12 和 LuaSTG After Ex Plus 0.9.0 对游戏循环更新顺序作
 * 先执行所有相交检测，再根据检测结果触发 colli 回调函数  
 * 先执行所有出界检测，再根据检测结果标记删除游戏对象  
 
-## 旧顺序  
+## Old order  
 
-1. 读取玩家操作  
-2. 执行 `ex.Frame`、_`<当前关卡>`_.`frame`  
-3. 游戏对象更新（1） `lstg.ObjFrame`（伪代码）：  
+1. Read player inputs  
+2. call `ex.Frame`, _`current_stage_instance`_`.frame`  
+3. Update GameObjects (1) `lstg.ObjFrame` (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 执行 frame 回调函数
+        -- Call frame callback function
         object:frame()
-        -- 根据 ax、ay、ag 更新 vx、vy
+        -- Update vx, vy according to ax, ay, ag
         object.vx = object.vx + object.ax
         object.vy = object.vy + object.ay - object.ag
-        -- 根据 maxv 限制 vx、vy
+        -- Limit vx, vy according to maxv
         local speed = sqrt(object.vx * object.vx + object.vy * object.vy)
         if speed > maxv then
             local scale = maxv / speed
             object.vx = object.vx * scale
             object.vy = object.vy * scale
         end
-        -- 根据 maxvx、maxvy 限制 vx、vy 范围
+        -- Limit vx, vy according to maxvx, maxvy
         object.vx = clamp(object.vx, -object.maxvx, object.maxvx)
         object.vy = clamp(object.vy, -object.maxvy, object.maxvy)
-        -- 根据 vx、vy 更新 x、y
+        -- Update x, y according to vx, vy
         object.x = object.x + object.vx
         object.y = object.y + object.vy
-        -- 根据 omega（omiga）更新 rot
+        -- Update rot according to omega (omiga)
         object.rot = object.rot + object.omega
-        -- 更新粒子系统（若有）
+        -- Updating particle system (if exists)
         updateParticleSystem(object)
     end
     ```
-4. 出界判断 `lstg.BoundCheck`（伪代码）：  
+4. Check world boundary `lstg.BoundCheck` (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 判断游戏对象中心位置是否离开世界边界
         if not isInWorldBoundary(object) then
-            -- “删除”游戏对象
+            -- mark as deleted
             lstg.Del(object)
         end
     end
     ```
-5. 相交检测 `lstg.CollisionCheck`（伪代码）：  
+5. Check intersection `lstg.CollisionCheck` (pseudo-code):  
     ```lua
     for object1 in lstg.ObjList(group1) do
         for object2 in lstg.ObjList(group2) do
             if hasIntersection(object1, object2) then
-                -- 执行属于第一个碰撞组的游戏对象的 colli 回调函数
+                -- Call the colli callback function for the GameObject that belongs to the first group.
                 object1:colli(object2)
             end
         end
     end
     ```
-6. 游戏对象更新到下一帧（1）+游戏对象更新（2）`lstg.UpdateXY`（伪代码）：  
+6. Update GameObject to next frame (1) & Update GameObjects (2) `lstg.UpdateXY` (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 更新 dx、dy（注意 lastx、lasty 在 lua 层不可访问）
+        -- Update dx, dy (Note that lastx, lasty are not accessible to lua scripts)
         object.dx = object.x - object.lastx
         object.dy = object.y - object.lasty
         object.lastx = object.x
         object.lasty = object.y
-        -- 根据 navi 更新 rot
+        -- Update rot if navi enabled
         if object.navi then
             object.rot = atan2(object.dy, object.dx)
         end
     end
     ```
-7. 游戏对象更新到下一帧（2）`lstg.AfterFrame`（伪代码）：  
+7. Update GameObject to next frame (2) `lstg.AfterFrame` (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 更新计时器
+        -- Update timers
         object.timer = object.timer + 1
         object.ani = object.ani + 1
-        -- 如果对象标记为删除（不是正常状态），回收对象
+        -- Check GameObject status
         if object.status ~= "normal" then
+            -- Marked as deleted, free it
             freeGameObject(object)
         end
     end
     ```
 
-## 新顺序  
+## New order  
 
-1. 游戏对象更新到下一帧（伪代码）:  
+1. Update GameObject to next frame (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 如果游戏对象是正常状态，执行更新，否则回收对象
+        -- Check GameObject status
         if object.status == "normal" then
-            -- 更新 dx、dy，注意 lastx、lasty 在 lua 层不可访问
+            -- Update dx, dy (Note that lastx, lasty are not accessible to lua scripts)
             object.dx = object.x - object.lastx
             object.dy = object.y - object.lasty
             object.lastx = object.x
             object.lasty = object.y
-            -- 更新计时器
+            -- Update timers
             object.timer = object.timer + 1
             object.ani = object.ani + 1
         else
-            -- 回收对象
+            -- Marked as deleted, free it
             freeGameObject(object)
         end
     end
     ```
-2. 读取玩家操作  
-3. 执行 `ex.Frame`、_`<当前关卡>`_.`frame`  
-4. 游戏对象更新（伪代码）：  
+2. Read player inputs    
+3. Call ex.Frame, _current_stage_instance_.frame  
+4. Update GameObject (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
-        -- 执行 frame 回调函数
+        -- Call frame callback function
         object:frame()
     end
     for object in lstg.ObjList() do
-        -- 根据 ax、ay、ag 更新 vx、vy
+        -- Update vx, vy according to ax, ay, ag
         object.vx = object.vx + object.ax
         object.vy = object.vy + object.ay - object.ag
-        -- 根据 maxv 限制 vx、vy
+        -- Limit vx, vy according to maxv
         local speed = sqrt(object.vx * object.vx + object.vy * object.vy)
         if speed > maxv then
             local scale = maxv / speed
             object.vx = object.vx * scale
             object.vy = object.vy * scale
         end
-        -- 根据 maxvx、maxvy 限制 vx、vy 范围
+        -- Limit vx, vy according to maxvx, maxvy
         object.vx = clamp(object.vx, -object.maxvx, object.maxvx)
         object.vy = clamp(object.vy, -object.maxvy, object.maxvy)
-        -- 根据 vx、vy 更新 x、y
+        -- Update x, y according to vx, vy
         object.x = object.x + object.vx
         object.y = object.y + object.vy
-        -- 根据 omega（omiga）更新 rot
+        -- Update rot according to omega (omiga)
         object.rot = object.rot + object.omega
-        -- 根据 navi 更新 rot
+        -- Update rot if navi enabled
         if object.navi then
             object.rot = atan2(object.dy, object.dx)
         end
-        -- 更新粒子系统（若有）
+        -- Updating particle system (if exists)
         updateParticleSystem(object)
     end
     ```
-5. 相交检测（伪代码）：  
+5. Check intersection (pseudo-code):  
     ```lua
-    -- 第一步
     local results = {}
     for object1 in lstg.ObjList(group1) do
         for object2 in lstg.ObjList(group2) do
@@ -158,25 +157,23 @@ LuaSTG Sub 0.21.12 和 LuaSTG After Ex Plus 0.9.0 对游戏循环更新顺序作
             end
         end
     end
-    -- 第二步
     for _, result in ipairs(results) do
-        -- 执行属于第一个碰撞组的游戏对象的 colli 回调函数
+        -- Call the colli callback function for the GameObject that belongs to the first group.
         result[1]:colli(result[2])
     end
     ```
-6. 出界检测（伪代码）：
+6. Check world boundary (pseudo-code):  
     ```lua
-    -- 第一步
+    -- Step 1
     local results = {}
     for object in lstg.ObjList() do
-        -- 判断游戏对象中心位置是否离开世界边界
         if not isInWorldBoundary(object) then
             table.insert(results, object)
         end
     end
-    -- 第二步
-    for _, object in ipairs(results) do
-        -- “删除”游戏对象
+    -- Step 2
+    for _ object in ipairs(results) do
+        -- mark as deleted
         lstg.Del(object)
     end
     ```
