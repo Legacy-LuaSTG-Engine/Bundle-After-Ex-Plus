@@ -4,18 +4,18 @@ LuaSTG Sub 0.21.12 and LuaSTG After Ex Plus 0.9.0 have made significant changes 
 
 ## Highlights of changes  
 
-* 调整“根据 navi 更新 rot 属性”的位置到每个游戏对象的粒子系统更新之前  
-* 调整“更新 dx、dy 属性”的位置到每个逻辑帧的开始  
-* 调整“更新 timer、ani 属性”的位置到每个逻辑帧的开始  
-* 将出界检测调整到每个逻辑帧的末尾  
-* 先执行所有游戏对象的 frame 回调函数，再更新所有游戏对象的运动参数、位置、粒子系统  
-* 先执行所有相交检测，再根据检测结果触发 colli 回调函数  
-* 先执行所有出界检测，再根据检测结果标记删除游戏对象  
+* Move "update dx, dy" to the start of logical frame  
+* Move "update timer, ani" to the start of logical frame  
+* Call GameObjects' frame callback functions first, then update movements and particle systems  
+* Move "update rot if navi enabled" to before each GameObject's particle system update    
+* Delay processing of intersection detection results  
+* Move out-of-world-boundary detection to the end of logical frame  
+* Delay processing of out-of-world-boundary detection results  
 
 ## Old order  
 
 1. Read player inputs  
-2. call `ex.Frame`, _`current_stage_instance`_`.frame`  
+2. Call `ex.Frame`, _`current_stage_instance`_`.frame`  
 3. Update GameObjects (1) `lstg.ObjFrame` (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
@@ -113,7 +113,7 @@ LuaSTG Sub 0.21.12 and LuaSTG After Ex Plus 0.9.0 have made significant changes 
     end
     ```
 2. Read player inputs    
-3. Call ex.Frame, _current_stage_instance_.frame  
+3. Call `ex.Frame`, _`current_stage_instance`_`.frame`  
 4. Update GameObject (pseudo-code):  
     ```lua
     for object in lstg.ObjList() do
