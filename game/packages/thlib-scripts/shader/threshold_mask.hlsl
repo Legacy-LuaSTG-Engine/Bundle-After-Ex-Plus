@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------
-// 遮罩功能
-// 根据灰度图生成 alpha 通道
+// 阈值遮罩功能
+// 根据遮罩图和阈值生成 alpha 通道
 // 璀境石
 // --------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ cbuffer engine_data : register(b1)
 
 cbuffer user_data : register(b0)
 {
-    float4   user_data_0;
+    float threshold;
 };
 
 // 用户传递的纹理和采样器参数，可用槽位 0 到 3
@@ -52,9 +52,16 @@ PS_Output main(PS_Input input)
         discard; // 抛弃不需要的像素，防止意外覆盖画面
     }
 
-    float4 texture_color = screen_texture.Sample(screen_texture_sampler, input.uv);
     float4 mask_color = mask_texture.Sample(mask_texture_sampler, input.uv);
-    texture_color *= ((mask_color.r + mask_color.g + mask_color.b) * _1_3);
+    float mask_value = (mask_color.r + mask_color.g + mask_color.b) * _1_3;
+    float4 texture_color;
+    if (mask_value < threshold)
+    {
+        texture_color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+    else {
+        texture_color = screen_texture.Sample(screen_texture_sampler, input.uv);
+    }
 
     PS_Output output;
     output.col = texture_color;
