@@ -174,4 +174,25 @@ function posteffect.drawBoxBlur7x7(rendertarget_name, blend, radius)
     )
 end
 
+---@param rendertarget_name string
+---@param h number
+---@param s number
+---@param l number
+function posteffect.drawHSLShiftEffect(rendertarget_name, h, s, l)
+    local shader_name = "$fx:hsl-shift"
+    if not lstg.CheckRes(9, shader_name) then
+        lstg.LoadFX(shader_name, "shader/hsl_shift.hlsl")
+    end
+    lstg.PostEffect(
+        rendertarget_name,
+        shader_name,
+        "mul+alpha",
+        {
+            hue_shift = h,
+            saturation_shift = s,
+            lightness_shift = l,
+        }
+    )
+end
+
 return posteffect
