@@ -13,9 +13,6 @@
     boss_distortion.fx
         功能：LuaSTG ex+ 时期的扭曲特效
         状态：已移植（有缺陷！）
-    texture_hue.fx
-        功能：色相、饱和度、明度变换
-        状态：未移植
     texture_mosaic.fx
         功能：马赛克化
         状态：弃用，因为不依赖屏幕后处理特效也能实现
