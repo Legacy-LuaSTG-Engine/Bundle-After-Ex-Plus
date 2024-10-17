@@ -203,6 +203,8 @@ end
 function DoFrame()
     -- 标题设置
     ChangeGameTitle()
+    -- 上一帧的处理
+    lstg.AfterFrame(2) -- TODO: remove (2)
     -- 获取输入
     GetInput()
     gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
@@ -214,8 +216,6 @@ function DoFrame()
         stage.CreateNextStage()
         gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
     end
-    -- 上一帧的处理
-    lstg.AfterFrame(2) -- TODO: remove (2)
     -- 关卡更新
     gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
     if GetCurrentSuperPause() <= 0 or stage.nopause then
