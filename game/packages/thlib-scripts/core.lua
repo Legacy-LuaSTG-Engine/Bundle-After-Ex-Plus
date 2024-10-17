@@ -55,6 +55,8 @@ function DoFrame()
     -- 设置标题
     --lstg.SetTitle(string.format("%s | %.2f FPS | %d OBJ | %s", setting.mod, lstg.GetFPS(), lstg.GetnObj(), gconfig.window_title))
     lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
+    -- 上一帧的处理
+    lstg.AfterFrame(2) -- TODO: remove (2)
     -- 获取输入
     GetInput()
     gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
@@ -64,8 +66,6 @@ function DoFrame()
         stage.Change()
         gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
     end
-    -- 上一帧的处理
-    lstg.AfterFrame(2) -- TODO: remove (2)
     -- 关卡更新
     gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
     stage.Update()
