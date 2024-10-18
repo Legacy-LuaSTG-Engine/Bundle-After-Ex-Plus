@@ -4,8 +4,14 @@ local AttributeProxy = require("foundation.AttributeProxy")
 --endregion
 
 --region Class Definition
+---@class THlib.v2.bullet.laser.laserCollider : lstg.GameObject
 local class = lstg.CreateGameObjectClass()
 
+---@param master lstg.GameObject @Master object
+---@param group number @Collider group
+---@param args table<string, any> @Arguments
+---@param on_del fun(master: lstg.GameObject, self: THlib.v2.bullet.laser.laserCollider, args: table<string, any>) @On Del callback
+---@param on_kill fun(master: lstg.GameObject, self: THlib.v2.bullet.laser.laserCollider, args: table<string, any>) @On Kill callback
 function class.create(master, group, args, on_del, on_kill)
     local self = lstg.New(class)
     self.group = group or GROUP_ENEMY_BULLET    -- Collider group

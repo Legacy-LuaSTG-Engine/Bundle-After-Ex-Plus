@@ -13,9 +13,11 @@ local gameEventDispatcher = lstg.globalEventDispatcher
 --endregion
 
 --region Class Definition
+---@class THlib.v2.bullet.laser.laser : lstg.GameObject
 local class = lstg.CreateGameObjectClass()
 
 --region Enums
+---@class THlib.v2.bullet.laser.EnumAnchor
 local EnumAnchor = {
     Head = 1,
     Center = 2,
@@ -23,6 +25,7 @@ local EnumAnchor = {
 }
 class.EnumAnchor = EnumAnchor
 
+---@class THlib.v2.bullet.laser.EnumChangeIndex
 local EnumChangeIndex = {
     Alpha = 1,
     Width = 2,
@@ -32,6 +35,17 @@ local EnumChangeIndex = {
 class.EnumChangeIndex = EnumChangeIndex
 --endregion
 
+---@param x number @Anchor position x
+---@param y number @Anchor position y
+---@param rot number @Rotation
+---@param l1 number @Length of the first part
+---@param l2 number @Length of the second part
+---@param l3 number @Length of the third part
+---@param w number @Width
+---@param node number @Node size
+---@param head number @Head size
+---@param index number @Style index
+---@return THlib.v2.bullet.laser.laser
 function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     local self = lstg.New(class)
     -- Basic attributes
@@ -224,6 +238,8 @@ end
 --endregion
 
 --region Main Methods
+---Preserve a collider if it is child of this laser
+---@param collider THlib.v2.bullet.laser.laserCollider
 function class:checkPreserveCollider(collider)
     if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
         return false
@@ -236,6 +252,9 @@ function class:checkPreserveCollider(collider)
     return true
 end
 
+---Called when a collider is deleted
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@param args table<string, any>
 function class:dispatchColliderOnDelete(collider, args)
     if not class.checkPreserveCollider(self, collider) then
         return
@@ -245,6 +264,9 @@ function class:dispatchColliderOnDelete(collider, args)
     end
 end
 
+---Default value of user defined callback when a collider is deleted
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@param args table<string, any>
 function class:onDelCollider(collider, args)
     local w = lstg.world
     if self.style_index and lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
@@ -252,6 +274,9 @@ function class:onDelCollider(collider, args)
     end
 end
 
+---Called when a collider is killed
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@param args table<string, any>
 function class:dispatchColliderOnKill(collider, args)
     if not class.checkPreserveCollider(self, collider) then
         return
@@ -261,6 +286,9 @@ function class:dispatchColliderOnKill(collider, args)
     end
 end
 
+---Default value of user defined callback when a collider is killed
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@param args table<string, any>
 function class:onKillCollider(collider, args)
     local w = lstg.world
     if lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
@@ -271,6 +299,8 @@ function class:onKillCollider(collider, args)
     end
 end
 
+---Check if the laser is out of bound
+---@return boolean
 function class:checkIsOutOfBound()
     local w = lstg.world
     local is_out_of_bound = true
@@ -284,6 +314,7 @@ function class:checkIsOutOfBound()
     return is_out_of_bound
 end
 
+---Update laser colliders immediately
 function class:updateColliders()
     local colliders = self.___colliders
     local length = self.length
@@ -337,6 +368,8 @@ function class:updateColliders()
     end
 end
 
+---Recovery a collider
+---@param collider THlib.v2.bullet.laser.laserCollider
 function class:recoveryCollider(collider)
     if not (self.___colliders[collider] and lstg.IsValid(collider)) then
         return
@@ -348,6 +381,10 @@ function class:recoveryCollider(collider)
     self.___recovery_colliders[collider] = true
 end
 
+---Generate a collider
+---@param offset number @Offset
+---@param killed boolean @Killed flag
+---@return THlib.v2.bullet.laser.laserCollider
 function class:generateCollider(offset, killed)
     local collider = table.remove(self.___recovery_colliders)
     if lstg.IsValid(collider) then
@@ -367,6 +404,18 @@ function class:generateCollider(offset, killed)
     return collider
 end
 
+---Update a collider
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@param tail_x number @Tail position x
+---@param tail_y number @Tail position y
+---@param total_length number @Total length
+---@param total_offset number @Total offset
+---@param half_width number @Half width
+---@param colli boolean @Collision flag
+---@param rot number @Rotation
+---@param rot_cos number @Rotation cos (pre-calculated)
+---@param rot_sin number @Rotation sin (pre-calculated)
+---@return boolean
 function class:updateCollider(collider, tail_x, tail_y, total_length, total_offset, half_width, colli, rot, rot_cos, rot_sin)
     local collider_offset = collider.args.offset
     local offset = collider_offset - total_offset
@@ -388,6 +437,8 @@ function class:updateCollider(collider, tail_x, tail_y, total_length, total_offs
     return true
 end
 
+---Get all laser collider parts
+---@return table<number, table<number, THlib.v2.bullet.laser.laserCollider>>
 function class:getLaserColliderParts()
     local colliders = self.___colliders
     local parts = {}
@@ -409,6 +460,8 @@ function class:getLaserColliderParts()
     return parts
 end
 
+---Render a laser collider part
+---@param part table<number, THlib.v2.bullet.laser.laserCollider>
 function class:renderLaserColliderPart(part)
     if not part or #part == 0 then
         return
@@ -456,6 +509,7 @@ function class:renderLaserColliderPart(part)
     end
 end
 
+---Update changing task
 function class:updateChangingTask()
     local tasks = self.___changing_task
     if not tasks then
@@ -475,6 +529,9 @@ function class:updateChangingTask()
     end
 end
 
+---Get anchor position
+---@param anchor THlib.v2.bullet.laser.EnumAnchor
+---@return number, number
 function class:getAnchorPosition(anchor)
     local self_anchor = self.anchor
     if self_anchor == anchor then
@@ -514,6 +571,9 @@ function class:getAnchorPosition(anchor)
     return x, y
 end
 
+---Apply default laser style
+---@param id number
+---@param index number
 function class:applyDefaultLaserStyle(id, index)
     id = math.max(math.min(math.floor(id), laser_texture_num - 1), 1)
     index = math.max(math.min(math.floor(index), 16), 1)
@@ -535,8 +595,14 @@ end
 --endregion
 
 --region Extension Methods
-function class:toWidth(time, width, easing_func)
-    if time <= 0 then
+---Apply laser changing task about width
+---@param width number @Width
+---@param time number @Time (0 for immediate)
+---@param easing_func function @Easing function
+---@overload fun(width: number) @Immediate change width
+---@overload fun(width: number, time: number) @Change width with time
+function class:toWidth(width, time, easing_func)
+    if not time or time <= 0 then
         self.w = width
         self.___changing_task[EnumChangeIndex.Width] = nil
         return
@@ -553,8 +619,14 @@ function class:toWidth(time, width, easing_func)
     end)
 end
 
-function class:toAlpha(time, alpha, easing_func)
-    if time <= 0 then
+---Apply laser changing task about alpha
+---@param alpha number @Alpha
+---@param time number @Time (0 for immediate)
+---@param easing_func function @Easing function
+---@overload fun(alpha: number) @Immediate change alpha
+---@overload fun(alpha: number, time: number) @Change alpha with time
+function class:toAlpha(alpha, time, easing_func)
+    if not time or time <= 0 then
         self.alpha = alpha
         self.___changing_task[EnumChangeIndex.Alpha] = nil
         return
@@ -571,7 +643,15 @@ function class:toAlpha(time, alpha, easing_func)
     end)
 end
 
-function class:toLength(time, l1, l2, l3, easing_func)
+---Apply laser changing task about length
+---@param l1 number @Length of the first part
+---@param l2 number @Length of the second part
+---@param l3 number @Length of the third part
+---@param time number @Time (0 for immediate)
+---@param easing_func function @Easing function
+---@overload fun(l1: number, l2: number, l3: number) @Immediate change length
+---@overload fun(l1: number, l2: number, l3: number, time: number) @Change length with time
+function class:toLength(l1, l2, l3, time, easing_func)
     if time <= 0 then
         self.l1 = l1
         self.l2 = l2
@@ -597,6 +677,59 @@ function class:toLength(time, l1, l2, l3, easing_func)
     end)
 end
 
+---Turn on the laser
+---@param width number @Width
+---@param time number @Time
+---@param open_collider boolean @Open colliders
+---@overload fun(width: number, time: number) @Turn on the laser
+function class:turnOn(width, time, open_collider)
+    class.toAlpha(self, 1, time)
+    class.toWidth(self, width, time)
+    if open_collider then
+        task.New(self, function()
+            task.Wait(time)
+            self.colli = true
+        end)
+    end
+end
+
+---Turn on the laser with half alpha
+---@param width number @Width
+---@param time number @Time
+function class:turnHalfOn(width, time)
+    class.toAlpha(self, 0.5, time)
+    class.toWidth(self, width, time)
+end
+
+---Turn off the laser
+---@param time number @Time
+---@param close_colliders boolean @Close colliders
+---@overload fun(time: number) @Turn off the laser
+function class:turnOff(time, close_colliders)
+    if close_colliders then
+        self.colli = false
+    end
+    class.toAlpha(self, 0, time)
+    class.toWidth(self, 0, time)
+end
+
+---Turn off the laser with half alpha
+---@param width number @Width
+---@param time number @Time
+---@param close_colliders boolean @Close colliders
+---@overload fun(width: number, time: number) @Turn off the laser with half alpha
+function class:turnHalfOff(width, time, close_colliders)
+    if close_colliders then
+        self.colli = false
+    end
+    class.toAlpha(self, 0.5, time)
+    class.toWidth(self, width, time)
+end
+
+---Set position and rotation
+---@param x number @Position x
+---@param y number @Position y
+---@param rot number @Rotation
 function class:setPositionAndRotation(x, y, rot)
     AttributeProxy.setStorageValue(self, "x", x)
     AttributeProxy.setStorageValue(self, "y", y)
@@ -604,6 +737,12 @@ function class:setPositionAndRotation(x, y, rot)
     self.___attribute_dirty = true
 end
 
+---Set length and width
+---@param l1 number @Length of the first part
+---@param l2 number @Length of the second part
+---@param l3 number @Length of the third part
+---@param width number @Width
+---@overload fun(l1: number, l2: number, l3: number) @Set length
 function class:setRectByPart(l1, l2, l3, width)
     AttributeProxy.setStorageValue(self, "l1", l1)
     AttributeProxy.setStorageValue(self, "l2", l2)
