@@ -236,20 +236,32 @@ function class:checkPreserveCollider(collider)
     return true
 end
 
-function class:onDelCollider(collider, offset)
+function class:dispatchColliderOnDelete(collider, args)
     if not class.checkPreserveCollider(self, collider) then
         return
     end
+    if self.onDelCollider then
+        self.onDelCollider(self, collider, args)
+    end
+end
+
+function class:onDelCollider(collider, args)
     local w = lstg.world
     if self.style_index and lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
     end
 end
 
-function class:onKillCollider(collider, offset)
+function class:dispatchColliderOnKill(collider, args)
     if not class.checkPreserveCollider(self, collider) then
         return
     end
+    if self.onKillCollider then
+        self.onKillCollider(self, collider, args)
+    end
+end
+
+function class:onKillCollider(collider, args)
     local w = lstg.world
     if lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(item_faith_minor, collider.x, collider.y)
@@ -311,7 +323,7 @@ function class:updateColliders()
         end
         if have_changed then
             QuickSort(colliders, function(a, b)
-                return a.___collider_offset > b.___collider_offset
+                return a.args.offset > b.args.offset
             end)
         end
     end
@@ -331,7 +343,7 @@ function class:recoveryCollider(collider)
     end
     collider.___killed = true
     self.___colliders[collider] = nil
-    self.___offset_colliders[collider.___collider_offset] = nil
+    self.___offset_colliders[collider.args.offset] = nil
     self.___recovery_colliders[#self.___recovery_colliders + 1] = collider
     self.___recovery_colliders[collider] = true
 end
@@ -340,10 +352,14 @@ function class:generateCollider(offset, killed)
     local collider = table.remove(self.___recovery_colliders)
     if lstg.IsValid(collider) then
         collider.group = self.group
-        collider.___collider_offset = offset
+        collider.master = self
+        collider.args = { offset = offset }
+        collider.on_del = class.dispatchColliderOnDelete
+        collider.on_kill = class.dispatchColliderOnKill
         self.___recovery_colliders[collider] = nil
     else
-        collider = laserCollider.create(self, self.group, offset)
+        collider = laserCollider.create(self, self.group, { offset = offset },
+        class.dispatchColliderOnDelete, class.dispatchColliderOnKill)
     end
     collider.___killed = killed == nil or killed
     self.___colliders[collider] = true
@@ -352,7 +368,7 @@ function class:generateCollider(offset, killed)
 end
 
 function class:updateCollider(collider, tail_x, tail_y, total_length, total_offset, half_width, colli, rot, rot_cos, rot_sin)
-    local collider_offset = collider.___collider_offset
+    local collider_offset = collider.args.offset
     local offset = collider_offset - total_offset
     local offset_begin = offset - 8
     local offset_end = offset + 8

@@ -6,29 +6,31 @@ local AttributeProxy = require("foundation.AttributeProxy")
 --region Class Definition
 local class = lstg.CreateGameObjectClass()
 
-function class.create(master, group, offset)
+function class.create(master, group, args, on_del, on_kill)
     local self = lstg.New(class)
     self.group = group or GROUP_ENEMY_BULLET    -- Collider group
     self.layer = LAYER_ENEMY_BULLET             -- Collider layer
     self.rect = true                            -- Use rectangle collider
     self.hide = true                            -- Collider do not render
     ---@diagnostic disable
-    self.___collider_master = master            -- Master object
-    self.___collider_offset = offset            -- Offset
+    self.master = master                        -- Master object
+    self.args = args                            -- Arguments
+    self.on_del = on_del                        -- On Del callback
+    self.on_kill = on_kill                      -- On Kill callback
     ---@diagnostic enable
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
     return self
 end
 
 function class:del()
-    if IsValid(self.___collider_master) and self.___collider_master.onDelCollider then
-        self.___collider_master:onDelCollider(self, self.___collider_offset)
+    if self.on_del and lstg.IsValid(self.master) then
+        self.on_del(self.master, self, self.args)
     end
 end
 
 function class:kill()
-    if IsValid(self.___collider_master) and self.___collider_master.onKillCollider then
-        self.___collider_master:onKillCollider(self, self.___collider_offset)
+    if self.on_kill and lstg.IsValid(self.master) then
+        self.on_kill(self.master, self, self.args)
     end
 end
 
@@ -48,8 +50,8 @@ function proxy_killed:setter(key, value, storage)
         return
     end
     storage[key] = value
-    if lstg.IsValid(self.___collider_master) then
-        lstg.SetAttr(self, "colli", self.___collider_master.colli and not value)
+    if lstg.IsValid(self.master) then
+        lstg.SetAttr(self, "colli", self.master.colli and not value)
     else
         lstg.SetAttr(self, "colli", false)
     end
@@ -62,14 +64,14 @@ local proxy_graze = AttributeProxy.createProxy("_graze")
 attribute_proxies["_graze"] = proxy_graze
 
 function proxy_graze:getter(key, storage)
-    if IsValid(self.___collider_master) then
-        return self.___collider_master._graze
+    if IsValid(self.master) then
+        return self.master._graze
     end
 end
 
 function proxy_graze:setter(key, value, storage)
-    if IsValid(self.___collider_master) then
-        self.___collider_master._graze = value
+    if IsValid(self.master) then
+        self.master._graze = value
     end
 end
 
@@ -80,14 +82,14 @@ local proxy_colli = AttributeProxy.createProxy("colli")
 attribute_proxies["colli"] = proxy_colli
 
 function proxy_colli:getter(key, storage)
-    if IsValid(self.___collider_master) then
-        return self.___collider_master.colli and not self.___killed
+    if IsValid(self.master) then
+        return self.master.colli and not self.___killed
     end
 end
 
 function proxy_colli:setter(key, value, storage)
-    if IsValid(self.___collider_master) then
-        lstg.SetAttr(self, "colli", self.___collider_master.colli and value and not self.___killed)
+    if IsValid(self.master) then
+        lstg.SetAttr(self, "colli", self.master.colli and value and not self.___killed)
     else
         lstg.SetAttr(self, "colli", false)
     end
@@ -104,14 +106,14 @@ function proxy_bound:init()
 end
 
 function proxy_bound:getter(key, storage)
-    if IsValid(self.___collider_master) then
-        return self.___collider_master.bound
+    if IsValid(self.master) then
+        return self.master.bound
     end
 end
 
 function proxy_bound:setter(key, value, storage)
-    if IsValid(self.___collider_master) then
-        self.___collider_master.bound = value
+    if IsValid(self.master) then
+        self.master.bound = value
     else
         lstg.SetAttr(self, "bound", true)
     end
