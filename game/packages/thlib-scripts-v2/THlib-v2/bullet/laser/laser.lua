@@ -525,24 +525,27 @@ function class:renderDefaultLaserStyle(chains)
     if not chains or #chains == 0 then
         return
     end
+    local width = self.w
+    local rot = self.rot
+    local rot_cos = lstg.cos(rot)
+    local rot_sin = lstg.sin(rot)
+    local blend = self._blend
+    local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
+    local w = width / 2 / self.img_wm * self.img_w / self.img_wm
+    local total_length = self.length
+    local l1_r = self.l1 / total_length
+    local l2_r = self.l2 / total_length
+    local l3_r = self.l3 / total_length
     for i = 1, #chains do
         local chain = chains[i]
         if chain.length > 0 then
-            local width = self.w
             local length = chain.length
-            local blend = self._blend
             local x = chain.tail.x
             local y = chain.tail.y
-            local rot = self.rot
-            local rot_cos = lstg.cos(rot)
-            local rot_sin = lstg.sin(rot)
             if width > 0 then
-                local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
-                local w = width / 2 / self.img_wm * self.img_w / self.img_wm
-                local total_length = self.length
-                local l1 = self.l1 / total_length * length
-                local l2 = self.l2 / total_length * length
-                local l3 = self.l3 / total_length * length
+                local l1 = l1_r * length
+                local l2 = l2_r * length
+                local l3 = l3_r * length
                 lstg.SetImageState(self.img1, blend, color)
                 lstg.Render(self.img1, x, y, rot, l1 / self.img1_l, w)
                 x = x + l1 * rot_cos
