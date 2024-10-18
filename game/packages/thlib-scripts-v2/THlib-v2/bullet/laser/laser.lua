@@ -325,7 +325,7 @@ end
 ---Default value of user defined callback when checking collider chain valid
 ---@param chain THlib.v2.bullet.laser.laser.colliderChain
 function class:defaultCheckColliderChainValid(chain)
-    return chain.length >= 16
+    return self.shooting_speed ~= 0 or chain.length >= 16
 end
 
 ---Check if the laser is out of bound
