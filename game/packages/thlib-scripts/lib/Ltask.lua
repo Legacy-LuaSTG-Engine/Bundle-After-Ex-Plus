@@ -74,7 +74,7 @@ function task.Do(target)
             end
         end
         for i = #clean, 1, -1 do
-            remove(tasks, i)
+            remove(tasks, clean[i])
         end
     end
 end
