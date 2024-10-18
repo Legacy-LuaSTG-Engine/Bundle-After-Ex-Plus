@@ -22,6 +22,8 @@ if false then
         length = 0,              -- Length of the chain
         head = { x = 0, y = 0 }, -- Head position
         tail = { x = 0, y = 0 }, -- Tail position
+        full_offset_tail = 0,    -- Offset begin
+        full_offset_head = 0,    -- Offset end
     }
 end
 
@@ -507,6 +509,8 @@ function class:getLaserColliderParts()
             x = tail_node.x - tail_node.a * lstg.cos(self.rot),
             y = tail_node.y - tail_node.a * lstg.sin(self.rot),
         }
+        chain.full_offset_tail = tail_node.args.offset + 8 - tail_node.a * 2
+        chain.full_offset_head = chain.full_offset_tail + chain.length
         chains[#chains + 1] = chain
     end
     return chains
@@ -531,6 +535,7 @@ function class:renderDefaultLaserStyle(chains)
     local rot_sin = lstg.sin(rot)
     local blend = self._blend
     local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
+    local color_head = lstg.Color(self._a, self._r, self._g, self._b)
     local w = width / 2 / self.img_wm * self.img_w / self.img_wm
     local total_length = self.length
     local l1_r = self.l1 / total_length
@@ -563,8 +568,7 @@ function class:renderDefaultLaserStyle(chains)
                 y = y + length * rot_sin
             end
             if self.head > 0 then
-                local color = lstg.Color(self._a, self._r, self._g, self._b)
-                lstg.SetImageState(self.img5, self._blend, color)
+                lstg.SetImageState(self.img5, self._blend, color_head)
                 lstg.Render(self.img5, x, y, 0, self.head / 8)
                 lstg.Render(self.img5, x, y, 0, 0.75 * self.head / 8)
             end
