@@ -13,11 +13,23 @@ local gameEventDispatcher = lstg.globalEventDispatcher
 --endregion
 
 --region Class Definition
----@class THlib.v2.bullet.laser.laser : lstg.GameObject
+if false then
+    ---@class THlib.v2.bullet.laser.laser.colliderChain
+    local chain = {
+        ---@type THlib.v2.bullet.laser.laserCollider[] @Child colliders
+        colliders = {},
+        count = 0,               -- Number of colliders
+        length = 0,              -- Length of the chain
+        head = { x = 0, y = 0 }, -- Head position
+        tail = { x = 0, y = 0 }, -- Tail position
+    }
+end
+
+---@class THlib.v2.bullet.laser.laser : lstg.GameObject, lstg.Class
 local class = lstg.CreateGameObjectClass()
 
 --region Enums
----@class THlib.v2.bullet.laser.EnumAnchor
+---@enum THlib.v2.bullet.laser.EnumAnchor
 local EnumAnchor = {
     Head = 1,
     Center = 2,
@@ -25,7 +37,7 @@ local EnumAnchor = {
 }
 class.EnumAnchor = EnumAnchor
 
----@class THlib.v2.bullet.laser.EnumChangeIndex
+---@enum THlib.v2.bullet.laser.EnumChangeIndex
 local EnumChangeIndex = {
     Alpha = 1,
     Width = 2,
@@ -47,6 +59,8 @@ class.EnumChangeIndex = EnumChangeIndex
 ---@param index number @Style index
 ---@return THlib.v2.bullet.laser.laser
 function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
+    ---@type THlib.v2.bullet.laser.laser
+    ---@diagnostic disable-next-line: assign-type-mismatch
     local self = lstg.New(class)
     -- Basic attributes
     self.group = GROUP_ENEMY_BULLET            -- Child colliders group
@@ -55,7 +69,6 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.y = y or 0                            -- Anchor position y
     self.rot = rot or 0                        -- Rotation
     self.colli = false                         -- Current collision status (for child colliders)
-    ---@diagnostic disable
     -- Laser attributes
     self.l1 = l1 or 0                          -- Length of the first part
     self.l2 = l2 or 0                          -- Length of the second part
@@ -69,6 +82,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.killed_at_spawn = false               -- Child colliders are killed at spawn
     self.offset_at_head = true                 -- Offset at head
     self.alpha = 0                             -- Render Alpha
+    self.enable_valid_check = false            -- Enable valid check
     -- Color attributes
     self._blend = "mul+add"                    -- Blend mode
     self._a = 255                              -- Color alpha
@@ -84,9 +98,10 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.___changing_task = {}                 -- Changing task
     self.___attribute_dirty = false            -- Attribute dirty
     -- Callbacks
-    self.onDelCollider = class.onDelCollider   -- On delete collider callback
-    self.onKillCollider = class.onKillCollider -- On kill collider callback
-    ---@diagnostic enable
+    self.onRender = class.renderDefaultLaserStyle                         -- On render callback
+    self.onDelCollider = class.defaultOnDelCollider                       -- On delete collider callback
+    self.onKillCollider = class.defaultOnKillCollider                     -- On kill collider callback
+    self.onCheckColliderChainValid = class.defaultCheckColliderChainValid -- On check collider chain valid callback
     -- Finalize
     class.applyDefaultLaserStyle(self, 1, index or 1)
     AttributeProxy.applyProxies(self, class.___attribute_proxies)
@@ -138,17 +153,11 @@ function class:frame()
 end
 
 function class:render()
+    if not self.onRender then
+        return
+    end
     local parts = class.getLaserColliderParts(self)
-    for i = 1, #parts do
-        class.renderLaserColliderPart(self, parts[i])
-    end
-    if self.node > 0 then
-        local x, y = class.getAnchorPosition(self, EnumAnchor.Tail)
-        local color = lstg.Color(self._a, self._r, self._g, self._b)
-        lstg.SetImageState(self.img4, self._blend, color)
-        lstg.Render(self.img4, x, y, 18 * self.timer, self.node / 8)
-        lstg.Render(self.img4, x, y, -18 * self.timer, self.node / 8)
-    end
+    self.onRender(self, parts)
 end
 
 function class:del()
@@ -267,7 +276,7 @@ end
 ---Default value of user defined callback when a collider is deleted
 ---@param collider THlib.v2.bullet.laser.laserCollider
 ---@param args table<string, any>
-function class:onDelCollider(collider, args)
+function class:defaultOnDelCollider(collider, args)
     local w = lstg.world
     if self.style_index and lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
@@ -289,7 +298,7 @@ end
 ---Default value of user defined callback when a collider is killed
 ---@param collider THlib.v2.bullet.laser.laserCollider
 ---@param args table<string, any>
-function class:onKillCollider(collider, args)
+function class:defaultOnKillCollider(collider, args)
     local w = lstg.world
     if lstg.BoxCheck(collider, w.boundl, w.boundr, w.boundb, w.boundt) then
         lstg.New(item_faith_minor, collider.x, collider.y)
@@ -297,6 +306,26 @@ function class:onKillCollider(collider, args)
             lstg.New(BulletBreak, collider.x, collider.y, self.style_index)
         end
     end
+end
+
+---Check collider chain valid
+---@param chains THlib.v2.bullet.laser.laser.colliderChain[]
+function class:dispatchCheckColliderChainValid(chains)
+    if self.enable_valid_check and self.onCheckColliderChainValid then
+        for i = 1, #chains do
+            if not self.onCheckColliderChainValid(self, chains[i]) then
+                for j = 1, chains[i].count do
+                    chains[i].colliders[j].___killed = true
+                end
+            end
+        end
+    end
+end
+
+---Default value of user defined callback when checking collider chain valid
+---@param chain THlib.v2.bullet.laser.laser.colliderChain
+function class:defaultCheckColliderChainValid(chain)
+    return chain.length >= 16
 end
 
 ---Check if the laser is out of bound
@@ -396,7 +425,7 @@ function class:generateCollider(offset, killed)
         self.___recovery_colliders[collider] = nil
     else
         collider = laserCollider.create(self, self.group, { offset = offset },
-        class.dispatchColliderOnDelete, class.dispatchColliderOnKill)
+            class.dispatchColliderOnDelete, class.dispatchColliderOnKill)
     end
     collider.___killed = killed == nil or killed
     self.___colliders[collider] = true
@@ -416,7 +445,8 @@ end
 ---@param rot_cos number @Rotation cos (pre-calculated)
 ---@param rot_sin number @Rotation sin (pre-calculated)
 ---@return boolean
-function class:updateCollider(collider, tail_x, tail_y, total_length, total_offset, half_width, colli, rot, rot_cos, rot_sin)
+function class:updateCollider(collider, tail_x, tail_y, total_length, total_offset,
+                              half_width, colli, rot, rot_cos, rot_sin)
     local collider_offset = collider.args.offset
     local offset = collider_offset - total_offset
     local offset_begin = offset - 8
@@ -438,7 +468,7 @@ function class:updateCollider(collider, tail_x, tail_y, total_length, total_offs
 end
 
 ---Get all laser collider parts
----@return table<number, table<number, THlib.v2.bullet.laser.laserCollider>>
+---@return table<number, THlib.v2.bullet.laser.laser.colliderChain>
 function class:getLaserColliderParts()
     local colliders = self.___colliders
     local parts = {}
@@ -447,64 +477,94 @@ function class:getLaserColliderParts()
         local c = colliders[i]
         if not c.___killed then
             part[#part + 1] = c
-        else
-            if #part > 0 then
-                parts[#parts + 1] = part
-                part = {}
-            end
+        elseif #part > 0 then
+            parts[#parts + 1] = part
+            part = {}
         end
     end
     if #part > 0 then
         parts[#parts + 1] = part
     end
-    return parts
+    local chains = {}
+    for i = 1, #parts do
+        part = parts[i]
+        ---@type THlib.v2.bullet.laser.laser.colliderChain
+        local chain = {}
+        chain.colliders = part
+        chain.count = #part
+        local head_node = part[1]
+        local tail_node = part[#part]
+        if head_node == tail_node then
+            chain.length = head_node.a * 2
+        else
+            chain.length = (head_node.a + tail_node.a) * 2 + math.max(0, #part - 2) * 16
+        end
+        chain.head = {
+            x = head_node.x + head_node.a * lstg.cos(self.rot),
+            y = head_node.y + head_node.a * lstg.sin(self.rot),
+        }
+        chain.tail = {
+            x = tail_node.x - tail_node.a * lstg.cos(self.rot),
+            y = tail_node.y - tail_node.a * lstg.sin(self.rot),
+        }
+        chains[#chains + 1] = chain
+    end
+    return chains
 end
 
----Render a laser collider part
----@param part table<number, THlib.v2.bullet.laser.laserCollider>
-function class:renderLaserColliderPart(part)
-    if not part or #part == 0 then
+---Render a laser collider part (default style)
+---@param chains THlib.v2.bullet.laser.laser.colliderChain[]
+function class:renderDefaultLaserStyle(chains)
+    if self.node > 0 then
+        local x, y = class.getAnchorPosition(self, EnumAnchor.Tail)
+        local color = lstg.Color(self._a, self._r, self._g, self._b)
+        lstg.SetImageState(self.img4, self._blend, color)
+        lstg.Render(self.img4, x, y, 18 * self.timer, self.node / 8)
+        lstg.Render(self.img4, x, y, -18 * self.timer, self.node / 8)
+    end
+    if not chains or #chains == 0 then
         return
     end
-    local width = self.w
-    local head_node = part[1]
-    local tail_node = part[#part]
-    local length
-    if head_node == tail_node then
-        length = head_node.a * 2
-    else
-        length = (head_node.a + tail_node.a) * 2 + math.max(0, #part - 2) * 16
-    end
-    if width > 0 and length > 0 then
-        local blend = self._blend
-        local rot = self.rot
-        local rot_cos = lstg.cos(rot)
-        local rot_sin = lstg.sin(rot)
-        local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
-        local w = width / 2 / self.img_wm * self.img_w / self.img_wm
-        local total_length = self.length
-        local l1 = self.l1 / total_length * length
-        local l2 = self.l2 / total_length * length
-        local l3 = self.l3 / total_length * length
-        local x = tail_node.x - tail_node.a * rot_cos
-        local y = tail_node.y - tail_node.a * rot_sin
-        lstg.SetImageState(self.img1, blend, color)
-        lstg.Render(self.img1, x, y, rot, l1 / self.img1_l, w)
-        x = x + l1 * rot_cos
-        y = y + l1 * rot_sin
-        lstg.SetImageState(self.img2, blend, color)
-        lstg.Render(self.img2, x, y, rot, l2 / self.img2_l, w)
-        x = x + l2 * rot_cos
-        y = y + l2 * rot_sin
-        lstg.SetImageState(self.img3, blend, color)
-        lstg.Render(self.img3, x, y, rot, l3 / self.img3_l, w)
-        if self.head > 0 then
-            x = x + l3 * rot_cos
-            y = y + l3 * rot_sin
-            color = lstg.Color(self._a, self._r, self._g, self._b)
-            lstg.SetImageState(self.img5, self._blend, color)
-            lstg.Render(self.img5, x, y, 0, self.head / 8)
-            lstg.Render(self.img5, x, y, 0, 0.75 * self.head / 8)
+    for i = 1, #chains do
+        local chain = chains[i]
+        if chain.length > 0 then
+            local width = self.w
+            local length = chain.length
+            local blend = self._blend
+            local x = chain.tail.x
+            local y = chain.tail.y
+            local rot = self.rot
+            local rot_cos = lstg.cos(rot)
+            local rot_sin = lstg.sin(rot)
+            if width > 0 then
+                local color = lstg.Color(self._a * self.alpha, self._r, self._g, self._b)
+                local w = width / 2 / self.img_wm * self.img_w / self.img_wm
+                local total_length = self.length
+                local l1 = self.l1 / total_length * length
+                local l2 = self.l2 / total_length * length
+                local l3 = self.l3 / total_length * length
+                lstg.SetImageState(self.img1, blend, color)
+                lstg.Render(self.img1, x, y, rot, l1 / self.img1_l, w)
+                x = x + l1 * rot_cos
+                y = y + l1 * rot_sin
+                lstg.SetImageState(self.img2, blend, color)
+                lstg.Render(self.img2, x, y, rot, l2 / self.img2_l, w)
+                x = x + l2 * rot_cos
+                y = y + l2 * rot_sin
+                lstg.SetImageState(self.img3, blend, color)
+                lstg.Render(self.img3, x, y, rot, l3 / self.img3_l, w)
+                x = x + l3 * rot_cos
+                y = y + l3 * rot_sin
+            else
+                x = x + length * rot_cos
+                y = y + length * rot_sin
+            end
+            if self.head > 0 then
+                local color = lstg.Color(self._a, self._r, self._g, self._b)
+                lstg.SetImageState(self.img5, self._blend, color)
+                lstg.Render(self.img5, x, y, 0, self.head / 8)
+                lstg.Render(self.img5, x, y, 0, 0.75 * self.head / 8)
+            end
         end
     end
 end
@@ -1061,6 +1121,8 @@ function updater:init()
         "THlib-v2:Laser.Updater.on_GameState_BeforeGameStageChange", 0, self.on_GameState_BeforeGameStageChange)
     gameEventDispatcher:RegisterEvent("GameState.AfterObjFrame",
         "THlib-v2:Laser.Updater.on_GameState_AfterObjFrame", 0, self.on_GameState_AfterObjFrame)
+    gameEventDispatcher:RegisterEvent("GameState.AfterCollisionCheck",
+        "THlib-v2:Laser.Updater.on_GameState_AfterCollisionCheck", 0, self.on_GameState_AfterCollisionCheck)
 end
 
 function updater:addLaser(laser)
@@ -1097,6 +1159,17 @@ function updater.on_GameState_AfterObjFrame()
         else
             table.remove(list, i)
             i = i - 1
+        end
+    end
+end
+
+function updater.on_GameState_AfterCollisionCheck()
+    local list = updater.list
+    for i = 1, #list do
+        local obj = list[i]
+        if lstg.IsValid(obj) and obj.enable_valid_check then
+            local chains = class.getLaserColliderParts(obj)
+            class.dispatchCheckColliderChainValid(obj, chains)
         end
     end
 end
