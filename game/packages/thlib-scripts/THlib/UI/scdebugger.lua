@@ -10,7 +10,7 @@ function stage_init:init()
             menu.FlyOut(menu_player_select, 'left')
             lstg.var.player_name = player_list[i][2]
             lstg.var.rep_player = player_list[i][3]
-            task.New(stage_init, function()
+            task.New(self, function()
                 task.Wait(30)
                 New(mask_fader, 'close')
                 task.Wait(30)
