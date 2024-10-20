@@ -60,7 +60,7 @@ class.EnumChangeIndex = EnumChangeIndex
 ---@param head number @Head size
 ---@param index number @Style index
 ---@return THlib.v2.bullet.laser.laser
-function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
+function class.create(x, y, rot, l1, l2, l3, w, node, head, index, single_collider)
     ---@type THlib.v2.bullet.laser.laser
     ---@diagnostic disable-next-line: assign-type-mismatch
     local self = lstg.New(class)
@@ -85,6 +85,7 @@ function class.create(x, y, rot, l1, l2, l3, w, node, head, index)
     self.offset_at_head = true                 -- Offset at head
     self.alpha = 0                             -- Render Alpha
     self.enable_valid_check = false            -- Enable valid check
+    self.single_collider = single_collider     -- Single collider (Disable collider chain)
     -- Color attributes
     self._blend = "mul+add"                    -- Blend mode
     self._a = 255                              -- Color alpha
@@ -334,7 +335,10 @@ end
 ---@return boolean
 function class:checkIsOutOfBound()
     local w = lstg.world
-    local is_out_of_bound = true
+    local is_out_of_bound = lstg.BoxCheck(self, w.boundl, w.boundr, w.boundb, w.boundt)
+    if not is_out_of_bound then
+        return false
+    end
     for i = 1, #self.___colliders do
         local c = self.___colliders[i]
         if lstg.IsValid(c) and lstg.BoxCheck(c, w.boundl, w.boundr, w.boundb, w.boundt) then
@@ -351,12 +355,23 @@ function class:updateColliders()
     local length = self.length
     if length <= 0 then
         for i = 1, #colliders do
-            local c = colliders[i]
-            colliders[i] = nil
-            colliders[c] = nil
-            if lstg.IsValid(c) then
-                lstg.Del(c)
-            end
+            class.recoveryCollider(self, colliders[i])
+        end
+        return
+    end
+    --
+    if self.single_collider then
+        local collider = colliders[1]
+        for i = 2, #colliders do
+            class.recoveryCollider(self, colliders[i], true)
+        end
+        if not collider then
+            collider = class.generateCollider(self, 0, self.killed_at_spawn)
+            colliders[1] = collider
+        end
+        if not (lstg.IsValid(collider) and class.updateColliderSingle(self, collider, length)) then
+            class.recoveryCollider(self, collider)
+            colliders[1] = nil
         end
         return
     end
@@ -371,23 +386,21 @@ function class:updateColliders()
     local rot_sin = lstg.sin(rot)
     local half_width = self.w / 2
     local colli = self.colli
-    if not self.___killed then
-        local fix_tail_offset = math.floor(total_offset / 16) * 16
-        local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
-        local have_changed = false
-        for part_offset = fix_tail_offset, fix_head_offset, 16 do
-            local collider = self.___offset_colliders[part_offset]
-            if not collider then
-                collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
-                colliders[#colliders + 1] = collider
-                have_changed = true
-            end
+    local fix_tail_offset = math.floor(total_offset / 16) * 16
+    local fix_head_offset = math.ceil((total_offset + length) / 16) * 16
+    local have_changed = false
+    for part_offset = fix_tail_offset, fix_head_offset, 16 do
+        local collider = self.___offset_colliders[part_offset]
+        if not collider then
+            collider = class.generateCollider(self, part_offset, self.killed_at_spawn)
+            colliders[#colliders + 1] = collider
+            have_changed = true
         end
-        if have_changed then
-            QuickSort(colliders, function(a, b)
-                return a.args.offset > b.args.offset
-            end)
-        end
+    end
+    if have_changed then
+        QuickSort(colliders, function(a, b)
+            return a.args.offset > b.args.offset
+        end)
     end
     for i = #colliders, 1, -1 do
         local collider = colliders[i]
@@ -401,13 +414,17 @@ end
 
 ---Recovery a collider
 ---@param collider THlib.v2.bullet.laser.laserCollider
-function class:recoveryCollider(collider)
+---@param forbid_pool boolean
+function class:recoveryCollider(collider, forbid_pool)
     if not (self.___colliders[collider] and lstg.IsValid(collider)) then
         return
     end
     collider.___killed = true
     self.___colliders[collider] = nil
     self.___offset_colliders[collider.args.offset] = nil
+    if forbid_pool then
+        return
+    end
     self.___recovery_colliders[#self.___recovery_colliders + 1] = collider
     self.___recovery_colliders[collider] = true
 end
@@ -469,6 +486,30 @@ function class:updateCollider(collider, tail_x, tail_y, total_length, total_offs
     return true
 end
 
+---Update a collider
+---@param collider THlib.v2.bullet.laser.laserCollider
+---@return boolean
+function class:updateColliderSingle(collider, length)
+    if length <= 0 then
+        return false
+    end
+    local center_x, center_y = class.getAnchorPosition(self, EnumAnchor.Center)
+    local offset = 0
+    if self.offset_at_head then
+        offset = self.___shooting_offset - length / 2
+    else
+        offset = self.___shooting_offset + length / 2
+    end
+    collider.args.offset = offset
+    collider.x = center_x
+    collider.y = center_y
+    collider.rot = self.rot
+    collider.a = length / 2
+    collider.b = self.w / 2
+    collider.colli = self.colli and length > 0 and not self.___killed
+    return true
+end
+
 ---Get all laser collider parts
 ---@return table<number, THlib.v2.bullet.laser.laser.colliderChain>
 function class:getLaserColliderParts()
@@ -486,6 +527,9 @@ function class:getLaserColliderParts()
     end
     if #part > 0 then
         parts[#parts + 1] = part
+    end
+    if #parts == 0 then
+        return {}
     end
     local chains = {}
     for i = 1, #parts do
@@ -509,8 +553,14 @@ function class:getLaserColliderParts()
             x = tail_node.x - tail_node.a * lstg.cos(self.rot),
             y = tail_node.y - tail_node.a * lstg.sin(self.rot),
         }
-        chain.full_offset_tail = tail_node.args.offset + 8 - tail_node.a * 2
-        chain.full_offset_head = chain.full_offset_tail + chain.length
+        if not self.single_collider then
+            chain.full_offset_tail = tail_node.args.offset + 8 - tail_node.a * 2
+            chain.full_offset_head = chain.full_offset_tail + chain.length
+        else
+            local length = self.length
+            chain.full_offset_tail = self.___shooting_offset - length / 2
+            chain.full_offset_head = self.___shooting_offset + length / 2
+        end
         chains[#chains + 1] = chain
     end
     return chains
