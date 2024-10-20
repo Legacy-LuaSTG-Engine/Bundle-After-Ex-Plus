@@ -419,6 +419,7 @@ function class:recoveryCollider(collider, forbid_pool)
     if not (self.___colliders[collider] and lstg.IsValid(collider)) then
         return
     end
+    collider.group = GROUP_GHOST
     collider.___killed = true
     self.___colliders[collider] = nil
     self.___offset_colliders[collider.args.offset] = nil
