@@ -252,14 +252,17 @@ end
 --region Main Methods
 ---Preserve a collider if it is child of this laser
 ---@param collider THlib.v2.bullet.laser.laserCollider
+---@return boolean @True if can be processed
 function class:checkPreserveCollider(collider)
     if not ((self.___colliders[collider] or self.___recovery_colliders[collider]) and lstg.IsValid(collider)) then
         return false
     end
-    if self.___killed then
+    if not self.___killed then
+        PreserveObject(collider)
+    end
+    if collider.___killed then
         return false
     end
-    PreserveObject(collider)
     collider.___killed = true
     return true
 end
@@ -424,6 +427,7 @@ function class:recoveryCollider(collider, forbid_pool)
     self.___colliders[collider] = nil
     self.___offset_colliders[collider.args.offset] = nil
     if forbid_pool then
+        lstg.Del(collider)
         return
     end
     self.___recovery_colliders[#self.___recovery_colliders + 1] = collider
