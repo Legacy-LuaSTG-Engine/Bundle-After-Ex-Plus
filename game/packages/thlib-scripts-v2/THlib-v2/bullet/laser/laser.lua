@@ -769,7 +769,7 @@ end
 ---@overload fun(l1: number, l2: number, l3: number) @Immediate change length
 ---@overload fun(l1: number, l2: number, l3: number, time: number) @Change length with time
 function class:toLength(l1, l2, l3, time, easing_func)
-    if time <= 0 then
+    if not time or time <= 0 then
         self.l1 = l1
         self.l2 = l2
         self.l3 = l3
