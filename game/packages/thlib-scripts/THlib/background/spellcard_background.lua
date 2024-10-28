@@ -372,6 +372,7 @@ end
 
 function bg:del()
     unloadRenderTexture(self)
+    self.hide = true
 end
 bg.kill = bg.del
 --endregion
