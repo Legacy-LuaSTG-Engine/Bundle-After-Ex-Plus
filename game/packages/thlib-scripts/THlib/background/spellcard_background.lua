@@ -235,10 +235,10 @@ local function prepareRenderTexture(self, layers)
         lstg.SetImageScale(1)
         lstg.RenderClear(emptyColor)
         lstg.RenderTexture(tex, "",
-                { 0, 0, 0.5, x, y, fullColor },
-                { w, 0, 0.5, x + w, y, fullColor },
-                { w, h, 0.5, x + w, y + h, fullColor },
-                { 0, h, 0.5, x, y + h, fullColor })
+                { 0, 0, 0.5, x, y + h, fullColor },
+                { w, 0, 0.5, x + w, y + h, fullColor },
+                { w, h, 0.5, x + w, y, fullColor },
+                { 0, h, 0.5, x, y, fullColor })
         lstg.PopRenderTarget()
         lstg.SetTextureSamplerState(rt, "linear+wrap")
     end
