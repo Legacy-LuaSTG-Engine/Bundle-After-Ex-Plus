@@ -151,21 +151,6 @@ function img_class:render()
     Render('preimg' .. self.index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 3 + 1) * self.imgclass.size)
 end
 ----------------------------------------------------------------
-bullet.gclist = {} -- TODO: 杀杀杀
-function ChangeBulletHighlight(imgclass, index, on)
-    local ble = ''
-    if on then
-        ble = 'mul+add'
-    end
-    local obj = {}
-    imgclass.init(obj, index)
-    SetImageState(obj.img, ble, Color(0xFFFFFFFF))
-    if not bullet.gclist[imgclass] then
-        bullet.gclist[imgclass] = {}
-    end
-    bullet.gclist[imgclass][index] = on
-end
-----------------------------------------------------------------
 particle_img = Class(object)
 function particle_img:init(index)
     self.layer = LAYER_ENEMY_BULLET
@@ -513,64 +498,6 @@ silence = Class(img_class)
 silence.size = 0.8
 function silence:init(index)
     self.img = 'silence' .. int((index + 1) / 2)
-end
-----------------------------------------------------------------
-bullet_deleter2 = Class(object) -- TODO: 杀杀杀
-function bullet_deleter:init(x, y, kill_indes)
-    self.player = player--by ETC，多玩家时处理
-    self.x = self.player.x
-    self.y = self.player.y
-    self.group = GROUP_GHOST
-    self.hide = true
-    self.kill_indes = kill_indes
-end
-function bullet_deleter2:frame()
-    self.x = self.player.x
-    self.y = self.player.y
-    if self.timer == 30 then
-        Del(self)
-    end
-    for i, o in ObjList(GROUP_ENEMY_BULLET) do
-        if Dist(self, o) < self.timer * 5 then
-            Del(o)
-        end
-    end
-    if self.kill_indes then
-        for i, o in ObjList(GROUP_INDES) do
-            if Dist(self, o) < self.timer * 5 then
-                Del(o)
-            end
-        end
-    end
-end
-----------------------------------------------------------------
-bullet_killer_SP = Class(object)
-function bullet_killer_SP:init(x, y, kill_indes)
-    self.x = x
-    self.y = y
-    self.group = GROUP_GHOST
-    self.hide = false
-    self.kill_indes = kill_indes
-    self.img = 'yubi'
-end
-function bullet_killer_SP:frame()
-
-    self.rot = -6 * self.timer
-    if self.timer == 60 then
-        Del(self)
-    end
-    for i, o in ObjList(GROUP_ENEMY_BULLET) do
-        if Dist(self, o) < 60 then
-            Kill(o)
-        end
-    end
-    if self.kill_indes then
-        for i, o in ObjList(GROUP_INDES) do
-            if Dist(self, o) < 60 then
-                Kill(o)
-            end
-        end
-    end
 end
 ----------------------------------------------------------------
 BULLETSTYLE = {
