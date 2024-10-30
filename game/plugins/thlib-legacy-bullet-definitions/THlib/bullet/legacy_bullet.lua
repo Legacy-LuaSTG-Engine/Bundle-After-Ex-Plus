@@ -101,7 +101,7 @@ LoadTexture('etbreak', 'THlib/bullet/etbreak.png')
 for j = 1, 16 do
     LoadAnimation('etbreak' .. j, 'etbreak', 0, 0, 64, 64, 4, 2, 3)
 end
-BulletBreakIndex = {
+local BulletBreakIndex = {
     Color(0xC0FF3030), --red
     Color(0xC0FF30FF), --purple
     Color(0xC03030FF), --blue
