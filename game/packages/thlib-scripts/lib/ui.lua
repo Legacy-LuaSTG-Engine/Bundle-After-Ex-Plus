@@ -84,15 +84,6 @@ local color_press = lstg.Color(255, 160, 160, 255)
 
 function ui.loadResources()
     if not lstg.CheckRes(8, "ttf:menu-font") then
-        --local windir = os.getenv("windir")
-        --if windir and string.len(windir) > 0 then
-        --    lstg.Print("%WinDir%: " .. windir)
-        --else
-        --    windir = "C:\\Windows"
-        --end
-        --if not lstg.LoadTTF("ttf:menu-font", windir .. "\\Fonts\\msyhbd.ttc", 0, 36) then
-        --    assert(lstg.LoadTTF("ttf:menu-font", windir .. "\\Fonts\\msyhbd.ttf", 0, 36))
-        --end
         lstg.LoadTTF("ttf:menu-font", "assets/font/SourceHanSansCN-Bold.otf", 0, 36)
         lstg.CreateRenderTarget("rt:menu-white", 64, 64)
         lstg.LoadImage("img:menu-white", "rt:menu-white", 16, 16, 16, 16)
