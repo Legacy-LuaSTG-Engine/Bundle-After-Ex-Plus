@@ -114,7 +114,7 @@ function lstg.plugin.LoadConfig()
         local src = f:read('*a')
         f:close()
         local ret, val = pcall(cjson.decode, src)
-        if ret then
+        if type(ret) == "table" then
             return val
         else
             lstg.Log(4, string.format("load json '%s' failed: %s", PLUGIN_PATH .. CONFIG_FILE, val))
