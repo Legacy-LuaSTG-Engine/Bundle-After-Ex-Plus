@@ -33,8 +33,170 @@ end
 ---@class plugin @插件包辅助
 lstg.plugin = {}
 
-local PLUGIN_PATH = "plugins/"    --插件路径
-local ENTRY_POINT_SCRIPT = "__init__.lua"   --入口点文件
+local PLUGIN_PATH = "plugins/"            -- 插件路径
+local ENTRY_POINT_SCRIPT = "__init__.lua" -- 入口点文件
+local MANIFEST_NAME = "package.json"      -- 清单文件
+
+---@param path string
+---@return string? text
+---@return string message
+local function readTextFile(path)
+    assert(type(path) == "string", "invalid parameter type")
+    local f, e = io.open(path, "r")
+    if f then
+        local s = f:read("*a")
+        f:close()
+        return s, "success"
+    else
+        return nil, tostring(e)
+    end
+end
+
+---@param archive_name string
+---@param path string
+---@return string? text
+---@return string message
+local function readArchiveTextFile(archive_name, path)
+    local archive = lstg.FileManager.GetArchive(archive_name)
+    if not archive:FileExist(path) then
+        return nil, ("file '%s' in '%s' not found"):format(path, archive_name)
+    end
+    local s = lstg.LoadTextFile(path, archive_name)
+    if type(s) == "string" then
+        return s, "success"
+    else
+        return nil, ("read file '%s' in '%s' failed"):format(path, archive_name)
+    end
+end
+
+---@param root_path string
+---@return lstg.plugin.Config.Entry?
+local function processLegacyModelPlugin(root_path)
+    local name = string.sub(root_path, string.len(PLUGIN_PATH) + 1, string.len(root_path) - 1)
+    ---@type lstg.plugin.Config.Entry
+    local entry = {
+        name = name,
+        description = name,
+        path = root_path,
+        model_type = "legacy",
+        directory_mode = true,
+        enable = true,
+    }
+    return entry
+end
+
+---@return boolean result
+---@return string message
+local function verifyManifest(t)
+    if t.name == nil then
+        return false, "invalid plugin manifest file: 'name' is required"
+    end
+    if type(t.name) ~= "string" then
+        return false, "invalid plugin manifest file: 'name' must be a string"
+    end
+
+    if t.version == nil then
+        return false, "invalid plugin manifest file: 'version' is required"
+    end
+    if type(t.version) ~= "string" then
+        return false, "invalid plugin manifest file: 'version' must be a string"
+    end
+
+    if t.main ~= nil then
+        if type(t.main) ~= "string" then
+            return false, "invalid plugin manifest file: 'main' must be a string"
+        end
+    end
+
+    if t.description then
+        if type(t.description) ~= "string" then
+            return false, "invalid plugin manifest file: 'description' must be a string"
+        end
+    end
+
+    return true, "ok"
+end
+
+---@param root_path string
+---@return lstg.plugin.Config.Entry?
+local function processManifestModelPlugin(root_path)
+    assert(type(root_path) == "string", "invalid parameter type")
+    local package_json_path = root_path .. MANIFEST_NAME
+    local package_json_text, read_file_error = readTextFile(package_json_path)
+    if not package_json_text then
+        lstg.Log(4, ("failed to read file '%s': %s"):format(package_json_path, read_file_error))
+        return
+    end
+    local decode_result, package_json = pcall(cjson.decode, package_json_text)
+    if not decode_result then
+        lstg.Log(4, ("invalid plugin file '%s': %s"):format(package_json_path, tostring(package_json)))
+        return
+    end
+    local verify_result, verify_error = verifyManifest(package_json)
+    if not verify_result then
+        lstg.Log(4, verify_error)
+        return
+    end
+    if package_json.main then
+        local main_lua_path = root_path .. package_json.main
+        if not lstg.FileManager.FileExist(main_lua_path) then
+            lstg.Log(4, ("invalid plugin '%s' ('%s'): main script '%s' not found"):format(package_json.name, root_path, main_lua_path))
+            return
+        end
+    end
+    ---@type lstg.plugin.Config.Entry
+    local entry = {
+        name = package_json.name,
+        description = package_json.description,
+        main = package_json.main,
+        path = root_path,
+        model_type = "manifest",
+        directory_mode = true,
+        enable = true,
+    }
+    return entry
+end
+
+---@param archive_path string
+---@return lstg.plugin.Config.Entry?
+local function processManifestModelPluginArchive(archive_path)
+    assert(type(archive_path) == "string", "invalid parameter type")
+    local package_json_path = MANIFEST_NAME
+    local package_json_text, read_file_error = readArchiveTextFile(archive_path, package_json_path)
+    if not package_json_text then
+        lstg.Log(4, ("failed to read file '%s' in '%s': %s"):format(package_json_path, archive_path, read_file_error))
+        return
+    end
+    local decode_result, package_json = pcall(cjson.decode, package_json_text)
+    if not decode_result then
+        lstg.Log(4, ("invalid plugin file '%s' in '%s': %s"):format(package_json_path, archive_path, tostring(package_json)))
+        return
+    end
+    local verify_result, verify_error = verifyManifest(package_json)
+    if not verify_result then
+        lstg.Log(4, verify_error)
+        return
+    end
+    if package_json.main then
+        local main_lua_path = package_json.main
+        local archive = lstg.FileManager.GetArchive(archive_path)
+        if not archive:FileExist(main_lua_path) then
+            lstg.Log(4, ("invalid plugin '%s' ('%s'): main script '%s' not found"):format(package_json.name, archive_path, main_lua_path))
+            return
+        end
+    end
+    ---@type lstg.plugin.Config.Entry
+    local entry = {
+        name = package_json.name,
+        description = package_json.description,
+        main = package_json.main,
+        path = archive_path,
+        model_type = "manifest",
+        directory_mode = false,
+        enable = true,
+    }
+    return entry
+end
 
 --- 列出插件目录下所有有效的插件（即包含入口点文件）  
 ---@return lstg.plugin.Config.Entry[]
@@ -44,29 +206,44 @@ function lstg.plugin.ListPlugins()
     for _, v in ipairs(list) do
         if v[2] then
             -- 文件夹模式
-            if lstg.FileManager.FileExist(v[1] .. ENTRY_POINT_SCRIPT) then
-                -- 有入口点文件
-                table.insert(result, {
-                    name = string.sub(v[1], string.len(PLUGIN_PATH) + 1, string.len(v[1]) - 1),
-                    path = v[1],
-                    directory_mode = true,
-                    enable = true, -- 默认启用
-                })
+            if lstg.FileManager.FileExist(v[1] .. MANIFEST_NAME) then
+                -- 清单文件模式（新）
+                local entry = processManifestModelPlugin(v[1])
+                if entry then
+                    table.insert(result, entry)
+                end
+            elseif lstg.FileManager.FileExist(v[1] .. ENTRY_POINT_SCRIPT) then
+                -- 传统模式（旧）
+                local entry = processLegacyModelPlugin(v[1])
+                if entry then
+                    table.insert(result, entry)
+                end
             end
         elseif isFileNameZip(v[1]) then
             -- 压缩包模式
             lstg.LoadPack(v[1])
-            local file_exist = lstg.FileManager.GetArchive(v[1]):FileExist(ENTRY_POINT_SCRIPT)
-            lstg.UnloadPack(v[1])
-            if file_exist then
-                -- 有入口点文件
+            local archive = lstg.FileManager.GetArchive(v[1])
+            local has_init = archive:FileExist(ENTRY_POINT_SCRIPT)
+            local has_manifest = archive:FileExist(MANIFEST_NAME)
+            if has_manifest then
+                -- 清单文件模式（新）
+                local entry = processManifestModelPluginArchive(v[1])
+                if entry then
+                    table.insert(result, entry)
+                end
+            elseif has_init then
+                -- 传统模式（旧）
+                local name = string.sub(v[1], string.len(PLUGIN_PATH) + 1, string.len(v[1]) - 4)
                 table.insert(result, {
-                    name = string.sub(v[1], string.len(PLUGIN_PATH) + 1, string.len(v[1]) - 4),
+                    name = name,
+                    description = name,
                     path = v[1],
+                    model_type = "legacy",
                     directory_mode = false,
                     enable = true, -- 默认启用
                 })
             end
+            lstg.UnloadPack(v[1])
         end
     end
     return result
@@ -77,12 +254,26 @@ end
 ---@param entry lstg.plugin.Config.Entry
 ---@return boolean
 function lstg.plugin.LoadPlugin(entry)
-    if entry.directory_mode then
-        lstg.FileManager.AddSearchPath(entry.path)
-        lstg.DoFile(entry.path .. ENTRY_POINT_SCRIPT)
-    else
-        lstg.LoadPack(entry.path)
-        lstg.DoFile(ENTRY_POINT_SCRIPT, entry.path)
+    if entry.model_type == "manifest" then
+        if entry.directory_mode then
+            lstg.FileManager.AddSearchPath(entry.path)
+            if entry.main then
+                lstg.DoFile(entry.path .. entry.main)
+            end
+        else
+            lstg.LoadPack(entry.path)
+            if entry.main then
+                lstg.DoFile(entry.main, entry.path)
+            end
+        end
+    else -- legacy model type
+        if entry.directory_mode then
+            lstg.FileManager.AddSearchPath(entry.path)
+            lstg.DoFile(entry.path .. ENTRY_POINT_SCRIPT)
+        else
+            lstg.LoadPack(entry.path)
+            lstg.DoFile(ENTRY_POINT_SCRIPT, entry.path)
+        end
     end
     return true
 end
@@ -95,7 +286,12 @@ local CONFIG_FILE = "plugins.json"
 ---@class lstg.plugin.Config.Entry
 local _ = {
     name = "",
+    description = "",
     path = "",
+    ---@type string?
+    main = "",
+    ---@type '"legacy"' | '"manifest"'
+    model_type = "legacy",
     directory_mode = false,
     enable = false,
 }
