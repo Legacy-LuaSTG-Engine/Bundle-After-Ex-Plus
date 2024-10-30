@@ -711,7 +711,7 @@ function class:applyDefaultLaserStyle(id, index)
     self.img2 = "laser" .. id .. "2" .. index
     self.img3 = "laser" .. id .. "3" .. index
     self.img4 = "laser_node" .. math.ceil(index / 2)
-    self.img5 = "ball_mid_b" .. math.ceil(index / 2)
+    self.img5 = "ball_mid_b" .. math.ceil(index / 2) -- TODO: 猎杀
 end
 
 --endregion

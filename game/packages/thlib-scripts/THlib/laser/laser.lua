@@ -25,7 +25,7 @@ LoadLaserTexture("laser2", 5, 236, 15, 1)
 LoadLaserTexture("laser3", 127, 1, 128, 1)
 LoadLaserTexture("laser4", 1, 254, 1, 1)
 
-LoadImageGroup("laser_node", "bullet1", 80, 0, 32, 32, 1, 8)
+LoadImageGroup("laser_node", "bullet1", 80, 0, 32, 32, 1, 8) -- TODO: 猎杀
 
 laser = Class(object)
 
@@ -36,7 +36,7 @@ function laser:init(index, x, y, rot, l1, l2, l3, w, node, head)
     self.img2 = "laser12" .. self.index
     self.img3 = "laser13" .. self.index
     self.img4 = "laser_node" .. int((self.index + 1) / 2)
-    self.img5 = "ball_mid_b" .. int((self.index + 1) / 2)
+    self.img5 = "ball_mid_b" .. int((self.index + 1) / 2)  -- TODO: 猎杀
     self.x = x
     self.y = y
     self.rot = rot
@@ -296,7 +296,7 @@ function laser:ChangeImage(id, index)
     self.img2 = "laser" .. id .. "2" .. index
     self.img3 = "laser" .. id .. "3" .. index
     self.img4 = "laser_node" .. int((index + 1) / 2)
-    self.img5 = "ball_mid_b" .. int((index + 1) / 2)
+    self.img5 = "ball_mid_b" .. int((index + 1) / 2)  -- TODO: 猎杀
 end
 
 function laser:grow(time, mute, wait)
