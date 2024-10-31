@@ -501,22 +501,28 @@ local function validateVersionData(t)
 end
 
 local function getLatestVersion()
-    -- 他奶奶的，luasocket 不支持 https，还得靠 curl
-    local tmp = os.tmpname()
-    local cmd = ("..\\tools\\curl\\curl.exe --get --output \"%s\" %s"):format(tmp, api_url_latest_framework_version)
-    os.execute(cmd)
-    local f = io.open(tmp, "r")
-    if f then
-        local s = f:read("*a")
-        f:close()
-        f = nil
-        os.remove(tmp)
-        local r, t = pcall(cjson.decode, s)
-        if r and validateVersionData(t) then
-            return true, t.description
-        end
+    local result = false
+    local function request()
+        local Request = require("http.Request")
+        return Request.get(api_url_latest_framework_version)
+            :setResolveTimeout(4000)
+            :setConnectTimeout(10000)
+            :setSendTimeout(10000)
+            :setReceiveTimeout(10000)
+            :addHeader("Accept", "application/json")
+            :execute()
     end
-    return false, ""
+    local response
+    result, response = pcall(request)
+    if not result then
+        return false, ""
+    end
+    local data
+    result, data = pcall(cjson.decode, response:body())
+    if not result or not validateVersionData(data) then
+        return false, ""
+    end
+    return true, data.description
 end
 
 ---@class launcher.menu.VersionView : launcher.menu.Base
