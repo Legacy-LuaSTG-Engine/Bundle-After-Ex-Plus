@@ -1,6 +1,6 @@
 local math = require("math")
-local std_assert = require("std.assert")
-local math_floor = math.floor
+local assert = require("std.assert")
+local floor = math.floor
 
 ---@class std.algorithm
 local algorithm = {}
@@ -48,7 +48,7 @@ local function sort(t, l, u, compare)
         if u - l == 1 then
             break
         end
-        local i = math_floor((l + u) / 2)
+        local i = floor((l + u) / 2)
         do
             local a = t[i]
             local b = t[l]
@@ -108,9 +108,9 @@ end
 ---@param t T[] | table<number, T> | table<integer, T>
 ---@param compare (fun(a:T, b:T):boolean)?
 function algorithm.quick_sort(t, compare)
-    std_assert.is_argument_type(t, "table", 1)
+    assert.is_argument_type(t, "table", 1)
     if compare ~= nil then
-        std_assert.is_argument_type(compare, "function", 2)
+        assert.is_argument_type(compare, "function", 2)
     end
     sort(t, 1, #t, compare or default_compare)
 end
