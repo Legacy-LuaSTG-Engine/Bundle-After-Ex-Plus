@@ -87,7 +87,7 @@ Write-Output "    Zip           : $($Zip)"
 
 # 读取版本信息
 
-$VersionInfo = Get-Content -Path ($ToolRoot + "/version.json") -Raw | ConvertFrom-Json
+$VersionInfo = Get-Content -Path "$($BuildRoot)/version.json" -Raw | ConvertFrom-Json
 [string] $BuildTimestamp = "$(Get-Date -Format "yyyyMMddHHmmss")"
 [string] $ArchiveName = "$($VersionInfo.name -replace " ", "-")-v$($VersionInfo.major).$($VersionInfo.minor).$($VersionInfo.patch)"
 if ($VersionInfo.pre_release.Length -gt 0) {
@@ -168,6 +168,8 @@ foreach ($EngineFileName in $EngineFileNameList) {
 #--------------------------------------------------------------------------------
 # 复制包
 
+Copy-File-And-Remove-Old -SourcePath "$($GameRoot)/launch" -TargetPath "$($GameOutput)/launch"
+
 [string[]] $PackageNameList = @(
     'thlib-resources'
     'thlib-scripts'
@@ -233,3 +235,8 @@ New-Directory-If-Not-Exist -Path $ArchiveOutputFirectory
 Set-Location -Path $OutputRoot
 & $Zip a $ArchiveOutputPath .\ -tzip -mmt=on -mcu=on -mx9
 Set-Location -Path $ProjectRoot
+
+#--------------------------------------------------------------------------------
+# 清理
+
+Remove-Directory-If-Exist  -Path $OutputRoot
