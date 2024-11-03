@@ -29,7 +29,3 @@ LuaSTG*.zip
 cache.zip
 
 project/*
-
-# build
-build/*
-.backup/*

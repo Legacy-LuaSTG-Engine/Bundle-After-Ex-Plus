@@ -11,6 +11,20 @@ Set-Location -Path ($PSScriptRoot + "\..")
 [string] $ToolOutput = $WorkSpace + "\build\tools"
 [string] $Zip        = $WorkSpace + "\tools\7z\7z.exe"
 
+# 版本信息
+
+[string] $VersionJsonText = Get-Content -Path ($ToolInput + "\version.json") -Raw
+$VersionInfo = ConvertFrom-Json $VersionJsonText
+[string] $BuildTimestamp = "$(Get-Date -Format "yyyyMMddHHmmss")"
+[string] $ArchiveName = "$($VersionInfo.name -replace " ", "-")-v$($VersionInfo.major).$($VersionInfo.minor).$($VersionInfo.patch)"
+if ($VersionInfo.pre_release.Length -gt 0) {
+    $ArchiveName = $ArchiveName + "-$($VersionInfo.pre_release)"
+}
+if ($VersionInfo.has_build_info) {
+    $ArchiveName = $ArchiveName + "+$($BuildTimestamp)"
+}
+Write-Output "输出包名：$($ArchiveName)"
+
 # 基础函数库
 
 function New-Directory-If-Not-Exist {
@@ -106,9 +120,22 @@ New-Directory-If-Not-Exist                                                      
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-scripts"   ) -TargetPath ($GameOutput + "\packages\thlib-scripts"   )
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-scripts-v2") -TargetPath ($GameOutput + "\packages\thlib-scripts-v2")
 # 生成内容
-    $AutoBuildTimestamp = Get-Content -Path ($ToolInput + "\gconfig_auto.lua") -Raw
-    $AutoBuildTimestamp = $AutoBuildTimestamp -replace "{BUILD_TIMESTAMP}", "$(Get-Date -Format "yyyyMMddHHmmss")"
-    Set-Content -Path ($GameOutput + "\packages\thlib-scripts\gconfig_auto.lua") -Value $AutoBuildTimestamp
+    $AutoConfig = Get-Content -Path ($ToolInput + "\gconfig_auto.lua") -Raw
+    $AutoConfig = $AutoConfig -replace "{VERSION_MAJOR}", $VersionInfo.major
+    $AutoConfig = $AutoConfig -replace "{VERSION_MINOR}", $VersionInfo.minor
+    $AutoConfig = $AutoConfig -replace "{VERSION_PATCH}", $VersionInfo.patch
+    if ($VersionInfo.pre_release.Length -gt 0) {
+        $AutoConfig = $AutoConfig -replace "{VERSION_PRE_RELEASE}", "-$($VersionInfo.pre_release)"
+    } else {
+        $AutoConfig = $AutoConfig -replace "{VERSION_PRE_RELEASE}", ""
+    }
+    if ($VersionInfo.has_build_info) {
+        $AutoConfig = $AutoConfig -replace "{VERSION_BUILD_TIMESTAMP}", "+$($BuildTimestamp)"
+    } else {
+        $AutoConfig = $AutoConfig -replace "{VERSION_BUILD_TIMESTAMP}", ""
+    }
+    $AutoConfig = $AutoConfig -replace "{NAME}", $VersionInfo.short_name
+    Set-Content -Path ($GameOutput + "\packages\thlib-scripts\gconfig_auto.lua") -Value $AutoConfig
 # 复制插件
     New-Directory-If-Not-Exist                                                                          -Path       ($GameOutput + "\plugins"                                )
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins\ColliderShapeDebugger"          ) -TargetPath ($GameOutput + "\plugins\ColliderShapeDebugger"          )
@@ -133,7 +160,8 @@ New-Directory-If-Not-Exist                                                      
     #Remove-File-If-Exist                                                            -Path       ($ToolOutput + "\外部设置工具\config.json")
     Remove-Directory-If-Exist                                                       -Path       ($ToolOutput + "\外部设置工具")
 # 打包
+    Remove-File-If-Exist -Path $ArchivePath
     Set-Location -Path $BuildRoot
-    Remove-File-If-Exist -Path ($WorkSpace + "\cache.zip")
-    & $Zip a ($WorkSpace + "\cache.zip") .\ -tzip -mmt=on -mcu=on -mx9
+    $ArchivePath = "$($WorkSpace)\$($ArchiveName).zip"
+    & $Zip a $ArchivePath .\ -tzip -mmt=on -mcu=on -mx9
     Set-Location -Path $WorkSpace

@@ -1,0 +1,9 @@
+{
+    "name": "LuaSTG After Ex Plus",
+    "short_name": "LuaSTG AEX+",
+    "major": 0,
+    "minor": 9,
+    "patch": 0,
+    "pre_release": "alpha.1",
+    "has_build_info": true
+}
