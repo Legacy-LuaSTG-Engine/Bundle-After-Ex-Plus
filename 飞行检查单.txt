@@ -1,7 +1,0 @@
-1、更新以下文件版本号
-    game\packages\thlib-scripts\gconfig.lua
-    game\packages\thlib-scripts\package.json
-    game\packages\thlib-resources\package.json
-2、运行 tools\pack_all.ps1 打包
-3、将得到的 cache.zip 重命名为
-    LuaSTG_aex+vx.y.z-beta (based on LuaSTG_ex+v0.83b)
