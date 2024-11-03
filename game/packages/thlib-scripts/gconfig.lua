@@ -36,7 +36,7 @@ gconfig.bundle_version_pre_release = "-alpha.1"
 --- 
 --- NOTE: Please refer to Semantic Versioning (https://semver.org/)  
 --- Build info  
-gconfig.bundle_version_build_info = "+202411031923"
+gconfig.bundle_version_build_info = ""
 
 --- 备注：请参考语义化版本号（https://semver.org/lang/zh-CN/）  
 --- 版本信息  
