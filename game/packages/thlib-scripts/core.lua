@@ -6,7 +6,9 @@
 ----------------------------------------
 ---各个模块
 
-lstg.DoFile("gconfig.lua")--全局配置信息
+require("gconfig") -- 全局配置信息
+require("gconfig_auto") -- 全局配置信息（由打包器自动生成）
+
 lstg.DoFile("lib/Llog.lua")--简单的log系统
 lstg.DoFile("lib/Lglobal.lua")--用户全局变量
 lstg.DoFile("lib/Lmath.lua")--数学常量、数学函数、随机数系统

@@ -105,6 +105,10 @@ New-Directory-If-Not-Exist                                                      
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-resources" ) -TargetPath ($GameOutput + "\packages\thlib-resources" )
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-scripts"   ) -TargetPath ($GameOutput + "\packages\thlib-scripts"   )
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\packages\thlib-scripts-v2") -TargetPath ($GameOutput + "\packages\thlib-scripts-v2")
+# 生成内容
+    $AutoBuildTimestamp = Get-Content -Path ($ToolInput + "\gconfig_auto.lua") -Raw
+    $AutoBuildTimestamp = $AutoBuildTimestamp -replace "{BUILD_TIMESTAMP}", "$(Get-Date -Format "yyyyMMddHHmmss")"
+    Set-Content -Path ($GameOutput + "\packages\thlib-scripts\gconfig_auto.lua") -Value $AutoBuildTimestamp
 # 复制插件
     New-Directory-If-Not-Exist                                                                          -Path       ($GameOutput + "\plugins"                                )
     Copy-Directory-And-Remove-Old -SourcePath ($GameInput + "\plugins\ColliderShapeDebugger"          ) -TargetPath ($GameOutput + "\plugins\ColliderShapeDebugger"          )
