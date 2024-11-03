@@ -4,8 +4,8 @@ Set-Location -Path ($PSScriptRoot + "\..")
 [string] $WorkSpace = Get-Location
 [string] $GameInput  = $WorkSpace + "\game"
 [string] $GameOutput = $WorkSpace + "\build\game"
-[string] $DocInput   = $WorkSpace + "\doc"
-[string] $DocOutput  = $WorkSpace + "\build\doc"
+[string] $DocInput   = $WorkSpace + "\document"
+[string] $DocOutput  = $WorkSpace + "\build\document"
 [string] $BuildRoot  = $WorkSpace + "\build"
 [string] $ToolInput  = $WorkSpace + "\tools"
 [string] $ToolOutput = $WorkSpace + "\build\tools"
@@ -117,7 +117,6 @@ New-Directory-If-Not-Exist                                                      
 # 复制文档
     Remove-Directory-If-Exist                                                       -Path       ($DocOutput)
     Copy-Directory-And-Remove-Old -SourcePath ($DocInput)                           -TargetPath ($DocOutput)
-    Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\更新日志.txt")         -TargetPath ($DocOutput + "\更新日志.txt")
     Copy-File-And-Remove-Old      -SourcePath ($WorkSpace + "\使用说明（必读）.txt")          -TargetPath ($BuildRoot + "\使用说明（必读）.txt")
     Copy-File-And-Remove-Old      -SourcePath ($GameInput + "\mod\模组安装说明（必读）.txt")  -TargetPath ($GameOutput + "\mod\模组安装说明（必读）.txt")
     #Remove-File-Force                                                               -Path       ($DocOutput + "\.git")
