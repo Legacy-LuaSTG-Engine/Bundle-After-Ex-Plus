@@ -108,9 +108,9 @@ end
 ---@param t T[] | table<number, T> | table<integer, T>
 ---@param compare (fun(a:T, b:T):boolean)?
 function algorithm.quick_sort(t, compare)
-    std_assert.argument_type(t, "table", 1)
+    std_assert.is_argument_type(t, "table", 1)
     if compare ~= nil then
-        std_assert.argument_type(compare, "function", 2)
+        std_assert.is_argument_type(compare, "function", 2)
     end
     sort(t, 1, #t, compare or default_compare)
 end
