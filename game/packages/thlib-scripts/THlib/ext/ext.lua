@@ -143,13 +143,10 @@ end
 --- 切关处理
 function ChangeGameStage()
     ResetWorld()
-    ResetWorldOffset()
-     --by ETC，重置world偏移
-
-    lstg.ResetLstgtmpvar()
-     --重置lstg.tmpvar
-    ex.Reset()
-     --重置ex全局变量
+    ResetWorldOffset() -- by ETC，重置world偏移
+    lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
+    ex.Reset() -- 重置ex全局变量
+    IntersectionDetectionManager.removeAllByTag("stage") -- 移除临时碰撞组对
 
     if lstg.nextvar then
         lstg.var = lstg.nextvar

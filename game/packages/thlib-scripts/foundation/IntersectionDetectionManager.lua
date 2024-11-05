@@ -1,10 +1,15 @@
 local table = require("table")
 local lstg = require("lstg")
 
+---@alias foundation.IntersectionDetectionManager.KnownTag
+---| '"global"'
+---| '"stage"'
+
 ---@class foundation.IntersectionDetectionManager
 local IntersectionDetectionManager = {}
 
----@type { [1]:number, [2]:number }[]
+--- { group1, group2, tag }
+---@type { [1]:number, [2]:number, tag:string }[]
 local pairs = {}
 
 ---@param group1 number
@@ -21,12 +26,13 @@ end
 
 ---@param group1 number
 ---@param group2 number
+---@param tag foundation.IntersectionDetectionManager.KnownTag?
 ---@return boolean
-function IntersectionDetectionManager.addPair(group1, group2)
+function IntersectionDetectionManager.addPair(group1, group2, tag)
     if IntersectionDetectionManager.hasPair(group1, group2) then
         return false
     end
-    table.insert(pairs, { group1, group2 })
+    table.insert(pairs, { group1, group2; tag = tag or "global" })
     return true
 end
 
@@ -41,6 +47,19 @@ function IntersectionDetectionManager.removePair(group1, group2)
         end
     end
     return false
+end
+
+---@param tag foundation.IntersectionDetectionManager.KnownTag
+function IntersectionDetectionManager.removeAllByTag(tag)
+    for i = #pairs, 1, -1 do
+        if pairs[i].tag == tag then
+            table.remove(pairs, i)
+        end
+    end
+end
+
+function IntersectionDetectionManager.removeAll()
+    pairs = {}
 end
 
 function IntersectionDetectionManager.execute()
