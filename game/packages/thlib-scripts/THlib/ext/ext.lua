@@ -4,6 +4,7 @@
 ---=====================================
 
 local SceneManager = require("foundation.SceneManager")
+local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
 ----------------------------------------
@@ -95,6 +96,24 @@ end
 function ext.PushPauseMenuOrder(msg)
     ext.pause_menu_order = msg
 end
+
+----------------------------------------
+---extra collision check
+
+-- 基础
+IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_ENEMY_BULLET)
+IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_ENEMY)
+IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_INDES)
+IntersectionDetectionManager.addPair(GROUP_ENEMY, GROUP_PLAYER_BULLET)
+IntersectionDetectionManager.addPair(GROUP_NONTJT, GROUP_PLAYER_BULLET)
+IntersectionDetectionManager.addPair(GROUP_ITEM, GROUP_PLAYER)
+-- 可用于自机 bomb (by OLC)
+IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_ENEMY)
+IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_NONTJT)
+IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_ENEMY_BULLET)
+IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_INDES)
+-- 用于检查与自机碰撞 (by OLC)
+IntersectionDetectionManager.addPair(GROUP_CPLAYER, GROUP_PLAYER)
 
 ----------------------------------------
 ---extra user function
@@ -230,24 +249,7 @@ function DoFrame()
     -- 碰撞检测
     if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
-        -- TODO: 等 API 文档更新后，去除下一行的禁用警告
-        ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
-        lstg.CollisionCheck({
-            -- 基础
-            { GROUP_PLAYER, GROUP_ENEMY_BULLET },
-            { GROUP_PLAYER, GROUP_ENEMY },
-            { GROUP_PLAYER, GROUP_INDES },
-            { GROUP_ENEMY, GROUP_PLAYER_BULLET },
-            { GROUP_NONTJT, GROUP_PLAYER_BULLET },
-            { GROUP_ITEM, GROUP_PLAYER },
-            -- 可用于自机 bomb (by OLC)
-            { GROUP_SPELL, GROUP_ENEMY },
-            { GROUP_SPELL, GROUP_NONTJT },
-            { GROUP_SPELL, GROUP_ENEMY_BULLET },
-            { GROUP_SPELL, GROUP_INDES },
-            -- 用于检查与自机碰撞 (by OLC)
-            { GROUP_CPLAYER, GROUP_PLAYER },
-        });
+        IntersectionDetectionManager.execute()
         gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     end
     -- 出界检测
