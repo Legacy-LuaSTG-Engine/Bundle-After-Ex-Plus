@@ -101,19 +101,19 @@ end
 ---extra collision check
 
 -- 基础
-IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_ENEMY_BULLET)
-IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_ENEMY)
-IntersectionDetectionManager.addPair(GROUP_PLAYER, GROUP_INDES)
-IntersectionDetectionManager.addPair(GROUP_ENEMY, GROUP_PLAYER_BULLET)
-IntersectionDetectionManager.addPair(GROUP_NONTJT, GROUP_PLAYER_BULLET)
-IntersectionDetectionManager.addPair(GROUP_ITEM, GROUP_PLAYER)
+IntersectionDetectionManager.add("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET, "global")
+IntersectionDetectionManager.add("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES, "global")
+IntersectionDetectionManager.add("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY, "global")
+IntersectionDetectionManager.add("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET, "global")
+IntersectionDetectionManager.add("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET, "global")
+IntersectionDetectionManager.add("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER, "global")
 -- 可用于自机 bomb (by OLC)
-IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_ENEMY)
-IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_NONTJT)
-IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_ENEMY_BULLET)
-IntersectionDetectionManager.addPair(GROUP_SPELL, GROUP_INDES)
+IntersectionDetectionManager.add("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY, "global")
+IntersectionDetectionManager.add("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT, "global")
+IntersectionDetectionManager.add("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET, "global")
+IntersectionDetectionManager.add("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES, "global")
 -- 用于检查与自机碰撞 (by OLC)
-IntersectionDetectionManager.addPair(GROUP_CPLAYER, GROUP_PLAYER)
+IntersectionDetectionManager.add("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER, "global")
 
 ----------------------------------------
 ---extra user function
@@ -146,7 +146,7 @@ function ChangeGameStage()
     ResetWorldOffset() -- by ETC，重置world偏移
     lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
     ex.Reset() -- 重置ex全局变量
-    IntersectionDetectionManager.removeAllByTag("stage") -- 移除临时碰撞组对
+    IntersectionDetectionManager.removeAllByScope("stage") -- 移除关卡范围的碰撞组对
 
     if lstg.nextvar then
         lstg.var = lstg.nextvar
