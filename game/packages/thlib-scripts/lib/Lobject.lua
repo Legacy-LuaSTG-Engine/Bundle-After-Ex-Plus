@@ -22,16 +22,23 @@ GROUP_CPLAYER = 9 -- 由OLC添加，可用于检测自机
 GROUP_ALL = 16
 GROUP_NUM_OF_GROUP = 16
 
-IntersectionDetectionManager.registerGroup("thlib-default-basic:ghost", GROUP_GHOST)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy-bullet", GROUP_ENEMY_BULLET)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy-bullet1", GROUP_INDES)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy", GROUP_ENEMY)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy1", GROUP_NONTJT)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:player-bullet", GROUP_PLAYER_BULLET)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:player", GROUP_PLAYER)
-IntersectionDetectionManager.registerGroup("thlib-default-basic:item", GROUP_ITEM)
-IntersectionDetectionManager.registerGroup("thlib-default-player:spell", GROUP_SPELL)
-IntersectionDetectionManager.registerGroup("thlib-default-area:area", GROUP_CPLAYER)
+do
+    ---@param id string
+    ---@param g number
+    local function reg(id, g)
+        IntersectionDetectionManager.registerGroup(id, g)
+    end
+    reg("thlib-default-basic:ghost", GROUP_GHOST)
+    reg("thlib-default-basic:enemy-bullet", GROUP_ENEMY_BULLET)
+    reg("thlib-default-basic:enemy-bullet1", GROUP_INDES)
+    reg("thlib-default-basic:enemy", GROUP_ENEMY)
+    reg("thlib-default-basic:enemy1", GROUP_NONTJT)
+    reg("thlib-default-basic:player-bullet", GROUP_PLAYER_BULLET)
+    reg("thlib-default-basic:player", GROUP_PLAYER)
+    reg("thlib-default-basic:item", GROUP_ITEM)
+    reg("thlib-default-player:spell", GROUP_SPELL)
+    reg("thlib-default-area:area", GROUP_CPLAYER)
+end
 
 --------------------------------------------------------------------------------
 --- 预定义的图层
