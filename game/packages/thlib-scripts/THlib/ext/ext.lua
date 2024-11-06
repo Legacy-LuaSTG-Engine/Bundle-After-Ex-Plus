@@ -147,6 +147,7 @@ function ChangeGameStage()
     lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
     ex.Reset() -- 重置ex全局变量
     IntersectionDetectionManager.removeAllByScope("stage") -- 移除关卡范围的碰撞组对
+    IntersectionDetectionManager.unregisterAllGroupByScope("stage") -- 移除关卡范围的碰撞组
 
     if lstg.nextvar then
         lstg.var = lstg.nextvar

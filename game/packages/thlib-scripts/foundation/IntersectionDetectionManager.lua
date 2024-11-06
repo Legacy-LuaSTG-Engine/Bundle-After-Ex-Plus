@@ -170,6 +170,23 @@ function IntersectionDetectionManager.unregisterGroup(id)
     groups[id] = nil
 end
 
+--- 根据范围移除所有相符的碰撞组  
+---@param scope foundation.IntersectionDetectionManager.KnownScope
+function IntersectionDetectionManager.unregisterAllGroupByScope(scope)
+    assertArgumentType(scope, "string", 1, "unregisterAllGroupByScope")
+    assertTrue(1, "unregisterAllGroupByScope", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
+    ---@type string[]
+    local ids = {}
+    for _, v in pairs(groups) do
+        if v.scope == scope then
+            table.insert(ids, v.id)
+        end
+    end
+    for _, s in ipairs(ids) do
+        groups[s] = nil
+    end
+end
+
 --------------------------------------------------------------------------------
 --- 碰撞组对管理和代理执行
 
