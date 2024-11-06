@@ -76,6 +76,52 @@ local function isKnownScope(s)
     return s == "global" or s == "stage"
 end
 
+--- 碰撞组对管理和代理执行 `lstg.CollisionCheck`
+---@class foundation.IntersectionDetectionManager
+local IntersectionDetectionManager = {}
+
+--------------------------------------------------------------------------------
+--- 碰撞组管理
+
+---@class foundation.IntersectionDetectionManager.Group
+---@field id string
+---@field group integer
+---@field scope foundation.IntersectionDetectionManager.KnownScope
+
+---@type table<string, foundation.IntersectionDetectionManager.Group>
+local groups = {}
+
+--- 注册碰撞组  
+---@param id string
+---@param group number
+---@param scope foundation.IntersectionDetectionManager.KnownScope?
+function IntersectionDetectionManager.registerGroup(id, group, scope)
+    assertArgumentType(id, "string", 1, "registerGroup")
+    assertArgumentType(group, "number", 2, "registerGroup")
+    if scope ~= nil then
+        assertArgumentType(scope, "string", 3, "registerGroup")
+    end
+    assertTrue(1, "registerGroup", isNotBlank(id), "'id' cannot be empty")
+    assertTrue(2, "registerGroup", isKnownGroup(group), "'group' must be in the range 0 to 15")
+    if scope ~= nil then
+        assertTrue(3, "registerGroup", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
+    end
+    assert(not groups[id], ("'id' ('%s') already exists"):format(id))
+    groups[id] = {
+        id = id,
+        group = math.floor(group),
+        scope = scope or "stage",
+    }
+end
+
+--- 取消注册碰撞组
+---@param id string
+function IntersectionDetectionManager.unregisterGroup(id)
+    assertArgumentType(id, "string", 1, "unregisterGroup")
+    assertTrue(1, "unregisterGroup", isNotBlank(id), "'id' cannot be empty")
+    groups[id] = nil
+end
+
 --------------------------------------------------------------------------------
 --- 碰撞组对管理和代理执行
 
@@ -115,10 +161,6 @@ local function merge()
         end
     end
 end
-
---- 碰撞组对管理和代理执行 `lstg.CollisionCheck`
----@class foundation.IntersectionDetectionManager
-local IntersectionDetectionManager = {}
 
 --- 添加碰撞组对，id 由管理器自动生成  
 --- 只能添加到 "stage" 范围，离开关卡后自动清理  
