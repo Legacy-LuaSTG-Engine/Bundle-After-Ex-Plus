@@ -120,6 +120,29 @@ end
 ---@class foundation.IntersectionDetectionManager
 local IntersectionDetectionManager = {}
 
+--- 添加碰撞组对，id 由管理器自动生成  
+--- 只能添加到 "stage" 范围，离开关卡后自动清理  
+---@param group1 number
+---@param group2 number
+---@diagnostic disable-next-line: duplicate-set-field
+function IntersectionDetectionManager.add(group1, group2)
+end
+
+---@param group1 number
+---@param group2 number
+local function add(group1, group2)
+    counter = counter + 1
+    local id = "foundation:auto-" .. counter
+    entries[id] = {
+        uid = counter,
+        id = id,
+        group1 = math.floor(group1),
+        group2 = math.floor(group2),
+        scope = "stage",
+    }
+    merge()
+end
+
 --- 添加碰撞组对，不填写范围（scope）时默认添加到关卡（"stage"）范围，离开关卡后自动清理  
 --- 如果需要添加到全局，范围（scope）需填写 "global"（全局）  
 --- 如果 id 重复，将抛出错误  
@@ -127,7 +150,16 @@ local IntersectionDetectionManager = {}
 ---@param group1 number
 ---@param group2 number
 ---@param scope foundation.IntersectionDetectionManager.KnownScope?
+---@diagnostic disable-next-line: duplicate-set-field
 function IntersectionDetectionManager.add(id, group1, group2, scope)
+    -- 二参数版本
+    if type(id) == "number" and type(group1) == "number" and group2 == nil and scope == nil then
+        ---@cast id -string, +number
+        ---@cast group2 -number, +nil
+        ---@cast scope -foundation.IntersectionDetectionManager.KnownScope?, +nil
+        return add(id, group1)
+    end
+    -- 四参数版本
     assertArgumentType(id, "string", 1, "add")
     assertArgumentType(group1, "number", 2, "add")
     assertArgumentType(group2, "number", 3, "add")
