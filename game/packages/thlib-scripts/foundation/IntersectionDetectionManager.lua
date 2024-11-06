@@ -3,6 +3,12 @@ local math = require("math")
 local lstg = require("lstg")
 
 --------------------------------------------------------------------------------
+--- 常量，具体数值由 LuaSTG 引擎的版本决定
+
+local FIRST_GROUP = 0
+local LAST_GROUP = 15
+
+--------------------------------------------------------------------------------
 --- 断言
 
 ---@generic T
@@ -68,9 +74,12 @@ local IntersectionDetectionManager = {}
 --- 碰撞组管理
 
 ---@class foundation.IntersectionDetectionManager.Group
+---@field uid integer
 ---@field id string
 ---@field group integer
 ---@field scope foundation.IntersectionDetectionManager.KnownScope
+
+local group_counter = 0
 
 ---@type table<string, foundation.IntersectionDetectionManager.Group>
 local groups = {}
@@ -79,8 +88,8 @@ local groups = {}
 ---@param g T
 ---@return boolean
 local function isValidGroup(g)
-    -- 碰撞组是整数，不能直接用 g >= 0 and g <= 15 判断
-    for i = 0, 15 do
+    -- 碰撞组是整数，不能直接用 g >= FIRST_GROUP and g <= LAST_GROUP 判断
+    for i = FIRST_GROUP, LAST_GROUP do
         if g == i then
             return true
         end
@@ -100,35 +109,60 @@ local function isGroupRegistered(g)
     return false
 end
 
---- 注册碰撞组  
+--- 注册碰撞组，通过该方法注册的碰撞组只能是全局（"global"）范围  
 ---@param id string
 ---@param group number
----@param scope foundation.IntersectionDetectionManager.KnownScope?
-function IntersectionDetectionManager.registerGroup(id, group, scope)
+function IntersectionDetectionManager.registerGroup(id, group)
     assertArgumentType(id, "string", 1, "registerGroup")
     assertArgumentType(group, "number", 2, "registerGroup")
-    if scope ~= nil then
-        assertArgumentType(scope, "string", 3, "registerGroup")
-    end
     assertTrue(1, "registerGroup", isNotBlank(id), "'id' cannot be empty")
     assertTrue(2, "registerGroup", isValidGroup(group), "'group' must be in the range 0 to 15")
-    if scope ~= nil then
-        assertTrue(3, "registerGroup", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
-    end
     assert(not groups[id], ("'id' ('%s') already exists"):format(id))
     for _, v in pairs(groups) do
         if v.group == group then
             error(("'group' ('%d') already registered"):format(group))
         end
     end
+    group_counter = group_counter + 1
     groups[id] = {
+        uid = group_counter,
         id = id,
         group = math.floor(group),
-        scope = scope or "stage",
+        scope = "global",
     }
 end
 
---- 取消注册碰撞组
+--- 分配碰撞组，通过该方法得到的碰撞组只能是关卡（"stage"）范围，离开关卡后自动清理  
+---@return string id
+---@return number group
+function IntersectionDetectionManager.allocateGroup()
+    ---@type boolean[]
+    local allocated = {}
+    for _, v in pairs(groups) do
+        allocated[v.group] = true
+    end
+    local group = FIRST_GROUP - 1
+    for i = FIRST_GROUP, LAST_GROUP do
+        if not allocated[i] then
+            group = i
+            break
+        end
+    end
+    if group < FIRST_GROUP then
+        error("allocate group failed")
+    end
+    group_counter = group_counter + 1
+    local id = "foundation:auto-" .. group_counter
+    groups[id] = {
+        uid = group_counter,
+        id = id,
+        group = group,
+        scope = "stage",
+    }
+    return id, group
+end
+
+--- 取消注册碰撞组  
 ---@param id string
 function IntersectionDetectionManager.unregisterGroup(id)
     assertArgumentType(id, "string", 1, "unregisterGroup")
@@ -168,7 +202,7 @@ local function merge()
     local pair_set = {}
     merged = {}
     for _, v in ipairs(list) do
-        local k = v.group1 * 100 + v.group2
+        local k = v.group1 * 10000 + v.group2
         if not pair_set[k] then
             pair_set[k] = true
             table.insert(merged, { v.group1, v.group2 })
@@ -283,19 +317,37 @@ function IntersectionDetectionManager.print()
         lstg.Log(2, fmt:format(...))
     end
     log("foundation.IntersectionDetectionManager")
-    log("    entries:")
-    ---@type foundation.IntersectionDetectionManager.Entry[]
-    local list = {}
-    for _, v in pairs(entries) do
-        table.insert(list, v)
+    log("    groups:")
+    do
+        ---@type foundation.IntersectionDetectionManager.Group[]
+        local list = {}
+        for _, v in pairs(groups) do
+            table.insert(list, v)
+        end
+        table.sort(list, function(a, b)
+            return a.uid < b.uid
+        end)
+        for i, v in ipairs(list) do
+            log("        %d. id   : '%s' (uid = %d)", i, v.id, v.uid)
+            log("            group: (%d - %d)", v.group)
+            log("            scope: '%s'", v.scope)
+        end
     end
-    table.sort(list, function(a, b)
-        return a.uid < b.uid
-    end)
-    for i, v in ipairs(list) do
-        log("        %d. id    : '%s' (uid = %d)", i, v.id, v.uid)
-        log("            groups: (%d - %d)", v.group1, v.group2)
-        log("            scope : '%s'", v.scope)
+    log("    entries:")
+    do
+        ---@type foundation.IntersectionDetectionManager.Entry[]
+        local list = {}
+        for _, v in pairs(entries) do
+            table.insert(list, v)
+        end
+        table.sort(list, function(a, b)
+            return a.uid < b.uid
+        end)
+        for i, v in ipairs(list) do
+            log("        %d. id    : '%s' (uid = %d)", i, v.id, v.uid)
+            log("            groups: (%d - %d)", v.group1, v.group2)
+            log("            scope : '%s'", v.scope)
+        end
     end
     log("    merged:")
     for i, v in ipairs(merged) do
