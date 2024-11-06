@@ -6,10 +6,11 @@ game/mod/*
 !game/mod/模组安装说明（必读）.txt
 
 #plugins
-game/plugins/JyuSeoiJanPlayer/*
-game/plugins/究极无敌完美无瑕原作文化帖文机(适配aex+.zip
-game/plugins/MaterialExperience/*
-game/plugins/广州地铁关门音效/*
+game/plugins/*
+!game/plugins/ColliderShapeDebugger
+!game/plugins/PlayerExtensions
+!game/plugins/StageBackgroundExtensions
+!game/plugins/thlib-legacy-bullet-definitions
 
 # temp
 game/engine.log

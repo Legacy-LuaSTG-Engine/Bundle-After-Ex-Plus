@@ -43,6 +43,7 @@ lstg.globalEventDispatcher = gameEventDispatcher
 --------------------------------------------------------------------------------
 
 local SceneManager = require("foundation.SceneManager")
+local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
 
 --------------------------------------------------------------------------------
 --- 默认的主场景
@@ -74,24 +75,7 @@ function DoFrame()
     gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
     -- 碰撞检测
     gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
-    -- TODO: 等 API 文档更新后，去除下一行的禁用警告
-    ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
-    lstg.CollisionCheck({
-        -- 基础
-        { GROUP_PLAYER, GROUP_ENEMY_BULLET },
-        { GROUP_PLAYER, GROUP_ENEMY },
-        { GROUP_PLAYER, GROUP_INDES },
-        { GROUP_ENEMY, GROUP_PLAYER_BULLET },
-        { GROUP_NONTJT, GROUP_PLAYER_BULLET },
-        { GROUP_ITEM, GROUP_PLAYER },
-        -- 可用于自机 bomb (by OLC)
-        { GROUP_SPELL, GROUP_ENEMY },
-        { GROUP_SPELL, GROUP_NONTJT },
-        { GROUP_SPELL, GROUP_ENEMY_BULLET },
-        { GROUP_SPELL, GROUP_INDES },
-        -- 用于检查与自机碰撞 (by OLC)
-        { GROUP_CPLAYER, GROUP_PLAYER },
-    });
+    IntersectionDetectionManager.execute()
     gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     -- 出界检测
     gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")

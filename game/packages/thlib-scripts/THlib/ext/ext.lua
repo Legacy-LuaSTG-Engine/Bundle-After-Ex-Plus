@@ -4,6 +4,7 @@
 ---=====================================
 
 local SceneManager = require("foundation.SceneManager")
+local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
 ----------------------------------------
@@ -97,6 +98,32 @@ function ext.PushPauseMenuOrder(msg)
 end
 
 ----------------------------------------
+---extra collision check
+
+do
+    ---@param id string
+    ---@param g1 number
+    ---@param g2 number
+    local function reg(id, g1, g2)
+        IntersectionDetectionManager.registerGroupPair(id, g1, g2, "global")
+    end
+    -- 基础
+    reg("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET)
+    reg("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES)
+    reg("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY)
+    reg("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET)
+    reg("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET)
+    reg("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER)
+    -- 可用于自机 bomb (by OLC)
+    reg("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY)
+    reg("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT)
+    reg("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET)
+    reg("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES)
+    -- 用于检查与自机碰撞 (by OLC)
+    reg("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER)
+end
+
+----------------------------------------
 ---extra user function
 
 function GameStateChange()
@@ -124,13 +151,11 @@ end
 --- 切关处理
 function ChangeGameStage()
     ResetWorld()
-    ResetWorldOffset()
-     --by ETC，重置world偏移
-
-    lstg.ResetLstgtmpvar()
-     --重置lstg.tmpvar
-    ex.Reset()
-     --重置ex全局变量
+    ResetWorldOffset() -- by ETC，重置world偏移
+    lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
+    ex.Reset() -- 重置ex全局变量
+    IntersectionDetectionManager.unregisterAllGroupPairByScope("stage") -- 移除关卡范围的碰撞组对
+    IntersectionDetectionManager.unregisterAllGroupByScope("stage") -- 移除关卡范围的碰撞组
 
     if lstg.nextvar then
         lstg.var = lstg.nextvar
@@ -230,24 +255,9 @@ function DoFrame()
     -- 碰撞检测
     if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
-        -- TODO: 等 API 文档更新后，去除下一行的禁用警告
-        ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
-        lstg.CollisionCheck({
-            -- 基础
-            { GROUP_PLAYER, GROUP_ENEMY_BULLET },
-            { GROUP_PLAYER, GROUP_ENEMY },
-            { GROUP_PLAYER, GROUP_INDES },
-            { GROUP_ENEMY, GROUP_PLAYER_BULLET },
-            { GROUP_NONTJT, GROUP_PLAYER_BULLET },
-            { GROUP_ITEM, GROUP_PLAYER },
-            -- 可用于自机 bomb (by OLC)
-            { GROUP_SPELL, GROUP_ENEMY },
-            { GROUP_SPELL, GROUP_NONTJT },
-            { GROUP_SPELL, GROUP_ENEMY_BULLET },
-            { GROUP_SPELL, GROUP_INDES },
-            -- 用于检查与自机碰撞 (by OLC)
-            { GROUP_CPLAYER, GROUP_PLAYER },
-        });
+    end
+    IntersectionDetectionManager.execute()
+    if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     end
     -- 出界检测
