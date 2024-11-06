@@ -164,6 +164,8 @@ end
 --- 根据范围移除所有相符的碰撞组对  
 ---@param scope foundation.IntersectionDetectionManager.KnownScope
 function IntersectionDetectionManager.removeAllByScope(scope)
+    assertArgumentType(scope, "string", 1, "removeAllByScope")
+    assertTrue(1, "removeAllByScope", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
     ---@type string[]
     local ids = {}
     for _, v in pairs(entries) do
