@@ -107,6 +107,11 @@ function IntersectionDetectionManager.registerGroup(id, group, scope)
         assertTrue(3, "registerGroup", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
     end
     assert(not groups[id], ("'id' ('%s') already exists"):format(id))
+    for _, v in pairs(groups) do
+        if v.group == group then
+            error(("'group' ('%d') already registered"):format(group))
+        end
+    end
     groups[id] = {
         id = id,
         group = math.floor(group),
