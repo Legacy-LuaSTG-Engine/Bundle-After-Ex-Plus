@@ -188,7 +188,7 @@ function IntersectionDetectionManager.unregisterAllGroupByScope(scope)
 end
 
 --------------------------------------------------------------------------------
---- 碰撞组对管理和代理执行
+--- 碰撞组对管理
 
 ---@class foundation.IntersectionDetectionManager.Entry
 ---@field uid integer
@@ -196,6 +196,7 @@ end
 ---@field group1 integer
 ---@field group2 integer
 ---@field scope foundation.IntersectionDetectionManager.KnownScope
+---@field super_pause_enabled boolean
 
 local counter = 0
 
@@ -205,34 +206,57 @@ local entries = {}
 ---@type { [1]: integer, [2]: integer }[]
 local merged = {}
 
---- 合并碰撞组对  
-local function merge()
+---@type { [1]: integer, [2]: integer }[]
+local merged_super_pause_enabled = {}
+
+---@param input table<string, foundation.IntersectionDetectionManager.Entry>
+---@param super_pause_enabled boolean
+---@return { [1]: integer, [2]: integer }[] merged
+local function merge0(input, super_pause_enabled)
     ---@type foundation.IntersectionDetectionManager.Entry[]
     local list = {}
-    for _, v in pairs(entries) do
+    for _, v in pairs(input) do
         table.insert(list, v)
     end
     table.sort(list, function(a, b)
         return a.uid < b.uid
     end)
+
+    if super_pause_enabled then
+        for i = #list, 1, -1 do
+            if not list[i].super_pause_enabled then
+                table.remove(list, i)
+            end
+        end
+    end
+
     ---@type table<integer, boolean>
     local pair_set = {}
-    merged = {}
+    ---@type { [1]: integer, [2]: integer }[]
+    local result = {}
     for _, v in ipairs(list) do
         local k = v.group1 * 10000 + v.group2
         if not pair_set[k] then
             pair_set[k] = true
-            table.insert(merged, { v.group1, v.group2 })
+            table.insert(result, { v.group1, v.group2 })
         end
     end
+
+    return result
+end
+
+--- 合并碰撞组对  
+local function merge()
+    merged = merge0(entries, false)
+    merged_super_pause_enabled = merge0(entries, true)
 end
 
 --- 注册碰撞组对，id 由管理器自动生成  
 --- 只能添加到 "stage" 范围，离开关卡后自动清理  
 ---@param group1 number
 ---@param group2 number
----@return string string
-function IntersectionDetectionManager.add(group1, group2)
+---@return string id
+function IntersectionDetectionManager.addGroupPair(group1, group2)
     counter = counter + 1
     local id = "foundation:auto-" .. counter
     entries[id] = {
@@ -241,6 +265,7 @@ function IntersectionDetectionManager.add(group1, group2)
         group1 = math.floor(group1),
         group2 = math.floor(group2),
         scope = "stage",
+        super_pause_enabled = false,
     }
     merge()
     return id
@@ -274,6 +299,7 @@ function IntersectionDetectionManager.registerGroupPair(id, group1, group2, scop
         group1 = math.floor(group1),
         group2 = math.floor(group2),
         scope = scope or "stage",
+        super_pause_enabled = false,
     }
     merge()
 end
@@ -305,11 +331,70 @@ function IntersectionDetectionManager.unregisterAllGroupPairByScope(scope)
     merge()
 end
 
+--------------------------------------------------------------------------------
+--- 兼容超级暂停
+
+local g_super_pause_enabled = false
+
+---@param feature_name '"super_pause"'
+---@param enabled boolean
+function IntersectionDetectionManager.setFeatureEnabled(feature_name, enabled)
+    if feature_name == "super_pause" then
+        g_super_pause_enabled = enabled
+    else
+        error(("unknown feature '%s'"):format(feature_name))
+    end
+end
+
+---@param feature_name '"super_pause"'
+---@return boolean enabled
+function IntersectionDetectionManager.isFeatureEnabled(feature_name)
+    if feature_name == "super_pause" then
+        return g_super_pause_enabled
+    else
+        error(("unknown feature '%s'"):format(feature_name))
+    end
+end
+
+---@param id string
+---@param feature_name '"super_pause"'
+---@param enabled boolean
+function IntersectionDetectionManager.setGroupPairFeatureEnabled(id, feature_name, enabled)
+    assert(entries[id], ("'%s' not found"):format(id))
+    if feature_name == "super_pause" then
+        entries[id].super_pause_enabled = enabled
+    else
+        error(("unknown feature '%s'"):format(feature_name))
+    end
+    merge()
+end
+
+---@param id string
+---@param feature_name '"super_pause"'
+---@return boolean enabled
+function IntersectionDetectionManager.isGroupPairFeatureEnabled(id, feature_name, enabled)
+    assert(entries[id], ("'%s' not found"):format(id))
+    if feature_name == "super_pause" then
+        return entries[id].super_pause_enabled
+    else
+        error(("unknown feature '%s'"):format(feature_name))
+    end
+end
+
+--------------------------------------------------------------------------------
+--- 代理执行
+
 --- 代理执行 `lstg.CollisionCheck`  
 function IntersectionDetectionManager.execute()
-    -- TODO: 等 API 文档更新后，去除下一行的禁用警告
-    ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
-    lstg.CollisionCheck(merged)
+    if g_super_pause_enabled and lstg.GetCurrentSuperPause() > 0 then
+        -- TODO: 等 API 文档更新后，去除下一行的禁用警告
+        ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
+        lstg.CollisionCheck(merged_super_pause_enabled)
+    else
+        -- TODO: 等 API 文档更新后，去除下一行的禁用警告
+        ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
+        lstg.CollisionCheck(merged)
+    end
 end
 
 --------------------------------------------------------------------------------

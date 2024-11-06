@@ -255,7 +255,9 @@ function DoFrame()
     -- 碰撞检测
     if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
-        IntersectionDetectionManager.execute()
+    end
+    IntersectionDetectionManager.execute()
+    if GetCurrentSuperPause() <= 0 then
         gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
     end
     -- 出界检测
