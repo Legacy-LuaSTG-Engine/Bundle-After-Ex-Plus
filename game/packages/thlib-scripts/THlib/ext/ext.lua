@@ -100,20 +100,28 @@ end
 ----------------------------------------
 ---extra collision check
 
--- 基础
-IntersectionDetectionManager.add("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET, "global")
-IntersectionDetectionManager.add("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES, "global")
-IntersectionDetectionManager.add("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY, "global")
-IntersectionDetectionManager.add("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET, "global")
-IntersectionDetectionManager.add("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET, "global")
-IntersectionDetectionManager.add("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER, "global")
--- 可用于自机 bomb (by OLC)
-IntersectionDetectionManager.add("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY, "global")
-IntersectionDetectionManager.add("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT, "global")
-IntersectionDetectionManager.add("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET, "global")
-IntersectionDetectionManager.add("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES, "global")
--- 用于检查与自机碰撞 (by OLC)
-IntersectionDetectionManager.add("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER, "global")
+do
+    ---@param id string
+    ---@param g1 number
+    ---@param g2 number
+    local function add(id, g1, g2)
+        IntersectionDetectionManager.registerGroupPair(id, g1, g2, "global")
+    end
+    -- 基础
+    add("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET)
+    add("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES)
+    add("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY)
+    add("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET)
+    add("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET)
+    add("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER)
+    -- 可用于自机 bomb (by OLC)
+    add("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY)
+    add("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT)
+    add("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET)
+    add("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES)
+    -- 用于检查与自机碰撞 (by OLC)
+    add("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER)
+end
 
 ----------------------------------------
 ---extra user function
@@ -146,7 +154,7 @@ function ChangeGameStage()
     ResetWorldOffset() -- by ETC，重置world偏移
     lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
     ex.Reset() -- 重置ex全局变量
-    IntersectionDetectionManager.removeAllByScope("stage") -- 移除关卡范围的碰撞组对
+    IntersectionDetectionManager.unregisterAllGroupPairByScope("stage") -- 移除关卡范围的碰撞组对
     IntersectionDetectionManager.unregisterAllGroupByScope("stage") -- 移除关卡范围的碰撞组
 
     if lstg.nextvar then
