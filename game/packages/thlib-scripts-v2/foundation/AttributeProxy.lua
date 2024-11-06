@@ -1,9 +1,11 @@
+local rawget = rawget
 local rawset = rawset
 local pairs = pairs
 local setmetatable = setmetatable
 local lstg = lstg
 
 local KEY_ATTRIBUTE_PROXIES_LIST = "___attribute_proxies"
+local KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT = "___attribute_proxies_is_game_object"
 local KEY_ATTRIBUTE_PROXIES_STORAGE = "___attribute_proxies_storage"
 
 if false then
@@ -57,7 +59,10 @@ function M:___metatableIndex(key)
     if proxy then
         return proxy.getter(self, key, self[KEY_ATTRIBUTE_PROXIES_STORAGE])
     end
-    return lstg.GetAttr(self, key)
+    if self[KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT] then
+        return lstg.GetAttr(self, key)
+    end
+    return rawget(self, key)
 end
 
 ---The metatable newindex function for the attribute proxy.
@@ -69,7 +74,11 @@ function M:___metatableNewIndex(key, value)
         proxy.setter(self, key, value, self[KEY_ATTRIBUTE_PROXIES_STORAGE])
         return
     end
-    lstg.SetAttr(self, key, value)
+    if self[KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT] then
+        lstg.SetAttr(self, key, value)
+        return
+    end
+    rawset(self, key, value)
 end
 
 ---Apply a list of proxies to the object.
@@ -78,7 +87,9 @@ function M:applyProxies(proxies)
     local current_proxies = self[KEY_ATTRIBUTE_PROXIES_LIST]
     if not current_proxies then
         current_proxies = {}
+        local isGameObject = lstg.IsValid(self)
         rawset(self, KEY_ATTRIBUTE_PROXIES_LIST, current_proxies)
+        rawset(self, KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT, isGameObject)
         rawset(self, KEY_ATTRIBUTE_PROXIES_STORAGE, {})
         setmetatable(self, {
             __index = M.___metatableIndex,
