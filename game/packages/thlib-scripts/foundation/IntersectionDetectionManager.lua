@@ -78,10 +78,22 @@ local groups = {}
 ---@generic T
 ---@param g T
 ---@return boolean
-local function isKnownGroup(g)
+local function isValidGroup(g)
     -- 碰撞组是整数，不能直接用 g >= 0 and g <= 15 判断
     for i = 0, 15 do
         if g == i then
+            return true
+        end
+    end
+    return false
+end
+
+---@generic T
+---@param g T
+---@return boolean
+local function isGroupRegistered(g)
+    for _, v in pairs(groups) do
+        if v.group == g then
             return true
         end
     end
@@ -99,7 +111,7 @@ function IntersectionDetectionManager.registerGroup(id, group, scope)
         assertArgumentType(scope, "string", 3, "registerGroup")
     end
     assertTrue(1, "registerGroup", isNotBlank(id), "'id' cannot be empty")
-    assertTrue(2, "registerGroup", isKnownGroup(group), "'group' must be in the range 0 to 15")
+    assertTrue(2, "registerGroup", isValidGroup(group), "'group' must be in the range 0 to 15")
     if scope ~= nil then
         assertTrue(3, "registerGroup", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
     end
@@ -211,8 +223,8 @@ function IntersectionDetectionManager.add(id, group1, group2, scope)
             assertArgumentType(scope, "string", 4, "add")
         end
         assertTrue(1, "add", isNotBlank(id), "'id' cannot be empty")
-        assertTrue(2, "add", isKnownGroup(group1), "'group1' must be in the range 0 to 15")
-        assertTrue(3, "add", isKnownGroup(group2), "'group2' must be in the range 0 to 15")
+        assertTrue(2, "add", isGroupRegistered(group1), "'group1' is not registered")
+        assertTrue(3, "add", isGroupRegistered(group2), "'group2' is not registered")
         if scope ~= nil then
             assertTrue(4, "add", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
         end
