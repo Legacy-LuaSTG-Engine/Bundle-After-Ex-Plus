@@ -3,6 +3,8 @@
 --- by 璀境石
 --------------------------------------------------------------------------------
 
+local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
+
 --------------------------------------------------------------------------------
 --- 预定义的碰撞组
 
@@ -14,11 +16,22 @@ GROUP_PLAYER = 4
 GROUP_INDES = 5
 GROUP_ITEM = 6
 GROUP_NONTJT = 7
-GROUP_SPELL = 8--由OLC添加，可用于自机bomb
-GROUP_CPLAYER = 9
+GROUP_SPELL = 8 -- 由OLC添加，可用于自机bomb
+GROUP_CPLAYER = 9 -- 由OLC添加，可用于检测自机
 
 GROUP_ALL = 16
 GROUP_NUM_OF_GROUP = 16
+
+IntersectionDetectionManager.registerGroup("thlib-default-basic:ghost", GROUP_GHOST)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy-bullet", GROUP_ENEMY_BULLET)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy-bullet1", GROUP_INDES)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy", GROUP_ENEMY)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:enemy1", GROUP_NONTJT)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:player-bullet", GROUP_PLAYER_BULLET)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:player", GROUP_PLAYER)
+IntersectionDetectionManager.registerGroup("thlib-default-basic:item", GROUP_ITEM)
+IntersectionDetectionManager.registerGroup("thlib-default-player:spell", GROUP_SPELL)
+IntersectionDetectionManager.registerGroup("thlib-default-area:area", GROUP_CPLAYER)
 
 --------------------------------------------------------------------------------
 --- 预定义的图层
