@@ -47,23 +47,7 @@ local function isNotBlank(s)
 end
 
 --------------------------------------------------------------------------------
---- 组
-
----@generic T
----@param g T
----@return boolean
-local function isKnownGroup(g)
-    -- 碰撞组是整数，不能直接用 g >= 0 and g <= 15 判断
-    for i = 0, 15 do
-        if g == i then
-            return true
-        end
-    end
-    return false
-end
-
---------------------------------------------------------------------------------
---- 范围
+--- 类
 
 ---@alias foundation.IntersectionDetectionManager.KnownScope
 ---| '"global"'
@@ -90,6 +74,19 @@ local IntersectionDetectionManager = {}
 
 ---@type table<string, foundation.IntersectionDetectionManager.Group>
 local groups = {}
+
+---@generic T
+---@param g T
+---@return boolean
+local function isKnownGroup(g)
+    -- 碰撞组是整数，不能直接用 g >= 0 and g <= 15 判断
+    for i = 0, 15 do
+        if g == i then
+            return true
+        end
+    end
+    return false
+end
 
 --- 注册碰撞组  
 ---@param id string
@@ -265,6 +262,9 @@ function IntersectionDetectionManager.execute()
     ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
     lstg.CollisionCheck(merged)
 end
+
+--------------------------------------------------------------------------------
+--- 调试
 
 function IntersectionDetectionManager.print()
     local function log(fmt, ...)
