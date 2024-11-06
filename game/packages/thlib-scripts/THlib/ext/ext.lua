@@ -104,23 +104,23 @@ do
     ---@param id string
     ---@param g1 number
     ---@param g2 number
-    local function add(id, g1, g2)
+    local function reg(id, g1, g2)
         IntersectionDetectionManager.registerGroupPair(id, g1, g2, "global")
     end
     -- 基础
-    add("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET)
-    add("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES)
-    add("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY)
-    add("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET)
-    add("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET)
-    add("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER)
+    reg("thlib-default-basic:player~enemy-bullet", GROUP_PLAYER, GROUP_ENEMY_BULLET)
+    reg("thlib-default-basic:player~enemy-bullet1", GROUP_PLAYER, GROUP_INDES)
+    reg("thlib-default-basic:player~enemy", GROUP_PLAYER, GROUP_ENEMY)
+    reg("thlib-default-basic:enemy~player-bullet", GROUP_ENEMY, GROUP_PLAYER_BULLET)
+    reg("thlib-default-basic:enemy1~player-bullet", GROUP_NONTJT, GROUP_PLAYER_BULLET)
+    reg("thlib-default-basic:item~player", GROUP_ITEM, GROUP_PLAYER)
     -- 可用于自机 bomb (by OLC)
-    add("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY)
-    add("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT)
-    add("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET)
-    add("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES)
+    reg("thlib-default-player:spell~enemy", GROUP_SPELL, GROUP_ENEMY)
+    reg("thlib-default-player:spell~enemy1", GROUP_SPELL, GROUP_NONTJT)
+    reg("thlib-default-player:spell~enemy-bullet", GROUP_SPELL, GROUP_ENEMY_BULLET)
+    reg("thlib-default-player:spell~enemy-bullet1", GROUP_SPELL, GROUP_INDES)
     -- 用于检查与自机碰撞 (by OLC)
-    add("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER)
+    reg("thlib-default-area:area~player", GROUP_CPLAYER, GROUP_PLAYER)
 end
 
 ----------------------------------------
