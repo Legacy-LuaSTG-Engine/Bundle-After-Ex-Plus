@@ -152,13 +152,13 @@ end
 ---@param scope foundation.IntersectionDetectionManager.KnownScope?
 ---@diagnostic disable-next-line: duplicate-set-field
 function IntersectionDetectionManager.add(id, group1, group2, scope)
-    -- 二参数版本
     if type(id) == "number" and type(group1) == "number" and group2 == nil and scope == nil then
+        -- 二参数版本
         ---@cast id -string, +number
         ---@cast group2 -number, +nil
         ---@cast scope -foundation.IntersectionDetectionManager.KnownScope?, +nil
         return add(id, group1)
-    end
+    else
     -- 四参数版本
     assertArgumentType(id, "string", 1, "add")
     assertArgumentType(group1, "number", 2, "add")
@@ -182,6 +182,7 @@ function IntersectionDetectionManager.add(id, group1, group2, scope)
         scope = scope or "stage",
     }
     merge()
+    end
 end
 
 --- 移除碰撞组对  
