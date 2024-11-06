@@ -159,29 +159,29 @@ function IntersectionDetectionManager.add(id, group1, group2, scope)
         ---@cast scope -foundation.IntersectionDetectionManager.KnownScope?, +nil
         return add(id, group1)
     else
-    -- 四参数版本
-    assertArgumentType(id, "string", 1, "add")
-    assertArgumentType(group1, "number", 2, "add")
-    assertArgumentType(group2, "number", 3, "add")
-    if scope ~= nil then
-        assertArgumentType(scope, "string", 4, "add")
-    end
-    assertTrue(1, "add", isNotBlank(id), "'id' cannot be empty")
-    assertTrue(2, "add", isKnownGroup(group1), "'group1' must be in the range 0 to 15")
-    assertTrue(3, "add", isKnownGroup(group2), "'group2' must be in the range 0 to 15")
-    if scope ~= nil then
-        assertTrue(4, "add", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
-    end
-    assert(not entries[id], ("'id' ('%s') already exists"):format(id))
-    counter = counter + 1
-    entries[id] = {
-        uid = counter,
-        id = id,
-        group1 = math.floor(group1),
-        group2 = math.floor(group2),
-        scope = scope or "stage",
-    }
-    merge()
+        -- 四参数版本
+        assertArgumentType(id, "string", 1, "add")
+        assertArgumentType(group1, "number", 2, "add")
+        assertArgumentType(group2, "number", 3, "add")
+        if scope ~= nil then
+            assertArgumentType(scope, "string", 4, "add")
+        end
+        assertTrue(1, "add", isNotBlank(id), "'id' cannot be empty")
+        assertTrue(2, "add", isKnownGroup(group1), "'group1' must be in the range 0 to 15")
+        assertTrue(3, "add", isKnownGroup(group2), "'group2' must be in the range 0 to 15")
+        if scope ~= nil then
+            assertTrue(4, "add", isKnownScope(scope), ("unknown scope '%s'"):format(scope))
+        end
+        assert(not entries[id], ("'id' ('%s') already exists"):format(id))
+        counter = counter + 1
+        entries[id] = {
+            uid = counter,
+            id = id,
+            group1 = math.floor(group1),
+            group2 = math.floor(group2),
+            scope = scope or "stage",
+        }
+        merge()
     end
 end
 
@@ -217,6 +217,31 @@ function IntersectionDetectionManager.execute()
     -- TODO: 等 API 文档更新后，去除下一行的禁用警告
     ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
     lstg.CollisionCheck(merged)
+end
+
+function IntersectionDetectionManager.print()
+    local function log(fmt, ...)
+        lstg.Log(2, fmt:format(...))
+    end
+    log("foundation.IntersectionDetectionManager")
+    log("    entries:")
+    ---@type foundation.IntersectionDetectionManager.Entry[]
+    local list = {}
+    for _, v in pairs(entries) do
+        table.insert(list, v)
+    end
+    table.sort(list, function(a, b)
+        return a.uid < b.uid
+    end)
+    for i, v in ipairs(list) do
+        log("        %d. id    : '%s' (uid = %d)", i, v.id, v.uid)
+        log("            groups: (%d - %d)", v.group1, v.group2)
+        log("            scope : '%s'", v.scope)
+    end
+    log("    merged:")
+    for i, v in ipairs(merged) do
+        log("        %d. groups: (%d - %d)", i, v[1], v[2])
+    end
 end
 
 return IntersectionDetectionManager
