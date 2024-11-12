@@ -6,6 +6,10 @@ local function get_file_name()
 	return LocalFileStorage.getRootDirectory() .. "/setting.json"
 end
 
+local function get_file_name_launch()
+	return LocalFileStorage.getRootDirectory() .. "/launch.json"
+end
+
 local function safe_encode_json(t)
 	local r, e = pcall(cjson.encode, t)
 	if r then
@@ -26,6 +30,12 @@ local function safe_decode_json(s)
 	end
 end
 
+local function write_file(path, content)
+	local f = assert(io.open(path, "w"))
+	f:write(content)
+	f:close()
+end
+
 function loadConfigure()
 	local f, msg
 	f, msg = io.open(get_file_name(), 'r')
@@ -38,14 +48,23 @@ function loadConfigure()
 end
 
 function saveConfigure()
-	local f, msg
-	f, msg = io.open(get_file_name(), 'w')
-	if f == nil then
-		error(msg)
-	else
-		f:write(cjson_util.format_json(safe_encode_json(setting)))
-		f:close()
-	end
+	local content = cjson_util.format_json(safe_encode_json(setting))
+	write_file(get_file_name(), content)
+	local content_launch = cjson_util.format_json(safe_encode_json({
+		initialize = {
+			graphics_system = {
+				width = setting.resx,
+				height = setting.resy,
+				fullscreen = not setting.windowed,
+				vsync = setting.vsync,
+			},
+			audio_system = {
+				sound_effect_volume = setting.sevolume / 100.0,
+				music_volume = setting.bgmvolume / 100.0,
+			},
+		},
+	}))
+	write_file(get_file_name_launch(), content_launch)
 end
 
 function loadConfigureTable()
@@ -62,14 +81,8 @@ function loadConfigureTable()
 end
 
 function saveConfigureTable(t)
-	local f, msg
-	f, msg = io.open(get_file_name(), 'w')
-	if f == nil then
-		error(msg)
-	else
-		f:write(cjson_util.format_json(safe_encode_json(t)))
-		f:close()
-	end
+	local content = cjson_util.format_json(safe_encode_json(t))
+	write_file(get_file_name(), content)
 end
 
 loadConfigure() -- 先加载一次配置

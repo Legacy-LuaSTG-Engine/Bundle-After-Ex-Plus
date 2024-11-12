@@ -5,7 +5,41 @@
     "persistent_log_file_directory": "userdata/logs/",
     "persistent_log_file_max_count": 10,
     "engine_cache_directory": "userdata/",
-    "single_application_instance": true,
-    "application_instance_id": "6514C225-EF44-4F9F-B092-A137F469B0A7",
-    "debug_track_window_focus": false
+    "include": [
+        {
+            "path": "userdata/launch.json",
+            "optional": true
+        }
+    ],
+    "application": {
+        "uuid": "37b1a4a0-36fe-4446-a8d1-19691ae44997",
+        "__cache": "userdata/",
+        "single_instance": true
+    },
+    "debug": {
+        "track_window_focus": false
+    },
+    "initialize": {
+        "file_systems": [
+            {
+                "type": "normal",
+                "path": "packages/thlib-resources/"
+            },
+            {
+                "type": "normal",
+                "path": "packages/thlib-scripts/"
+            },
+            {
+                "type": "normal",
+                "path": "packages/thlib-scripts-v2/"
+            }
+        ],
+        "application": {
+            "frame_rate": 60
+        },
+        "window": {
+            "title": "LuaSTG aex+",
+            "cursor_visible": false
+        }
+    }
 }
