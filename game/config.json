@@ -1,9 +1,4 @@
 {
-    "log_file_enable": true,
-    "log_file_path": "engine.log",
-    "persistent_log_file_enable": true,
-    "persistent_log_file_directory": "userdata/logs/",
-    "persistent_log_file_max_count": 10,
     "engine_cache_directory": "userdata/",
     "include": [
         {
@@ -13,23 +8,47 @@
     ],
     "application": {
         "uuid": "37b1a4a0-36fe-4446-a8d1-19691ae44997",
-        "__cache": "userdata/",
         "single_instance": true
     },
     "debug": {
         "track_window_focus": false
     },
+    "logging": {
+        "debugger": {
+            "enable": true,
+            "threshold": "debug"
+        },
+        "console": {
+            "enable": false,
+            "threshold": "debug",
+            "preserve": true
+        },
+        "file": {
+            "enable": true,
+            "threshold": "info",
+            "path": "engine.log"
+        },
+        "rolling_file": {
+            "enable": true,
+            "threshold": "info",
+            "path": "userdata/logs/",
+            "max_history": 10
+        }
+    },
     "initialize": {
         "file_systems": [
             {
+                "name": "thlib-resources",
                 "type": "normal",
                 "path": "packages/thlib-resources/"
             },
             {
+                "name": "thlib-scripts",
                 "type": "normal",
                 "path": "packages/thlib-scripts/"
             },
             {
+                "name": "thlib-scripts-v2",
                 "type": "normal",
                 "path": "packages/thlib-scripts-v2/"
             }
@@ -39,7 +58,8 @@
         },
         "window": {
             "title": "LuaSTG aex+",
-            "cursor_visible": false
+            "cursor_visible": false,
+            "allow_window_corner": true
         }
     }
 }
