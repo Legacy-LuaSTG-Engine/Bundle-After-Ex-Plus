@@ -51,17 +51,15 @@ function saveConfigure()
 	local content = cjson_util.format_json(safe_encode_json(setting))
 	write_file(get_file_name(), content)
 	local content_launch = cjson_util.format_json(safe_encode_json({
-		initialize = {
-			graphics_system = {
-				width = setting.resx,
-				height = setting.resy,
-				fullscreen = not setting.windowed,
-				vsync = setting.vsync,
-			},
-			audio_system = {
-				sound_effect_volume = setting.sevolume / 100.0,
-				music_volume = setting.bgmvolume / 100.0,
-			},
+		graphics_system = {
+			width = setting.resx,
+			height = setting.resy,
+			fullscreen = not setting.windowed,
+			vsync = setting.vsync,
+		},
+		audio_system = {
+			sound_effect_volume = setting.sevolume / 100.0,
+			music_volume = setting.bgmvolume / 100.0,
 		},
 	}))
 	write_file(get_file_name_launch(), content_launch)

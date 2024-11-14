@@ -1,10 +1,7 @@
 {
-    "engine_cache_directory": "userdata/",
     "include": [
-        {
-            "path": "userdata/launch.json",
-            "optional": true
-        }
+        { "path": "userdata/launch.json", "optional": true },
+        { "path": "userdata/editor.json", "optional": true }
     ],
     "application": {
         "uuid": "37b1a4a0-36fe-4446-a8d1-19691ae44997",
@@ -35,31 +32,49 @@
             "max_history": 10
         }
     },
-    "initialize": {
-        "file_systems": [
+    "file_system": {
+        "resources": [
             {
                 "name": "thlib-resources",
-                "type": "normal",
+                "type": "directory",
                 "path": "packages/thlib-resources/"
             },
             {
                 "name": "thlib-scripts",
-                "type": "normal",
+                "type": "directory",
                 "path": "packages/thlib-scripts/"
             },
             {
                 "name": "thlib-scripts-v2",
-                "type": "normal",
+                "type": "directory",
                 "path": "packages/thlib-scripts-v2/"
+            },
+            {
+                "name": "secret-garden",
+                "type": "archive",
+                "path": "packages/secret-garden-v1.zip"
             }
         ],
-        "application": {
-            "frame_rate": 60
-        },
-        "window": {
-            "title": "LuaSTG aex+",
-            "cursor_visible": false,
-            "allow_window_corner": true
-        }
+        "user": "userdata/"
+    },
+    "timing": {
+        "frame_rate": 60
+    },
+    "window": {
+        "title": "LuaSTG aex+",
+        "cursor_visible": true,
+        "allow_window_corner": true
+    },
+    "graphics_system": {
+        "preferred_device_name": "",
+        "width": 640,
+        "height": 480,
+        "fullscreen": false,
+        "vsync": false
+    },
+    "audio_system": {
+        "preferred_endpoint_name": "",
+        "sound_effect_volume": 1.0,
+        "music_volume": 1.0
     }
 }
