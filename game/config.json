@@ -1,11 +1,80 @@
 {
-    "log_file_enable": true,
-    "log_file_path": "engine.log",
-    "persistent_log_file_enable": true,
-    "persistent_log_file_directory": "userdata/logs/",
-    "persistent_log_file_max_count": 10,
-    "engine_cache_directory": "userdata/",
-    "single_application_instance": true,
-    "application_instance_id": "6514C225-EF44-4F9F-B092-A137F469B0A7",
-    "debug_track_window_focus": false
+    "include": [
+        { "path": "userdata/launch.json", "optional": true },
+        { "path": "userdata/editor.json", "optional": true }
+    ],
+    "application": {
+        "uuid": "37b1a4a0-36fe-4446-a8d1-19691ae44997",
+        "single_instance": true
+    },
+    "debug": {
+        "track_window_focus": false
+    },
+    "logging": {
+        "debugger": {
+            "enable": true,
+            "threshold": "debug"
+        },
+        "console": {
+            "enable": false,
+            "threshold": "debug",
+            "preserve": true
+        },
+        "file": {
+            "enable": true,
+            "threshold": "info",
+            "path": "engine.log"
+        },
+        "rolling_file": {
+            "enable": true,
+            "threshold": "info",
+            "path": "userdata/logs/",
+            "max_history": 10
+        }
+    },
+    "file_system": {
+        "resources": [
+            {
+                "name": "thlib-resources",
+                "type": "directory",
+                "path": "packages/thlib-resources/"
+            },
+            {
+                "name": "thlib-scripts",
+                "type": "directory",
+                "path": "packages/thlib-scripts/"
+            },
+            {
+                "name": "thlib-scripts-v2",
+                "type": "directory",
+                "path": "packages/thlib-scripts-v2/"
+            },
+            {
+                "name": "secret-garden",
+                "type": "archive",
+                "path": "packages/secret-garden-v1.zip"
+            }
+        ],
+        "user": "userdata/"
+    },
+    "timing": {
+        "frame_rate": 60
+    },
+    "window": {
+        "title": "LuaSTG aex+",
+        "cursor_visible": true,
+        "allow_window_corner": true
+    },
+    "graphics_system": {
+        "preferred_device_name": "",
+        "width": 640,
+        "height": 480,
+        "fullscreen": false,
+        "vsync": false
+    },
+    "audio_system": {
+        "preferred_endpoint_name": "",
+        "sound_effect_volume": 1.0,
+        "music_volume": 1.0
+    }
 }
