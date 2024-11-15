@@ -1,0 +1,69 @@
+# LuaSTG Sub 配置
+
+# 额外包含其他配置
+
+[[include]]
+path     = "userdata/launch.json" # 由启动器生成的显示模式和音量初始设置
+optional = true                   # 文件可能不存在
+
+# 应用程序配置
+
+[application]
+uuid =            "37b1a4a0-36fe-4446-a8d1-19691ae44997" # 唯一标识符
+single_instance = true                                   # 防止多开
+
+# 调试功能配置
+
+[debug]
+track_window_focus = false # 追踪窗口焦点，用来排查是哪个应用程序抢了窗口焦点
+
+# 日志配置
+# 日志级别有：debug、info、warn、error
+# 日志阈值用于过滤指定级别以下的日志
+
+[logging.debugger]
+enable    = true
+threshold = "debug"
+
+[logging.console]
+enable    = false
+threshold = "debug"
+preserve  = true    # 应用程序退出后仍然保留控制台窗口
+
+[logging.file]
+enable    = true
+threshold = "info"
+path      = "engine.log"
+
+[logging.rolling_file]
+enable      = true
+threshold   = "info"
+path        = "userdata/logs/" # 日志文件存放在该文件夹下
+max_history = 10               # 最多保留 10 个历史文件
+
+# 初始化：文件系统配置
+# 类型有：normal —— 文件夹、archive —— zip 压缩包
+
+[[initialize.file_systems]]
+type = "normal"
+path = "packages/thlib-resources/"
+
+[[initialize.file_systems]]
+type = "normal"
+path = "packages/thlib-scripts/"
+
+[[initialize.file_systems]]
+type = "normal"
+path = "packages/thlib-scripts-v2/"
+
+# 初始化：应用程序配置
+
+[initialize.application]
+frame_rate = 60 # 帧率
+
+# 初始化：窗口配置
+
+[initialize.window]
+title               = "LuaSTG aex+" # 窗口标题
+cursor_visible      = false         # 鼠标可见
+allow_window_corner = true          # 允许窗口圆角（Windows 11）
