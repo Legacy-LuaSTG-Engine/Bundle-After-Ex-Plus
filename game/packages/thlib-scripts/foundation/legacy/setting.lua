@@ -7,7 +7,7 @@ local function get_file_name()
 end
 
 local function get_file_name_launch()
-	return LocalFileStorage.getRootDirectory() .. "/launch.json"
+	return LocalFileStorage.getRootDirectory() .. "/config.launch.json"
 end
 
 local function safe_encode_json(t)
