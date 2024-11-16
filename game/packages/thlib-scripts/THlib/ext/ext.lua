@@ -97,6 +97,23 @@ function ext.PushPauseMenuOrder(msg)
     ext.pause_menu_order = msg
 end
 
+--ext pausemenu
+--把暂停菜单相关操作移到gameEventDispatcher里完成
+--按键弹出菜单
+gameEventDispatcher:RegisterEvent("GameState.BeforeDoFrame", "pop_pause_menu", 0, function ()
+    if ext.pause_menu:IsKilled() and (GetLastKey() == setting.keysys.menu or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
+        ext.pause_menu:FlyIn()
+    end
+end)
+--暂停菜单更新
+gameEventDispatcher:RegisterEvent("GameState.AfterDoFrame", "pause_menu_frame", 0, function ()
+    ext.pause_menu:frame()
+end)
+-- 暂停菜单渲染
+gameEventDispatcher:RegisterEvent("GameState.AfterRender", "pause_menu_render", 0, function ()
+    ext.pause_menu:render()
+end)
+
 ----------------------------------------
 ---extra collision check
 
@@ -313,8 +330,6 @@ end
 
 function AfterRender()
     gameEventDispatcher:DispatchEvent("GameState.AfterRender")
-    -- 暂停菜单渲染
-    ext.pause_menu:render()
 end
 
 ----------------------------------------
@@ -330,17 +345,13 @@ function GameScene:onDestroy()
 end
 
 function GameScene:onUpdate()
+    gameEventDispatcher:DispatchEvent("GameState.BeforeDoFrame")
     --执行场景逻辑
     if ext.pause_menu:IsKilled() then
         --处理录像速度与正常更新逻辑
         DoFrameEx()
-        --按键弹出菜单
-        if (GetLastKey() == setting.keysys.menu or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
-            ext.pause_menu:FlyIn()
-        end
     end
-    --暂停菜单更新
-    ext.pause_menu:frame()
+    gameEventDispatcher:DispatchEvent("GameState.AfterDoFrame")
 end
 
 function GameScene:onRender()
