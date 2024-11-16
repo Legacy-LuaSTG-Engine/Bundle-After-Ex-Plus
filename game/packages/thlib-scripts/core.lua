@@ -156,6 +156,7 @@ local function initializeMod()
 
     local editor_setting_text = find_editor_setting()
     local editor_setting = {}
+    local want_change_view = false
     if editor_setting_text then
         local sandbox_environment = { setting = editor_setting }
         load_as_sandbox("editor_setting", editor_setting_text, sandbox_environment)()
@@ -169,18 +170,26 @@ local function initializeMod()
         if sandbox_environment.cheat then
             cheat = true
         end
-    end
-
-    for k, v in pairs(editor_setting) do
-        setting[k] = v
+        if editor_setting.mod then
+            setting.mod = editor_setting.mod
+        end
+        if editor_setting.resx then
+            setting.resx = editor_setting.resx
+            want_change_view = true
+        end
+        if editor_setting.resy then
+            setting.resy = editor_setting.resy
+            want_change_view = true
+        end
+        if editor_setting.windowed then
+            setting.windowed = editor_setting.windowed
+            want_change_view = true
+        end
     end
 
     setting.last_mod = setting.mod
     if not start_game then
         setting.mod = "launcher"
-        --setting.resx = 480
-        --setting.resy = 640
-        --setting.windowed = true
     end
 
     -- 按需加载启动器包
@@ -206,6 +215,11 @@ local function initializeMod()
         else
             --使用裸露的启动器脚本
         end
+    end
+
+    -- 改变显示
+    if want_change_view then
+        lstg.ChangeVideoMode(setting.resx, setting.resy, setting.windowed, setting.vsync)
     end
 end
 
