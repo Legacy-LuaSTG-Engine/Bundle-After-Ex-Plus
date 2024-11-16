@@ -168,8 +168,6 @@ foreach ($EngineFileName in $EngineFileNameList) {
 #--------------------------------------------------------------------------------
 # 复制包
 
-Copy-File-And-Remove-Old -SourcePath "$($GameRoot)/launch" -TargetPath "$($GameOutput)/launch"
-
 [string[]] $PackageNameList = @(
     'thlib-resources'
     'thlib-scripts'
