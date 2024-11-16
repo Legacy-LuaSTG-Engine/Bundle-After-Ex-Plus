@@ -34,7 +34,7 @@ eventListener = createEventDispatcher -- for compatibility
 
 --------------------------------------------------------------------------------
 
----@alias lstg.GameStateEventGroup '"GameState.AfterGetInput"' | '"GameState.BeforeGameStageChange"' | '"GameState.AfterGameStageChange"' | '"GameState.BeforeGameStageUpdate"' | '"GameState.AfterGameStageUpdate"' | '"GameState.BeforeObjFrame"' | '"GameState.AfterObjFrame"' | '"GameState.BeforeBoundCheck"' | '"GameState.AfterBoundCheck"' | '"GameState.BeforeCollisionCheck"' | '"GameState.AfterCollisionCheck"' | '"GameState.BeforeRender"' | '"GameState.AfterRender"' | '"GameState.BeforeStageRender"' | '"GameState.AfterStageRender"' | '"GameState.BeforeObjRender"' | '"GameState.AfterObjRender"'
+---@alias lstg.GameStateEventGroup '"GameState.AfterGetInput"' | '"GameState.BeforeGameStageChange"' | '"GameState.AfterGameStageChange"' | '"GameState.BeforeGameStageUpdate"' | '"GameState.AfterGameStageUpdate"' | '"GameState.BeforeObjFrame"' | '"GameState.AfterObjFrame"' | '"GameState.BeforeBoundCheck"' | '"GameState.AfterBoundCheck"' | '"GameState.BeforeCollisionCheck"' | '"GameState.AfterCollisionCheck"' | '"GameState.BeforeRender"' | '"GameState.AfterRender"' | '"GameState.BeforeStageRender"' | '"GameState.AfterStageRender"' | '"GameState.BeforeObjRender"' | '"GameState.AfterObjRender"' | '"GameState.AfterColliderRender"'
 
 ---@class lstg.GlobalEventDispatcher : foundation.EventDispatcher
 ---@field FindEvent fun(self: lstg.GlobalEventDispatcher, eventType: lstg.GameStateEventGroup, name: string): foundation.EventDispatcher.Event
