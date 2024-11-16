@@ -330,8 +330,6 @@ function GameScene:onDestroy()
 end
 
 function GameScene:onUpdate()
-    -- 重设boss ui的槽位（多boss支持）
-    boss_ui.active_count = 0
     --执行场景逻辑
     if ext.pause_menu:IsKilled() then
         --处理录像速度与正常更新逻辑
