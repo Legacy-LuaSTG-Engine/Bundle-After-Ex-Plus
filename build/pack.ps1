@@ -198,7 +198,7 @@ foreach ($PluginName in $PluginNameList) {
 #--------------------------------------------------------------------------------
 # 自动生成版本信息
 
-[string] $AutoConfig = Get-Content -Path "$($ToolRoot)/gconfig_auto.lua" -Raw
+[string] $AutoConfig = Get-Content -Path "$($BuildRoot)/gconfig_auto.lua" -Raw
 
 $AutoConfig = $AutoConfig -replace "{VERSION_MAJOR}", $VersionInfo.major
 $AutoConfig = $AutoConfig -replace "{VERSION_MINOR}", $VersionInfo.minor
