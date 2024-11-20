@@ -1,34 +1,8 @@
-if not (sp) then
-    sp = {}
-    sp.logfile = "userdata/sp_log.txt"
-    do
-        lstg.FileManager.CreateDirectory("userdata")
-        local f = io.open(sp.logfile, 'w')
-        f:close()
-    end
-    function sp.logWrite(str)
-        local f = io.open(sp.logfile, 'a+')
-        f:write(str .. "\n")
-        f:close()
-    end
-end
-
---输出log至sp_log文件
-local function _log(...)
-    local list = { ... }
-    for i, v in ipairs(list) do
-        list[i] = tostring(v)
-    end
-    local str = table.concat(list, "\t")
-    Print(str)
-    sp.logWrite(str)
-end
+sp = sp or {}
 
 ---@class sp.math
 local lib = {}
 sp.math = lib
-
-_log(string.format("[spmath] installing"))
 
 --角速度与半径相互转换
 local function UniformSpiralTransform(speed, var)
@@ -409,5 +383,3 @@ local function Per3D(x, y, z, dist)
     return x, y
 end
 lib.Per3D = Per3D
-
-_log(string.format("[spmath] complete"))

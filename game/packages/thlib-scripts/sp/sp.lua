@@ -1,27 +1,4 @@
-sp = {}
-sp.logfile = "userdata/sp_log.txt"
-do
-    lstg.FileManager.CreateDirectory("userdata")
-    local f = io.open(sp.logfile, 'w')
-    f:close()
-end
-function sp.logWrite(str)
-    local f = io.open(sp.logfile, 'a+')
-    f:write(str .. "\n")
-    f:close()
-end
-
-function sp.Print(...)
-    local list = { ... }
-    for i, v in ipairs(list) do
-        list[i] = tostring(v)
-    end
-    local str = table.concat(list, "\t")
-    Print(str)
-    sp.logWrite(str)
-end
-
-sp.Print(string.format("[sp] installing"))
+sp = sp or {}
 
 --SP+系 boss函数库
 Include 'sp/spboss.lua'
@@ -270,5 +247,3 @@ function sp.SplitText(input, delimiter)
     table.insert(arr, string.sub(input, pos))
     return arr
 end
-
-sp.Print(string.format("[sp] install complete"))

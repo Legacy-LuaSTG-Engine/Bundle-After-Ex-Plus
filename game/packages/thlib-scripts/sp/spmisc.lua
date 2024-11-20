@@ -1,34 +1,8 @@
-if not (sp) then
-    sp = {}
-    sp.logfile = "userdata/sp_log.txt"
-    do
-        lstg.FileManager.CreateDirectory("userdata")
-        local f = io.open(sp.logfile, 'w')
-        f:close()
-    end
-    function sp.logWrite(str)
-        local f = io.open(sp.logfile, 'a+')
-        f:write(str .. "\n")
-        f:close()
-    end
-end
-
---输出log至sp_log文件
-local function _log(...)
-    local list = { ... }
-    for i, v in ipairs(list) do
-        list[i] = tostring(v)
-    end
-    local str = table.concat(list, "\t")
-    Print(str)
-    sp.logWrite(str)
-end
+sp = sp or {}
 
 ---@class sp.misc
 local lib = {}
 sp.misc = lib
-
-_log(string.format("[spmisc] installing"))
 
 ---渲染纯色圆
 ---@param x number @中心x坐标
@@ -325,5 +299,3 @@ function lib.IsInLaser(x0, y0, a, unit, w)
         return (abs(A * unit.x - unit.y + C) / hypot(A, 1) < ((unit.a + unit.b + w) / 2) and cos(a1) >= 0)
     end
 end
-
-_log(string.format("[spmisc] complete"))

@@ -3,34 +3,6 @@ LuaSTG Special Plus 系 rep函数库
 data by OLC
 ]]
 
-if not (sp) then
-    sp = {}
-    sp.logfile = "userdata/sp_log.txt"
-    do
-        lstg.FileManager.CreateDirectory("userdata")
-        local f = io.open(sp.logfile, 'w')
-        f:close()
-    end
-    function sp.logWrite(str)
-        local f = io.open(sp.logfile, 'a+')
-        f:write(str .. "\n")
-        f:close()
-    end
-end
-
---输出log至sp_log文件
-local function _log(...)
-    local list = { ... }
-    for i, v in ipairs(list) do
-        list[i] = tostring(v)
-    end
-    local str = table.concat(list, "\t")
-    Print(str)
-    sp.logWrite(str)
-end
-
-_log(string.format("[spstring] Installing"))
-
 --[[
 本系统使用UTF8编码进行字符串处理
 UTF8的编码规则：
@@ -38,6 +10,8 @@ UTF8的编码规则：
     2. 0xC0, 0xC1,0xF5—0xFF(192, 193 和 245-255)不会出现在UTF8编码中 
     3. 0x80—0xBF(128-191)只会出现在第二个及随后的编码中(针对多字节编码，如汉字) 
 ]]
+
+sp = sp or {}
 
 ---@class sp.string
 local lib = plus.Class()
@@ -130,5 +104,3 @@ function lib:GetReverse()
     end
     return table.concat(s, "")
 end
-
-_log(string.format("[spstring] Complete"))
