@@ -3,31 +3,9 @@ LuaSTG Special Plus 系 boss函数库
 data by OLC
 ]]
 
-if not (sp) then
-    sp = {}
-    sp.logfile = "userdata/sp_log.txt"
-    do
-        lstg.FileManager.CreateDirectory("userdata")
-        local f = io.open(sp.logfile, 'w')
-        f:close()
-    end
-    function sp.logWrite(str)
-        local f = io.open(sp.logfile, 'a+')
-        f:write(str .. "\n")
-        f:close()
-    end
-end
+sp = sp or {}
 
---输出log至sp_log文件
-local function _log(...)
-    local list = { ... }
-    for i, v in ipairs(list) do
-        list[i] = tostring(v)
-    end
-    local str = table.concat(list, "\t")
-    Print(str)
-    sp.logWrite(str)
-end
+local _log = lstg.Print
 
 ---@class sp.boss
 local lib = {}
@@ -36,8 +14,6 @@ sp.boss = lib
 
 --以下为spboss正式定义
 lib.list = { boss = {}, init = {}, card = {} }
-
-_log(string.format("[spboss] Installing"))
 
 ---检查值是否存在于表内
 ---@param list table @检查表
@@ -2004,5 +1980,3 @@ function lib.sp_card:do_cards(cards)
     self.sc_left = self._card_system.sc_left
     self._card_system:next(self)
 end
-
-_log(string.format("[spboss] SpellCard Additional Library install"))
