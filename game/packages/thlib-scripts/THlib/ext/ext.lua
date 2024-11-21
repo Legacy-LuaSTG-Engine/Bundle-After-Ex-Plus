@@ -58,17 +58,17 @@ function ext.updateWithSpeedModifier()
     if db.x_speed_update_value == 0 then
         if db.request_once_update then
             db.request_once_update = false
-            DoFrame(true, false)
+            DoFrame()
         end
     elseif db.x_speed_update_value > 0 then
         for _ = 1, ext.debug_data.x_speed_update_value do
             if not ext.pop_pause_menu then
-                DoFrame(true, false)
+                DoFrame()
             end
         end
     else -- if db.x_speed_update_value < 0 then
         if (db.timer % db.x_speed_update_value) == 0 then
-            DoFrame(true, false)
+            DoFrame()
         end
     end
 end
@@ -293,22 +293,22 @@ function DoFrameEx()
         ext.slowTicker = ext.slowTicker + 1
         if GetKeyState(setting.keysys.repfast) then
             for _ = 1, 4 do
-                DoFrame(true, false)
+                DoFrame()
                 ext.pause_menu_order = nil
             end
         elseif GetKeyState(setting.keysys.repslow) then
             if ext.replayTicker % 4 == 0 then
-                DoFrame(true, false)
+                DoFrame()
                 ext.pause_menu_order = nil
             end
         else
             if lstg.var.timeslow and lstg.var.timeslow > 0 and lstg.var.timeslow ~= 1 then
                 local tmp = min(4, max(1, lstg.var.timeslow))
                 if ext.slowTicker % (ext.time_slow_level[tmp]) == 0 then
-                    DoFrame(true, false)
+                    DoFrame()
                 end
             else
-                DoFrame(true, false)
+                DoFrame()
             end
             ext.pause_menu_order = nil
         end
@@ -318,12 +318,12 @@ function DoFrameEx()
         if lstg.var.timeslow and lstg.var.timeslow > 0 and lstg.var.timeslow ~= 1 then
             local tmp = min(4, max(1, lstg.var.timeslow))
             if ext.slowTicker % (ext.time_slow_level[tmp]) == 0 then
-                DoFrame(true, false)
+                DoFrame()
             end
         elseif ext.isUpdateSpeedModifierEnable() then
             ext.updateWithSpeedModifier()
         else
-            DoFrame(true, false)
+            DoFrame()
         end
     end
 end
