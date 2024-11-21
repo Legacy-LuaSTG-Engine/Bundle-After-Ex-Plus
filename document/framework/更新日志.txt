@@ -10,9 +10,9 @@
 
     aex+ v0.9.0
         LuaSTG Sub 引擎
-            更新到 v0.21.12
-            v0.21.0 到 v0.21.12
-                具体更改内容请阅读 doc 文件夹下的 history.md
+            更新到 v0.21.20
+            v0.21.0 到 v0.21.20
+                具体更改内容请阅读 document/engine/history.md
         THlib
             修改：改进 task.Do 的性能：
                 改用 rawget 读取游戏对象上的 task 列表
@@ -43,6 +43,26 @@
             修复：boss 符卡系统的高防护状态生效时未考虑倒计时
             修改：改进碰撞体调试插件的效率
             修改：游戏循环更新顺序，请阅读 document/framework/游戏循环更新顺序.md
+            修改：改进插件的定义方式，__init__.lua 将被淘汰，改为使用 package.json（具体示例请查看自带插件）
+            修复：插件数据缓存文件加载失败的情况下会产生弹窗报错
+            修改：THlib 中的弹型素材和类定义移动到单独的插件 thlib-legacy-bullet-definitions
+            移除：bullet.gclist 表和全局 ChangeBulletHighlight 函数
+                它们曾用于 LuaSTG boost 及更早期的版本，但从 LuaSTG er+ 开始不再使用，因此移除
+            移除：全局 bullet_deleter2 类、bullet_killer_SP 类
+                bullet_deleter2、bullet_killer_SP 的代码有 bug 且没有人使用，因此移除（bullet_killer_SP 曾用于异夜剧）
+            修改：全局 BulletBreakIndex 表从全局改为局部私有
+            修改：启动器 launcher 不再使用 curl 检查版本更新，改为使用 winhttp
+            移除：luasocket 库已被移除
+            新增：新增 foundation.IntersectionDetectionManager 类用于管理碰撞检测系统的执行和动态注册碰撞组
+                具体用法请阅读 document/framework/自定义碰撞检测.md
+            移除：暂时移除具有全局暂停游戏功能的咲夜自机，该自机将会以独立的自机插件方式提供，不再内置于 LuaSTG aex+ 框架中
+            修改：launch 脚本已合并到 core.lua 中，初始化显示模式、音频系统等功能已被新版本的配置文件功能取代
+            移除：全局 boss_ui 类已被移除，它已被多个独立的组件取代
+            修改：sp 库日志打印不再单独维护日志文件，而是使用引擎提供的日志打印函数，避免因为文件打开失败导致游戏崩溃
+        文档：
+            修改：LuaSTG 引擎、LuaSTG After Ex Plus 框架的文档分别存放到 document 文件夹下的 engine、framework 文件夹
+        其他工具
+            移除：curl、toutf8 命令行工具
 
     aex+ v0.8.22-beta
         项目结构
