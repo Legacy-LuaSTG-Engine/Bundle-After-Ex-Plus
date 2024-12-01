@@ -220,6 +220,7 @@ local function initializeMod()
     -- 改变显示
     if want_change_view then
         lstg.ChangeVideoMode(setting.resx, setting.resy, setting.windowed, setting.vsync)
+        ResetScreen(true) -- 刷新UI布局
     end
 end
 
