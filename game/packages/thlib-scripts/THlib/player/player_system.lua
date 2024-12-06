@@ -268,7 +268,7 @@ local defaultFrameEvent = {
         if self.death > 0 then
             self.death = self.death - 1
         end
-        lstg.var.pointrate = item.PointRateFunc(lstg.var)
+        lstg.var.pointrate = item.PointRateFunc()
     end },
     ["frame.updateSupport"] = { 89, function(self)
         if not (self.time_stop) then
