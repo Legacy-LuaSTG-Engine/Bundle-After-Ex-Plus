@@ -442,3 +442,22 @@ local function schmidt(a)
     return b
 end
 lib.schmidt = schmidt
+
+---@param a table @向量A
+---@param b table @向量B
+---@param angle number @夹角
+---@return table
+local function vec3D(a, b, angle)
+    local c = {}
+    local len = vecLen(a) * cos(angle)
+    local proj = vecProj(b, a)
+    for i = 1, #b do
+        c[i] = b[i] - proj[i]
+    end
+    c = vecUnit(c)
+    for i = 1, #c do
+        c[i] = len * c[i]
+    end
+    return c
+end
+lib.vec3d = vec3D
