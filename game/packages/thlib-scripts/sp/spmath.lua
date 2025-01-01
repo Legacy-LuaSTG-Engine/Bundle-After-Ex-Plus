@@ -170,7 +170,7 @@ lib.GetCircle2 = GetCircle2
 ---@param a table @向量A
 ---@param b table @向量B
 ---@return number
-local function vecmul(a, b)
+local function vecMul(a, b)
     local x = 0
     local num = math.min(#a, #b)
     for i = 1, num do
@@ -178,7 +178,7 @@ local function vecmul(a, b)
     end
     return x
 end
-lib.vecmul = vecmul
+lib.vecmul = vecMul
 
 --矩阵转阵
 ---@param a table @待处理矩阵
@@ -201,7 +201,7 @@ lib.shuffle = shuffle
 ---@param toCol1 boolean @是否转阵矩阵A
 ---@param toCol2 boolean @是否转阵矩阵B
 ---@return table
-local function matmul(a, b, toCol1, toCol2)
+local function matMul(a, b, toCol1, toCol2)
     if toCol1 then
         a = shuffle(a)
     end
@@ -212,12 +212,12 @@ local function matmul(a, b, toCol1, toCol2)
     for i = 1, #a do
         c[i] = {}
         for j = 1, #b do
-            c[i][j] = vecmul(a[i], b[j])
+            c[i][j] = vecMul(a[i], b[j])
         end
     end
     return c
 end
-lib.matmul = matmul
+lib.matmul = matMul
 
 --3D初始矩阵（四元）
 ---@param x number @X坐标
@@ -320,11 +320,11 @@ local function point3DT(x, y, z, w, tx, ty, tz, rx, ry, rz, sx, sy, sz)
     sx, sy, sz = sx or 1, sy or 1, sz or 1
     local p = _MAT_3D_P(x, y, z, w)
     local mat = _MAT_3D_T(tx, ty, tz)
-    mat = matmul(mat, _MAT_3D_RY(ry))
-    mat = matmul(mat, _MAT_3D_RX(rx))
-    mat = matmul(mat, _MAT_3D_RZ(rz))
-    mat = matmul(mat, _MAT_3D_S(sx, sy, sz))
-    p = matmul(p, mat)
+    mat = matMul(mat, _MAT_3D_RY(ry))
+    mat = matMul(mat, _MAT_3D_RX(rx))
+    mat = matMul(mat, _MAT_3D_RZ(rz))
+    mat = matMul(mat, _MAT_3D_S(sx, sy, sz))
+    p = matMul(p, mat)
     return unpack(p)
 end
 lib.point3DT = point3DT
@@ -357,9 +357,9 @@ local function Axis3D(x, y, z, a, b, c, dx, dy, dz)
         { -sin(c), cos(c), 0 },
         { 0, 0, 1 }
     }
-    local temp = matmul(C2, C3, false, true)
-    local r = matmul(C1, temp, false, true)
-    p = matmul(r, p, false, true)
+    local temp = matMul(C2, C3, false, true)
+    local r = matMul(C1, temp, false, true)
+    p = matMul(r, p, false, true)
     local q = {}
     q[1] = sum(p[1]) + dx
     q[2] = sum(p[2]) + dy
@@ -383,3 +383,62 @@ local function Per3D(x, y, z, dist)
     return x, y
 end
 lib.Per3D = Per3D
+
+--计算向量长度
+---@param a table @向量
+---@return number
+local function vecLen(a)
+    return math.sqrt(vecMul(a, a))
+end
+lib.veclen = vecLen
+
+--计算向量单位向量
+---@param a table @向量
+---@return table
+local function vecUnit(a)
+    local len = vecLen(a)
+    local b = {}
+    for i = 1, #a do
+        b[i] = a[i] / len
+    end
+    return b
+end
+lib.vecunit = vecUnit
+
+--计算向量投影
+---@param a table @向量A
+---@param b table @向量B
+---@return table
+local function vecProj(a, b)
+    local len = vecMul(a, b) / vecMul(b, b)
+    local c = {}
+    for i = 1, #b do
+        c[i] = len * b[i]
+    end
+    return c
+end
+lib.vecproj = vecProj
+
+--施密特正交化
+---@param a table @待处理矩阵
+---@return table
+local function schmidt(a)
+    local b = {}
+    for i = 1, #a do
+        b[i] = {}
+        for j = 1, #a[i] do
+            b[i][j] = a[i][j]
+        end
+    end
+    for i = 1, #b do
+        for j = 1, i - 1 do
+            local proj = vecProj(b[i], b[j])
+            for k = 1, #b[i] do
+                b[i][k] = b[i][k] - proj[k]
+            end
+        end
+        b[i] = vecUnit(b[i])
+    end
+    return b
+end
+lib.schmidt = schmidt
