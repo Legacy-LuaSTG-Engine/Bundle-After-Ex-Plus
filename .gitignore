@@ -11,7 +11,7 @@ game/plugins/*
 !game/plugins/PlayerExtensions
 !game/plugins/StageBackgroundExtensions
 !game/plugins/thlib-legacy-bullet-definitions
-!game/plugins/danmaku_recorder
+!game/plugins/danmaku-recorder
 
 # temp
 game/engine.log
