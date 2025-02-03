@@ -7,9 +7,6 @@
 [submodule "game/plugins/danmaku-recorder"]
 	path = game/plugins/danmaku-recorder
 	url = https://github.com/TonyWu1201/LuaSTG_danmaku_recorder.git
-[submodule "game/plugins/thlib-legacy-stage-backgrounds"]
-	path = game/plugins/thlib-legacy-stage-backgrounds
-	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions.git
 [submodule "game/plugins/thlib-legacy-default-players"]
 	path = game/plugins/thlib-legacy-default-players
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions
