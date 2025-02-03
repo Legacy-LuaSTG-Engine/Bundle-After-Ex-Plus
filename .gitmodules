@@ -13,3 +13,6 @@
 [submodule "game/plugins/thlib-legacy-bullet-definitions"]
 	path = game/plugins/thlib-legacy-bullet-definitions
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Bullet-Extensions.git
+[submodule "game/plugins/thlib-legacy-stage-backgrounds"]
+	path = game/plugins/thlib-legacy-stage-backgrounds
+	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Stage-Background-Extensions.git
