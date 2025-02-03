@@ -8,7 +8,7 @@ game/mod/*
 #plugins
 game/plugins/*
 !game/plugins/collider-shape-debugger
-!game/plugins/PlayerExtensions
+!game/plugins/thlib-legacy-default-players
 !game/plugins/thlib-legacy-stage-backgrounds
 !game/plugins/thlib-legacy-bullet-definitions
 !game/plugins/danmaku-recorder

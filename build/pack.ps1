@@ -183,7 +183,7 @@ foreach ($PackageName in $PackageNameList) {
 
 [string[]] $PluginNameList = @(
     'collider-shape-debugger'
-    'PlayerExtensions'
+    'thlib-legacy-default-players'
     'thlib-legacy-stage-backgrounds'
     'thlib-legacy-bullet-definitions'
     'danmaku-recorder'

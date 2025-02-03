@@ -1,9 +1,6 @@
 [submodule "game/packages/thlib-resources"]
 	path = game/packages/thlib-resources
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Resources.git
-[submodule "game/plugins/PlayerExtensions"]
-	path = game/plugins/PlayerExtensions
-	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions.git
 [submodule "document/engine"]
 	path = document/engine
 	url = https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub-Documentation
@@ -13,3 +10,6 @@
 [submodule "game/plugins/thlib-legacy-stage-backgrounds"]
 	path = game/plugins/thlib-legacy-stage-backgrounds
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions.git
+[submodule "game/plugins/thlib-legacy-default-players"]
+	path = game/plugins/thlib-legacy-default-players
+	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions
