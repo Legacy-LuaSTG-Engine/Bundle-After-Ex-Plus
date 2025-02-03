@@ -145,6 +145,7 @@ Remove-File-If-Exist -Path "$($DocumentOutput)/engine/.git"
     'HGE粒子编辑器'
     'HGE纹理字体生成器'
     '半透明PNG边缘优化工具'
+    'SimpleGifEncoder'
 )
 
 foreach ($ToolName in $ToolNameList) {
@@ -185,6 +186,7 @@ foreach ($PackageName in $PackageNameList) {
     'PlayerExtensions'
     'StageBackgroundExtensions'
     'thlib-legacy-bullet-definitions'
+    'danmaku-recorder'
 )
 
 New-Directory-If-Not-Exist -Path "$($GameOutput)/plugins"
