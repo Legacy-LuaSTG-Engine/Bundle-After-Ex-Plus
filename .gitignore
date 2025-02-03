@@ -7,7 +7,7 @@ game/mod/*
 
 #plugins
 game/plugins/*
-!game/plugins/ColliderShapeDebugger
+!game/plugins/collider-shape-debugger
 !game/plugins/PlayerExtensions
 !game/plugins/StageBackgroundExtensions
 !game/plugins/thlib-legacy-bullet-definitions

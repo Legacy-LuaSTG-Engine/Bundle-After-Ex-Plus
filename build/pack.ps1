@@ -182,7 +182,7 @@ foreach ($PackageName in $PackageNameList) {
 }
 
 [string[]] $PluginNameList = @(
-    'ColliderShapeDebugger'
+    'collider-shape-debugger'
     'PlayerExtensions'
     'StageBackgroundExtensions'
     'thlib-legacy-bullet-definitions'
