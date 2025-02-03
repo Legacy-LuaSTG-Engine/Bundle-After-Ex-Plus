@@ -13,3 +13,6 @@
 [submodule "game/plugins/thlib-legacy-default-players"]
 	path = game/plugins/thlib-legacy-default-players
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Player-Extensions
+[submodule "game/plugins/thlib-legacy-bullet-definitions"]
+	path = game/plugins/thlib-legacy-bullet-definitions
+	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Bullet-Extensions.git
