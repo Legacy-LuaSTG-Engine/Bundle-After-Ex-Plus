@@ -1,6 +1,0 @@
-{
-    "name": "thlib-legacy-bullet-definitions",
-    "version": "1.0.0",
-    "description": "Legacy THlib bullet definitions",
-    "main": "index.lua"
-}

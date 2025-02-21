@@ -1,0 +1,6 @@
+{
+    "name": "collider-shape-debugger",
+    "version": "1.0.0",
+    "description": "Debugger: display GameObject collider shapes",
+    "main": "index.lua"
+}

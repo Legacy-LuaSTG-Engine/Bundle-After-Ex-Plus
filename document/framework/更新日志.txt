@@ -59,6 +59,10 @@
             修改：launch 脚本已合并到 core.lua 中，初始化显示模式、音频系统等功能已被新版本的配置文件功能取代
             移除：全局 boss_ui 类已被移除，它已被多个独立的组件取代
             修改：sp 库日志打印不再单独维护日志文件，而是使用引擎提供的日志打印函数，避免因为文件打开失败导致游戏崩溃
+            新增：画面录制和输出 GIF 动图插件 danmaku-recorder (by TNW)
+            修改：插件 StageBackgroundExtensions 重命名为 thlib-legacy-stage-backgrounds
+            修改：插件 PlayerExtensions 重命名为 thlib-legacy-default-players
+            修改：插件 ColliderShapeDebugger 重命名为 collider-shape-debugger
         文档：
             修改：LuaSTG 引擎、LuaSTG After Ex Plus 框架的文档分别存放到 document 文件夹下的 engine、framework 文件夹
         其他工具
