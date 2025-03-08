@@ -16,3 +16,6 @@
 [submodule "game/plugins/thlib-legacy-stage-backgrounds"]
 	path = game/plugins/thlib-legacy-stage-backgrounds
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Stage-Background-Extensions.git
+[submodule "game/packages/community-creations"]
+	path = game/packages/community-creations
+	url = https://github.com/Legacy-LuaSTG-Engine/Community-Creations
