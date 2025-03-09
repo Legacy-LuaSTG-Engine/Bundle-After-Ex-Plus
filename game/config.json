@@ -53,7 +53,7 @@
             {
                 "name": "community-creations",
                 "type": "directory",
-                "path": "packages/community-creations"
+                "path": "packages/community-creations/"
             },
             {
                 "name": "secret-garden",
