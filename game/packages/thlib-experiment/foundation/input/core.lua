@@ -331,7 +331,13 @@ function M.update()
 
         -- TODO: 这种向量合成的方式真的没问题吗（
         for k, v in pairs(controller_map.vector2) do
-            local x, y = 0, 0
+            local x, y
+            if vector2_action_state[k] then
+                x, y = vector2_action_state[k].x, vector2_action_state[k].y
+            else
+                x, y = 0, 0
+                vector2_action_state[k] = {}
+            end
             for _, component in ipairs(v) do
                 if component == 1 then
                     x = x + xinput.getLeftThumbX(device_index)
@@ -341,11 +347,11 @@ function M.update()
                     y = y + xinput.getRightThumbY(device_index)
                 end
             end
-            local a = math.atan2(y, x)
-            local r = math.min(math.sqrt(x * x + y * y), 1)
-            vector2_action_state[k] = vector2_action_state[k] or {}
-            vector2_action_state[k].x = r * math.cos(a)
-            vector2_action_state[k].y = r * math.sin(a)
+            -- local a = math.atan2(y, x)
+            -- local r = math.min(math.sqrt(x * x + y * y), 1)
+            -- 归一化留到后面统一进行
+            vector2_action_state[k].x = x
+            vector2_action_state[k].y = y
         end
     end
 
@@ -362,6 +368,16 @@ function M.update()
         end
         -- TODO: 支持标量类型
         -- TODO: 支持二维向量类型
+    end
+
+    --向量输入归一化
+    for _, vector in pairs(vector2_action_state) do
+        local x, y = vector.x, vector.y
+        local r = math.sqrt(x * x + y * y)
+        if r > 1 then
+            vector.x = x / r
+            vector.y = y / r
+        end
     end
 end
 
