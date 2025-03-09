@@ -323,3 +323,141 @@ function bomb_bullet_killer:colli(other)
         Kill(other)
     end
 end
+
+--------------------------------------------------------------------------------
+
+local cjson = require("cjson")
+
+---@class thlib.bullet.Definition.Point
+---@field x number
+---@field y number
+
+---@class thlib.bullet.Definition.Rect
+---@field x number
+---@field y number
+---@field width number
+---@field height number
+
+---@class thlib.bullet.Definition.Texture
+---@field name string texture resource name
+---@field path string path to texture file
+---@field mipmap boolean? enable mipmap, default to false
+
+---@class thlib.bullet.Definition.Sprite
+---@field name string sprite resource name
+---@field texture string texture resource name
+---@field rect thlib.bullet.Definition.Rect
+---@field center thlib.bullet.Definition.Point? center of sprite relative to rect, default to center of rect
+---@field scaling number? default to 1.0
+
+---@class thlib.bullet.Definition.SpriteSequence.Frame
+---@field sprite string sprite resource name
+----field duration integer duration in frames -- not supported
+
+---@class thlib.bullet.Definition.SpriteSequence
+---@field name string sprite-sequence resource name
+---@field frames thlib.bullet.Definition.SpriteSequence.Frame[] sprite-sequence frame
+
+---@alias thlib.bullet.Definition.KnownColor
+---| '"deep_red"'
+---| '"red"'
+---| '"deep_purple"'
+---| '"purple"'
+---| '"deep_blue"'
+---| '"blue"'
+---| '"deep_cyan"'
+---| '"cyan"'
+---| '"deep_green"'
+---| '"green"'
+---| '"yellow_green"'
+---| '"deep_yellow"'
+---| '"yellow"'
+---| '"orange"'
+---| '"gray"'
+---| '"white"'
+
+---@class thlib.bullet.Definition.Variant
+---@field name string bullet variant name
+---@field sprite string? sprite resource name
+---@field sprite_sequence string? sprite-sequence resource name
+---@field color thlib.bullet.Definition.KnownColor
+
+---@class thlib.bullet.Definition.Collider
+---@field type '"circle"' | '"ellipse"' | '"rect"'
+---@field radius number? circle
+---@field a number? ellipse | rect
+---@field b number? ellipse | rect
+
+---@class thlib.bullet.Definition.Family
+---@field name string bullet family name
+---@field variants thlib.bullet.Definition.Variant[] bullet variants
+---@field collider thlib.bullet.Definition.Collider bullet collider
+
+---@class thlib.bullet.Definition
+---@field textures thlib.bullet.Definition.Texture[]?
+---@field sprites thlib.bullet.Definition.Sprite[]?
+---@field sprite_sequences thlib.bullet.Definition.SpriteSequence[]?
+---@field families table<string, thlib.bullet.Definition.Family> bullet families
+
+---@param path string
+local function loadBulletDefinitions(path)
+    ---@type string?
+    local root
+    for i = #path, 1, -1 do
+        local c = path:sub(i, i)
+        if c == "/" or c == "\\" then
+            root = path:sub(1, i)
+            break
+        end
+    end
+    if not root then
+        root = ""
+    end
+    local json_content = assert(lstg.LoadTextFile(path), ("load bullet definitions from '%s' failed, read file failed"):format(path))
+    ---@type thlib.bullet.Definition
+    local definitions = cjson.decode(json_content)
+    if definitions.textures then
+        assert(type(definitions.textures) == "table", "bullet definitions field 'textures' must be an array")
+        for _, texture in ipairs(definitions.textures) do
+            assert(type(texture.name) == "string", "texture field 'name' must be string")
+            assert(type(texture.path) == "string", "texture field 'path' must be string")
+            if texture.mipmap ~= nil then
+                assert(type(texture.mipmap) == "boolean", "texture field 'mipmap' must be boolean")
+            end
+            if texture.mipmap ~= nil then
+                lstg.LoadTexture(texture.name, root .. texture.path, texture.mipmap)
+            else
+                lstg.LoadTexture(texture.name, root .. texture.path)
+            end
+        end
+    end
+    if definitions.sprites then
+        assert(type(definitions.sprites) == "table", "bullet definitions field 'sprites' must be an array")
+        for _, sprite in ipairs(definitions.sprites) do
+            assert(type(sprite.name) == "string", "sprite field 'name' must be string")
+            assert(type(sprite.texture) == "string", "sprite field 'texture' must be string")
+            assert(type(sprite.rect) == "table", "sprite field 'rect' must be a Rect")
+            assert(type(sprite.rect.x) == "number", "Rect field 'x' must be a number")
+            assert(type(sprite.rect.y) == "number", "Rect field 'y' must be a number")
+            assert(type(sprite.rect.width) == "number", "Rect field 'width' must be a number")
+            assert(type(sprite.rect.height) == "number", "Rect field 'height' must be a number")
+            if sprite.center ~= nil then
+                assert(type(sprite.center) == "table", "sprite field 'center' must be a Point")
+                assert(type(sprite.center.x) == "number", "Point field 'x' must be a number")
+                assert(type(sprite.center.y) == "number", "Point field 'y' must be a number")
+            end
+            if sprite.scaling ~= nil then
+                assert(type(sprite.scaling) == "number", "sprite field 'scaling' must be number")
+            end
+            lstg.LoadImage(sprite.name, sprite.texture, sprite.rect.x, sprite.rect.y, sprite.rect.width, sprite.rect.height)
+            if sprite.center ~= nil then
+                lstg.SetImageCenter(sprite.name, sprite.center.x, sprite.center.y)
+            end
+            if sprite.scaling ~= nil then
+                lstg.SetImageScale(sprite.name, sprite.scaling)
+            end
+        end
+    end
+end
+
+loadBulletDefinitions("assets/cake/bullet/bullet.json")
