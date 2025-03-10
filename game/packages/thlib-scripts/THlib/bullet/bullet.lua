@@ -350,13 +350,10 @@ local cjson = require("cjson")
 ---@field center thlib.bullet.Definition.Point? center of sprite relative to rect, default to center of rect
 ---@field scaling number? default to 1.0
 
----@class thlib.bullet.Definition.SpriteSequence.Frame
----@field sprite string sprite resource name
-----field duration integer duration in frames -- not supported
-
 ---@class thlib.bullet.Definition.SpriteSequence
 ---@field name string sprite-sequence resource name
----@field frames thlib.bullet.Definition.SpriteSequence.Frame[] sprite-sequence frame
+---@field sprites string[] sprite-sequence frame
+---@field interval integer? sprite-sequence frame interval, default to 1
 
 ---@alias thlib.bullet.Definition.KnownColor
 ---| '"deep_red"'
@@ -456,6 +453,21 @@ local function loadBulletDefinitions(path)
             if sprite.scaling ~= nil then
                 lstg.SetImageScale(sprite.name, sprite.scaling)
             end
+        end
+    end
+    if definitions.sprite_sequences then
+        assert(type(definitions.sprites) == "table", "bullet definitions field 'sprite_sequences' must be an array")
+        for _, sprite_sequence in ipairs(definitions.sprite_sequences) do
+            assert(type(sprite_sequence.name) == "string", "sprite-sequence field 'name' must be string")
+            assert(type(sprite_sequence.sprites) == "table", "sprite-sequence field 'sprites' must be an array")
+            for _, sprite in ipairs(sprite_sequence.sprites) do
+                assert(type(sprite) == "string", "sprite-sequence field 'sprites' must contains string type")
+            end
+            if sprite_sequence.interval ~= nil then
+                assert(type(sprite_sequence.interval) == "number", "sprite-sequence field 'interval' must be integer")
+            end
+            ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
+            lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
         end
     end
 end
