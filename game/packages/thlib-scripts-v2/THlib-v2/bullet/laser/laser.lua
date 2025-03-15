@@ -44,7 +44,8 @@ local EnumChangeIndex = {
     Alpha = 1,
     Width = 2,
     Length = 3,
-    Total = 3,
+    Collision = 4,
+    Total = 4,
 }
 class.EnumChangeIndex = EnumChangeIndex
 --endregion
@@ -229,6 +230,7 @@ function class:kill()
             end
             self.w = 0
         end)
+        tasks[EnumChangeIndex.Collider] = nil
     else
         for i = 1, #self.___colliders do
             local c = self.___colliders[i]
@@ -808,7 +810,8 @@ function class:turnOn(width, time, open_collider)
     class.toAlpha(self, 1, time)
     class.toWidth(self, width, time)
     if open_collider then
-        task.New(self, function()
+        local tasks = self.___changing_task
+        tasks[EnumChangeIndex.Collider] = coroutine.create(function()
             task.Wait(time)
             self.colli = true
         end)
@@ -829,6 +832,7 @@ end
 ---@overload fun(time: number) @Turn off the laser
 function class:turnOff(time, close_colliders)
     if close_colliders then
+        self.___changing_task[EnumChangeIndex.Collider] = nil
         self.colli = false
     end
     class.toAlpha(self, 0, time)
@@ -842,6 +846,7 @@ end
 ---@overload fun(width: number, time: number) @Turn off the laser with half alpha
 function class:turnHalfOff(width, time, close_colliders)
     if close_colliders then
+        self.___changing_task[EnumChangeIndex.Collider] = nil
         self.colli = false
     end
     class.toAlpha(self, 0.5, time)
