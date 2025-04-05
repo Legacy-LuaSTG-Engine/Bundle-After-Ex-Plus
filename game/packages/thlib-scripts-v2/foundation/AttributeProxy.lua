@@ -1,5 +1,6 @@
 local rawget = rawget
 local rawset = rawset
+local type = type
 local pairs = pairs
 local setmetatable = setmetatable
 local lstg = lstg
@@ -32,6 +33,17 @@ if false then
     ---@param storage table<string, any> @The storage table of all attributes.
     function Proxy:setter(key, value, storage)
     end
+end
+
+local function deep_copy(value)
+    if type(value) == "table" then
+        local copy = {}
+        for k, v in pairs(value) do
+            copy[k] = deep_copy(v)
+        end
+        return copy
+    end
+    return value
 end
 
 ---@class foundation.AttributeProxy
@@ -84,6 +96,7 @@ end
 ---Apply a list of proxies to the object.
 ---@param proxies table<any, foundation.AttributeProxy.Proxy>
 function M:applyProxies(proxies)
+    proxies = deep_copy(proxies)
     local current_proxies = self[KEY_ATTRIBUTE_PROXIES_LIST]
     if not current_proxies then
         current_proxies = {}
