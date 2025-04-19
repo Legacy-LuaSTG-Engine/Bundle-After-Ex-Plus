@@ -112,6 +112,22 @@ local function refreshMagicTable()
     }
 end
 
+---@param resource_name string
+---@param families table<string, thlib.bullet.Definition.Family>
+---@return boolean? rect
+---@return number? a
+---@return number? b
+local function getColliderFromFamilies(resource_name, families)
+    for _, family in pairs(families) do
+        for _, variant in ipairs(family.variants) do
+            if variant.sprite == resource_name or variant.sprite_sequence == resource_name then
+                return translateCollider(family.collider)
+            end
+        end
+    end
+    return nil, nil, nil
+end
+
 ---@param path string
 local function loadBulletDefinitions(path)
     ---@type string?
@@ -162,7 +178,12 @@ local function loadBulletDefinitions(path)
             if sprite.scaling ~= nil then
                 assert(type(sprite.scaling) == "number", "sprite field 'scaling' must be number")
             end
-            lstg.LoadImage(sprite.name, sprite.texture, sprite.rect.x, sprite.rect.y, sprite.rect.width, sprite.rect.height)
+            local rect, a, b = getColliderFromFamilies(sprite.name, definitions.families)
+            if rect ~= nil and a ~= nil and b ~= nil then
+                lstg.LoadImage(sprite.name, sprite.texture, sprite.rect.x, sprite.rect.y, sprite.rect.width, sprite.rect.height, a, b, rect)
+            else
+                lstg.LoadImage(sprite.name, sprite.texture, sprite.rect.x, sprite.rect.y, sprite.rect.width, sprite.rect.height)
+            end
             if sprite.center ~= nil then
                 lstg.SetImageCenter(sprite.name, sprite.center.x, sprite.center.y)
             end
@@ -185,8 +206,12 @@ local function loadBulletDefinitions(path)
             if sprite_sequence.interval ~= nil then
                 assert(type(sprite_sequence.interval) == "number", "sprite-sequence field 'interval' must be integer")
             end
-            ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
-            lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
+            local rect, a, b = getColliderFromFamilies(sprite_sequence.name, definitions.families)
+            if rect ~= nil and a ~= nil and b ~= nil then
+                lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1, a, b, rect)
+            else
+                lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
+            end
             if sprite_sequence.blend ~= nil then
                 lstg.SetAnimationState(sprite_sequence.name, sprite_sequence.blend, lstg.Color(255, 255, 255, 255))
             end
