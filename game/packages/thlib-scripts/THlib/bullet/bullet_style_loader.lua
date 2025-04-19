@@ -21,11 +21,13 @@ local cjson = require("cjson")
 ---@field rect thlib.bullet.Definition.Rect
 ---@field center thlib.bullet.Definition.Point? center of sprite relative to rect, default to center of rect
 ---@field scaling number? default to 1.0
+---@field blend lstg.BlendMode?
 
 ---@class thlib.bullet.Definition.SpriteSequence
 ---@field name string sprite-sequence resource name
 ---@field sprites string[] sprite-sequence frame
 ---@field interval integer? sprite-sequence frame interval, default to 1
+---@field blend lstg.BlendMode?
 
 ---@alias thlib.bullet.Definition.KnownColor
 ---| '"deep_red"'
@@ -61,6 +63,7 @@ local cjson = require("cjson")
 ---@field name string bullet family name
 ---@field variants thlib.bullet.Definition.Variant[] bullet variants
 ---@field collider thlib.bullet.Definition.Collider bullet collider
+---@field blend lstg.BlendMode?
 
 ---@class thlib.bullet.Definition
 ---@field textures thlib.bullet.Definition.Texture[]?
@@ -166,6 +169,9 @@ local function loadBulletDefinitions(path)
             if sprite.scaling ~= nil then
                 lstg.SetImageScale(sprite.name, sprite.scaling)
             end
+            if sprite.blend ~= nil then
+                lstg.SetImageState(sprite.name, sprite.blend, lstg.Color(255, 255, 255, 255))
+            end
         end
     end
     if definitions.sprite_sequences then
@@ -181,6 +187,9 @@ local function loadBulletDefinitions(path)
             end
             ---@diagnostic disable-next-line: param-type-mismatch, missing-parameter
             lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
+            if sprite_sequence.blend ~= nil then
+                lstg.SetAnimationState(sprite_sequence.name, sprite_sequence.blend, lstg.Color(255, 255, 255, 255))
+            end
         end
     end
     for k, v in pairs(definitions.families) do
@@ -207,11 +216,26 @@ local function loadBulletDefinitions(path)
         end
 
         local rect, a, b = translateCollider(v.collider)
-        function bullet_class:init(index)
-            self.img = variants[index]
-            self.rect = rect
-            self.a = a
-            self.b = b
+        if v.blend ~= nil then
+            local blend = v.blend
+            function bullet_class:init(index)
+                self.img = variants[index]
+                self.rect = rect
+                self.a = a
+                self.b = b
+                self._blend = blend
+                self._r = 255
+                self._g = 255
+                self._b = 255
+                self._a = 255
+            end
+        else
+            function bullet_class:init(index)
+                self.img = variants[index]
+                self.rect = rect
+                self.a = a
+                self.b = b
+            end
         end
 
         _G[class_name] = bullet_class

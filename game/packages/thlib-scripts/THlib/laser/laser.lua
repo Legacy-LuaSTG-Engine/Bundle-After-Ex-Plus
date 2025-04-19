@@ -25,7 +25,7 @@ LoadLaserTexture("laser2", 5, 236, 15, 1)
 LoadLaserTexture("laser3", 127, 1, 128, 1)
 LoadLaserTexture("laser4", 1, 254, 1, 1)
 
-LoadImageGroup("laser_node", "bullet1", 80, 0, 32, 32, 1, 8) -- TODO: 猎杀
+--LoadImageGroup("laser_node", "bullet1", 80, 0, 32, 32, 1, 8) -- TODO: 猎杀
 
 laser = Class(object)
 
