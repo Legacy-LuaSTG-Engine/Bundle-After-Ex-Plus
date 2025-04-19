@@ -36,6 +36,12 @@ function BulletBreak:frame()
 end
 
 --------------------------------------------------------------------------------
+--- bullet fade out effect
+
+---@type thlib.bullet.BulletFadeOutEffect
+local BulletFadeOutEffect = lstg.DoFile("THlib/bullet/BulletFadeOutEffect.lua")
+
+--------------------------------------------------------------------------------
 --- bullet class
 
 bullet = Class(object)
@@ -68,7 +74,8 @@ function bullet:kill()
     local w = lstg.world
     New(item_faith_minor, self.x, self.y)
     if self._index and BoxCheck(self, w.boundl, w.boundr, w.boundb, w.boundt) then
-        New(BulletBreak, self.x, self.y, self._index)
+        --New(BulletBreak, self.x, self.y, self._index)
+        BulletFadeOutEffect.create(self)
     end
     if self.imgclass.size == 2.0 then
         self.imgclass.del(self)
@@ -82,7 +89,8 @@ function bullet:del()
         self.imgclass.del(self)
     end
     if self._index and BoxCheck(self, w.boundl, w.boundr, w.boundb, w.boundt) then
-        New(BulletBreak, self.x, self.y, self._index)
+        --New(BulletBreak, self.x, self.y, self._index)
+        BulletFadeOutEffect.create(self)
     end
 end
 
@@ -139,7 +147,8 @@ end
 
 function img_class:kill()
     img_class.del(self)
-    New(BulletBreak, self.x, self.y, self._index)
+    --New(BulletBreak, self.x, self.y, self._index)
+    BulletFadeOutEffect.create(self)
     New(item_faith_minor, self.x, self.y)
 end
 
