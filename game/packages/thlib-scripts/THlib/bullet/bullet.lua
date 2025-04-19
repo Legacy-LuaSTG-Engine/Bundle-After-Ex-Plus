@@ -91,13 +91,15 @@ function img_class:render()
 end
 
 function ChangeBulletImage(obj, imgclass, index)
-    if obj.class == obj.imgclass then
-        obj.class = imgclass
-        obj.imgclass = imgclass
-    else
-        obj.imgclass = imgclass
-    end
+    --if obj.class == obj.imgclass then
+    --    obj.class = imgclass
+    --    obj.imgclass = imgclass
+    --else
+    --    obj.imgclass = imgclass
+    --end
+    obj.imgclass = imgclass
     obj._index = index
+    obj.index = int((index + 1) / 8)
     imgclass.init(obj, obj._index)
 end
 
