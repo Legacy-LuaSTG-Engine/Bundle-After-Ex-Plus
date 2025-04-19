@@ -244,6 +244,6 @@ local function loadBulletDefinitions(path)
 end
 
 -- default bullet style
-loadBulletDefinitions("assets/cake/bullet/bullet.json")
+loadBulletDefinitions("assets/cake/bullet/generated/bullet_atlas.json")
 
 bullet.loadBulletDefinitions = loadBulletDefinitions
