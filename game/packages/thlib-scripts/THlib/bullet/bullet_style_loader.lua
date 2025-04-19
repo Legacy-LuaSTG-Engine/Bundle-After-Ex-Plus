@@ -192,6 +192,7 @@ local function loadBulletDefinitions(path)
             end
         end
     end
+    --[[
     for k, v in pairs(definitions.families) do
         local class_name = k
         local bullet_class = Class(img_class)
@@ -241,6 +242,7 @@ local function loadBulletDefinitions(path)
         _G[class_name] = bullet_class
     end
     refreshMagicTable()
+    --]]
 end
 
 -- default bullet style
