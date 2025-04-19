@@ -180,7 +180,6 @@ function timeCounter:init(ui, system)
     self.system = system
     local b = self.system.boss
     self.x, self.y = 2, 192
-    self.oldstyle = false
     self.scale = 0.5
     self.scalewarning = 1
     self.scalewarning_current = 1.0
@@ -206,7 +205,6 @@ function timeCounter:frame()
     end
     assert(self.t2 <= self.t1, "time counter's t1 > t2 must be satisfied.")
     self.x, self.y = 2, 192
-    self.oldstyle = false
     if _ui.countdown and self.sound then
         if _ui.countdown > self.t2 and _ui.countdown <= self.t1 and _ui.countdown % 1 == 0 then
             PlaySound("timeout", 0.6)
@@ -291,12 +289,7 @@ function timeCounter:render()
         local cd1, cd2 = max(self.cd1, 0), max(self.cd2, 0)
         local dy = (b.ui_slot - 1) * 44
         local x = self.x
-        local y1
-        if self.oldstyle then
-            y1 = self.y - dy
-        else
-            y1 = self.y + self.yoffset - dy
-        end
+        local y1 = self.y + self.yoffset - dy
         local y2 = y1 - 3
         local scalew = self.scalewarning
         local scale1 = self.scale
