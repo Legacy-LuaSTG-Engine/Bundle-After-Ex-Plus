@@ -444,7 +444,7 @@ function _straight:frame()
     end
 end
 
-function _create_bullet_group(style, color, x, y, n, t, v1, v2, angle, da, aim, omiga, stay, des, time, _495, enemy)
+function _create_bullet_group(style, color, x, y, n, t, v1, v2, angle, da, aim, omiga, stay, des, time, _495, enemy, bullet_action)
     local unitlist = {}
     local p = player
     if n >= 1 then
@@ -457,9 +457,17 @@ function _create_bullet_group(style, color, x, y, n, t, v1, v2, angle, da, aim, 
             if aim then
                 angle = angle + Angle(x, y, p.x, p.y)
             end
-            for i = 0, n - 1 do
-                local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
-                ex.UnitListAppend(unitlist, last1)
+            if type(bullet_action) == "function" then
+                for i = 0, n - 1 do
+                    local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
+                    ex.UnitListAppend(unitlist, last1)
+                    bullet_action(last1, i)
+                end
+            else
+                for i = 0, n - 1 do
+                    local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
+                    ex.UnitListAppend(unitlist, last1)
+                end
             end
             last = unitlist
             return unitlist
@@ -473,10 +481,19 @@ function _create_bullet_group(style, color, x, y, n, t, v1, v2, angle, da, aim, 
             if aim then
                 angle = angle + Angle(x, y, p.x, p.y)
             end
-            for i = 0, n - 1 do
-                local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
-                ex.UnitListAppend(unitlist, last1)
-                task._Wait(t)
+            if type(bullet_action) == "function" then
+                for i = 0, n - 1 do
+                    local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
+                    ex.UnitListAppend(unitlist, last1)
+                    bullet_action(last1, i)
+                    task._Wait(t)
+                end
+            else
+                for i = 0, n - 1 do
+                    local last1 = New(_straight, style, color, x, y, v1 + dv * i, angle + da * i, false, omiga, stay, des, time, _495)
+                    ex.UnitListAppend(unitlist, last1)
+                    task._Wait(t)
+                end
             end
         end, enemy)
     end
