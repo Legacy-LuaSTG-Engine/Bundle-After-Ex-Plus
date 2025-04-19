@@ -187,7 +187,6 @@ function system:init(b, name, cards, bg, diff)
     b.spell_damage = 0
     b.__is_waiting = true --boss是否在等待操作
     b.__hpbartype = -1 --boss血条样式
-    b.__hpbar_legacy_compatible = true -- 远古hpbar模式兼容
     b.__card_timer = 0 --阶段已进行时长
     b.__hpbar_timer = 0 --血条计时器
     b.__hpbar_rendertime = 60 --血条填满时间
@@ -611,21 +610,6 @@ end
 function system:updateHPFlags()
     local b = self.boss
     local mode = b.__hpbartype
-    if b.__hpbar_legacy_compatible and IsValid(b.ui) then -- 仅用于兼容远古时期的 hpbarcolor 设计，不应使用 hpbarcolor !!!!
-        local _ui = b.ui
-        if not (_ui.hpbarcolor1) and not (_ui.hpbarcolor2) then
-            mode = -1 --无血条（时符等）
-        elseif not (_ui.hpbarcolor2) then
-            mode = 0 --全血条符卡
-        elseif not (_ui.hpbarcolor1) then
-            mode = 3 --全血条非符
-        elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-            mode = 2 --组合血条（符卡）
-        elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-            mode = 1 --组合血条（非符）
-        end
-        b.__hpbartype = mode
-    end
     if not (b.__is_waiting) and mode ~= -1 then
         b.__hpbar_timer = b.__hpbar_timer + 1
         local players
