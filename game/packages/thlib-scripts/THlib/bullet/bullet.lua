@@ -396,6 +396,36 @@ local cjson = require("cjson")
 ---@field sprite_sequences thlib.bullet.Definition.SpriteSequence[]?
 ---@field families table<string, thlib.bullet.Definition.Family> bullet families
 
+---@param collider thlib.bullet.Definition.Collider
+---@return number
+local function getColliderArea(collider)
+    if collider.type == "circle" then
+        return math.pi * collider.radius * collider.radius
+    elseif collider.type == "ellipse" then
+        return math.pi * collider.a * collider.b
+    elseif collider.type == "rect" then
+        return 2.0 * collider.a * 2.0 * collider.b
+    else
+        error(("unknown collider type '%s'"):format(collider.type))
+    end
+end
+
+---@param collider thlib.bullet.Definition.Collider
+---@return boolean rect
+---@return number a
+---@return number b
+local function translateCollider(collider)
+    if collider.type == "circle" then
+        return false, collider.radius, collider.radius
+    elseif collider.type == "ellipse" then
+        return false, collider.a, collider.b
+    elseif collider.type == "rect" then
+        return true, collider.a, collider.b
+    else
+        error(("unknown collider type '%s'"):format(collider.type))
+    end
+end
+
 ---@param path string
 local function loadBulletDefinitions(path)
     ---@type string?
@@ -470,6 +500,39 @@ local function loadBulletDefinitions(path)
             lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
         end
     end
+    for k, v in pairs(definitions.families) do
+        local class_name = k
+        local bullet_class = Class(img_class)
+
+        bullet_class.size = getColliderArea(v.collider) / 256.0
+
+        ---@type string[]
+        local variants = {}
+        if #v.variants == 16 then
+            for i = 1, 16 do
+                local value = v.variants[i].sprite or v.variants[i].sprite_sequence
+                table.insert(variants, value)
+            end
+        elseif #v.variants == 8 then
+            for i = 1, 8 do
+                local value = v.variants[i].sprite or v.variants[i].sprite_sequence
+                table.insert(variants, value)
+                table.insert(variants, value)
+            end
+        else
+            error("unsupported variant count")
+        end
+
+        local rect, a, b = translateCollider(v.collider)
+        function bullet_class:init(index)
+            self.img = variants[index]
+            self.rect = rect
+            self.a = a
+            self.b = b
+        end
+
+        _G[class_name] = bullet_class
+    end
 end
 
-loadBulletDefinitions("assets/cake/bullet/bullet.json")
+bullet.loadBulletDefinitions = loadBulletDefinitions
