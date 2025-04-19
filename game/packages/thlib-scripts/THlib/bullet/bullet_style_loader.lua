@@ -98,6 +98,17 @@ local function translateCollider(collider)
     end
 end
 
+local function refreshMagicTable()
+    -- 祖宗之法不可变
+    BULLETSTYLE = {
+        arrow_big, arrow_mid, arrow_small, gun_bullet, butterfly, square,
+        ball_small, ball_mid, ball_mid_c, ball_big, ball_huge, ball_light,
+        star_small, star_big, grain_a, grain_b, grain_c, kite, knife, knife_b,
+        water_drop, mildew, ellipse, heart, money, music, silence,
+        water_drop_dark, ball_huge_dark, ball_light_dark
+    }
+end
+
 ---@param path string
 local function loadBulletDefinitions(path)
     ---@type string?
@@ -205,6 +216,7 @@ local function loadBulletDefinitions(path)
 
         _G[class_name] = bullet_class
     end
+    refreshMagicTable()
 end
 
 bullet.loadBulletDefinitions = loadBulletDefinitions
