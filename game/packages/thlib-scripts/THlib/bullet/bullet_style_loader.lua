@@ -219,4 +219,7 @@ local function loadBulletDefinitions(path)
     refreshMagicTable()
 end
 
+-- default bullet style
+loadBulletDefinitions("assets/cake/bullet/bullet.json")
+
 bullet.loadBulletDefinitions = loadBulletDefinitions

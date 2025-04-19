@@ -24,7 +24,7 @@ local function lerp(a, b, k)
     return (1.0 - k) * a + k * b
 end
 
----@class thlib.bullet.BulletFadeOutEffect : lstg.GameObject
+---@class stg.bullet.BulletFadeOutEffect : lstg.GameObject
 ---@field hscale0 number
 ---@field vscale0 number
 ---@field has_c_b boolean
@@ -46,25 +46,17 @@ function BulletFadeOutEffect:render()
     self.hscale = lerp(self.hscale0, 0, t)
     self.vscale = lerp(self.vscale0, 0, t)
     if self.has_c_b then
-        local r = lerp(self._r, 0, t)
-        local g = lerp(self._g, 0, t)
-        local b = lerp(self._b, 0, t)
-        local a = lerp(self._a, 0, t)
-        lstg.SetImgState(self, self._blend, a, r, g, b)
+        lstg.SetImgState(self, self._blend, lerp(self._a, 0, t), self._r, self._g, self._b)
     else
-        local r = lerp(255, 0, t)
-        local g = lerp(255, 0, t)
-        local b = lerp(255, 0, t)
-        local a = lerp(255, 0, t)
-        lstg.SetImgState(self, "", a, r, g, b)
+        lstg.SetImgState(self, "", lerp(255, 0, t), 255, 255, 255)
     end
     lstg.DefaultRenderFunc(self)
     lstg.SetImgState(self, "", 255, 255, 255, 255) -- restore
 end
 
----@return thlib.bullet.BulletFadeOutEffect
+---@return stg.bullet.BulletFadeOutEffect
 function BulletFadeOutEffect.create(o)
-    ---@type thlib.bullet.BulletFadeOutEffect
+    ---@type stg.bullet.BulletFadeOutEffect
     ---@diagnostic disable-next-line: param-type-mismatch, assign-type-mismatch
     local e = lstg.New(BulletFadeOutEffect)
 
