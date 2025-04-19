@@ -89,7 +89,14 @@ function EnemyBullet:kill()
 end
 
 function EnemyBullet:frame()
-    task.Do(self)
+    if self.stay and self.timer < self.fade_in_frames then
+        -- magic behavior
+        self.x = self.x - self.vx
+        self.y = self.y - self.vy
+        self.rot = self.rot - self.omiga
+    else
+        task.Do(self)
+    end
 end
 
 function EnemyBullet:render()
