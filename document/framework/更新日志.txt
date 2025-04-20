@@ -8,10 +8,10 @@
 
 更新日志：
 
-    aex+ v0.9.0
+    aex+ v0.9.0-alpha.5
         LuaSTG Sub 引擎
-            更新到 v0.21.20
-            v0.21.0 到 v0.21.20
+            更新到 v0.21.103
+            v0.21.0 到 v0.21.103
                 具体更改内容请阅读 document/engine/history.md
         THlib
             修改：改进 task.Do 的性能：
@@ -45,7 +45,6 @@
             修改：游戏循环更新顺序，请阅读 document/framework/游戏循环更新顺序.md
             修改：改进插件的定义方式，__init__.lua 将被淘汰，改为使用 package.json（具体示例请查看自带插件）
             修复：插件数据缓存文件加载失败的情况下会产生弹窗报错
-            修改：THlib 中的弹型素材和类定义移动到单独的插件 thlib-legacy-bullet-definitions
             移除：bullet.gclist 表和全局 ChangeBulletHighlight 函数
                 它们曾用于 LuaSTG boost 及更早期的版本，但从 LuaSTG er+ 开始不再使用，因此移除
             移除：全局 bullet_deleter2 类、bullet_killer_SP 类
@@ -63,6 +62,21 @@
             修改：插件 StageBackgroundExtensions 重命名为 thlib-legacy-stage-backgrounds
             修改：插件 PlayerExtensions 重命名为 thlib-legacy-default-players
             修改：插件 ColliderShapeDebugger 重命名为 collider-shape-debugger
+            修改：_create_bullet_group 函数新增 bullet_action 参数（回调函数），用于对每个子弹执行额外的逻辑
+            修改：修改 item.DropItem 的逻辑，使掉落的 power 点数超过或等于 400 时，转为掉落大 P 点
+            新增：新增 960p 清晰度原作风格的子弹素材，用于替换东方 Project 原作的素材（位于 community-creations 包内）
+            移除：删除东方 Project 原作子弹素材，包括：
+                THlib/bullet/Magic1.png
+                THlib/bullet/bullet1.png
+                THlib/bullet/bullet2.png
+                THlib/bullet/bullet3.png
+                THlib/bullet/bullet4.png
+                THlib/bullet/bullet5.png
+                THlib/bullet/bullet6.png
+                THlib/bullet/bullet_ball_huge.png
+                THlib/bullet/bullet_music.png
+                THlib/bullet/bullet_water_drop.png
+                对应的纹理资源也被删除，但图片精灵（sprite）仍然保留，以保证兼容性
         文档：
             修改：LuaSTG 引擎、LuaSTG After Ex Plus 框架的文档分别存放到 document 文件夹下的 engine、framework 文件夹
         其他工具
