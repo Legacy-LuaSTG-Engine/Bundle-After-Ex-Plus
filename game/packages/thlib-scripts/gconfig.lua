@@ -29,7 +29,7 @@ gconfig.bundle_version_patch = 0
 --- 
 --- NOTE: Please refer to Semantic Versioning (https://semver.org/)  
 --- Pre-Release version  
-gconfig.bundle_version_pre_release = "-alpha.5"
+gconfig.bundle_version_pre_release = "-alpha.6"
 
 --- 备注：请参考语义化版本号（https://semver.org/lang/zh-CN/）  
 --- 构建信息  
