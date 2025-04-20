@@ -1,5 +1,16 @@
 local lstg = lstg
+local io = io
+local string = string
 local table = table
+local type = type
+local pairs = pairs
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local unpack = unpack or table.unpack
+local pcall = pcall
+local require = require
+local tostring = tostring
+local localFileStorage = require("foundation.LocalFileStorage")
 
 lstg.LoadTexture("Collision_render", "render_colli.png")
 lstg.LoadImage("collision_rect", "Collision_render", 0, 0, 128, 128)
@@ -8,11 +19,48 @@ lstg.LoadImage("collision_rect2", "Collision_render", 32, 0, 64, 128)
 lstg.LoadImage("collision_rect3", "Collision_render", 96, 0, 32, 128)
 lstg.LoadImage("collision_ring", "Collision_render", 130, 0, 128, 128)
 
+---@return boolean
 local function match_base(class, match)
     if class == match then
         return true
     elseif class.base then
         return match_base(class.base, match)
+    end
+end
+
+---@return string
+local function getStoragePath()
+    local dir = localFileStorage.getRootDirectory()
+    local path = dir .. "/plugins/collider-shape-debugger"
+    if not (lstg.FileManager.DirectoryExist(path)) then
+        lstg.FileManager.CreateDirectory(path)
+    end
+    return path
+end
+
+local function copy(t, all)
+    if all then
+        local lookup = {}
+        local function _copy(_t)
+            if type(_t) ~= 'table' then
+                return _t
+            elseif lookup[_t] then
+                return lookup[_t]
+            end
+            local ref = {}
+            lookup[_t] = ref
+            for k, v in pairs(_t) do
+                ref[_copy(k)] = _copy(v)
+            end
+            return setmetatable(ref, getmetatable(_t))
+        end
+        return _copy(t)
+    else
+        local ref = {}
+        for k, v in pairs(t) do
+            ref[k] = v
+        end
+        return setmetatable(ref, getmetatable(t))
     end
 end
 
@@ -23,19 +71,84 @@ local toggleColliderRender, keyDownCollider, keyDownCheat
 
 local class = {}
 
-class.list = {
-    { GROUP_PLAYER,        lstg.Color(255, 50, 255, 50) },
-    { GROUP_PLAYER_BULLET, lstg.Color(255, 127, 127, 192) },
-    { GROUP_SPELL,         lstg.Color(255, 255, 50, 255) },
-    { GROUP_NONTJT,        lstg.Color(255, 128, 255, 255) },
-    { GROUP_ENEMY,         lstg.Color(255, 255, 255, 128) },
-    { GROUP_ENEMY_BULLET,  lstg.Color(255, 255, 50, 50) },
-    { GROUP_INDES,         lstg.Color(255, 255, 165, 10) },
+class.list_default = {
+    { GROUP_PLAYER, { 255, 50, 255, 50 } },
+    { GROUP_PLAYER_BULLET, { 255, 127, 127, 192 } },
+    { GROUP_SPELL, { 255, 255, 50, 255 } },
+    { GROUP_NONTJT, { 255, 128, 255, 255 } },
+    { GROUP_ENEMY, { 255, 255, 255, 128 } },
+    { GROUP_ENEMY_BULLET, { 255, 255, 50, 50 } },
+    { GROUP_INDES, { 255, 255, 165, 10 } },
 }
+
 function class.init()
     toggleColliderRender = false
     keyDownCollider = false
     keyDownCheat = false
+
+    class.storage_path = getStoragePath()
+    class.storage_file = class.storage_path .. "/config.json"
+
+    local data
+    if lstg.FileManager.FileExist(class.storage_file) then
+        local f, e = io.open(class.storage_file, "rb")
+        if f then
+            local s = f:read("*a")
+            f:close()
+            local r, t = pcall(cjson.decode, s)
+            if r then
+                data = t
+            else
+                lstg.Log(4, string.format("decode data storage file '%s' failed: %s", class.storage_file, tostring(t)))
+            end
+        else
+            lstg.Log(4, string.format("open data storage file '%s' failed: %s", class.storage_file, tostring(e)))
+        end
+    else
+        lstg.Log(2, string.format("data storage file '%s' not exist", class.storage_file))
+    end
+    if not data then
+        data = copy(class.list_default, true)
+    end
+    class.list = data
+end
+
+function class.reload()
+    local f, e = io.open(class.storage_file, "rb")
+    if f then
+        local s = f:read("*a")
+        f:close()
+        local r, t = pcall(cjson.decode, s)
+        if r then
+            class.list = t
+        else
+            lstg.Log(4, string.format("decode data storage file '%s' failed: %s", class.storage_file, tostring(t)))
+            return false
+        end
+    else
+        lstg.Log(4, string.format("open data storage file '%s' failed: %s", class.storage_file, tostring(e)))
+        return false
+    end
+    return true
+end
+
+function class.save()
+    local f, e = io.open(class.storage_file, "wb")
+    if f then
+        local r, s = pcall(cjson.encode, copy(class.list))
+        if r then
+            f:write(s)
+            f:close()
+        else
+            lstg.Log(4, string.format("encode data storage file '%s' failed: %s", class.storage_file, tostring(s)))
+        end
+    else
+        lstg.Log(4, string.format("write data storage file '%s' failed: %s", class.storage_file, tostring(e)))
+    end
+end
+
+function class.resetToDefault()
+    class.list = copy(class.list_default, true)
 end
 
 function class.render()
@@ -59,9 +172,9 @@ function class.render()
     else
         keyDownCheat = false
     end
-    if toggleColliderRender == true then
+    if toggleColliderRender then
         for i = 1, #class.list do
-            local c = class.list[i][2]
+            local c = lstg.Color(unpack(class.list[i][2]))
             lstg.SetImageState("collision_rect", "", c)
             lstg.SetImageState("collision_rect1", "", c)
             lstg.SetImageState("collision_rect2", "", c)
@@ -86,14 +199,14 @@ function class.render()
                         local x3, y3 = x + (l1 + l2) * dx + wx, y + (l1 + l2) * dy + wy
                         local x4, y4 = x + (l1 + l2) * dx - wx, y + (l1 + l2) * dy - wy
                         lstg.Render4V("collision_rect1",
-                            x, y, 0.5, x1, y1, 0.5,
-                            x2, y2, 0.5, x, y, 0.5)
+                                x, y, 0.5, x1, y1, 0.5,
+                                x2, y2, 0.5, x, y, 0.5)
                         lstg.Render4V("collision_rect2",
-                            x1, y1, 0.5, x3, y3, 0.5,
-                            x4, y4, 0.5, x2, y2, 0.5)
+                                x1, y1, 0.5, x3, y3, 0.5,
+                                x4, y4, 0.5, x2, y2, 0.5)
                         lstg.Render4V("collision_rect3",
-                            x3, y3, 0.5, tx, ty, 0.5,
-                            tx, ty, 0.5, x4, y4, 0.5)
+                                x3, y3, 0.5, tx, ty, 0.5,
+                                tx, ty, 0.5, x4, y4, 0.5)
                     elseif match_base(unit.class, laser_bent) and unit.alpha > 0.999 and unit._colli then
                         local bc = lstg.Color(c.a * 0.6, c.r, c.b, c.g)
                         unit.data:RenderCollider(bc)
@@ -207,45 +320,38 @@ function colliderShapeDebugger:layout()
         ImGui.Text(tostring(item[1]))
         --给这行加一个颜色块用来显示颜色
         ImGui.NextColumn()
-        local a, r, g, b = item[2]:ARGB()
+        local a, r, g, b = unpack(item[2])
         ImGui.ColorButton("##ColliderShapeDebugger##ColorBtn" .. label, imgui.ImVec4(r / 255, g / 255, b / 255, a / 255))
         ImGui.NextColumn()
-        local ret, value, changed
+        local ret, value
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##A" .. label, a, 1, 0, 255)
         if ret then
-            changed = true
-            a = value
+            item[2][1] = value
         end
         ImGui.PopItemWidth()
         ImGui.NextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##R" .. label, r, 1, 0, 255)
         if ret then
-            changed = true
-            r = value
+            item[2][2] = value
         end
         ImGui.PopItemWidth()
         ImGui.NextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##G" .. label, g, 1, 0, 255)
         if ret then
-            changed = true
-            g = value
+            item[2][3] = value
         end
         ImGui.PopItemWidth()
         ImGui.NextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##B" .. label, b, 1, 0, 255)
         if ret then
-            changed = true
-            b = value
+            item[2][4] = value
         end
         ImGui.PopItemWidth()
         ImGui.NextColumn()
-        if changed then
-            item[2] = lstg.Color(a, r, g, b)
-        end
         if ImGui.Button("Delete##ColliderShapeDebugger##BtnDelete" .. label) then
             table.insert(need_delete, i)
         end
@@ -261,7 +367,7 @@ function colliderShapeDebugger:layout()
     ImGui.Columns(7, "##ColliderShapeDebugger##AddColumns", true)
     local id = self._user_add[1] or 0
     local a, r, g, b = self._user_add[2] or 255, self._user_add[3] or 255, self._user_add[4] or 255,
-        self._user_add[5] or 255
+    self._user_add[5] or 255
     local ret, value, changed
     ImGui.PushItemWidth(-1)
     ret, value = ImGui.DragInt("##ColliderShapeDebugger##GroupID", id, 1, 0, 15)
@@ -310,10 +416,22 @@ function colliderShapeDebugger:layout()
     end
     if ImGui.Button("Add##ColliderShapeDebugger##NewGroup") then
         table.insert(list,
-            { self._user_add[1], lstg.Color(self._user_add[2], self._user_add[3], self._user_add[4], self._user_add[5]) })
+                { self._user_add[1], { self._user_add[2], self._user_add[3], self._user_add[4], self._user_add[5] } })
         self._user_add = { 0, 255, 255, 255, 255 }
     end
     ImGui.Columns(1)
+    ImGui.Separator()
+    if ImGui.Button("Save##ColliderShapeDebugger##Save") then
+        class.save()
+    end
+    ImGui.SameLine()
+    if ImGui.Button("Reload##ColliderShapeDebugger##Reload") then
+        class.reload()
+    end
+    ImGui.SameLine()
+    if ImGui.Button("Reset to default##ColliderShapeDebugger##Reset") then
+        class.resetToDefault()
+    end
     ImGui.EndChild()
 end
 
