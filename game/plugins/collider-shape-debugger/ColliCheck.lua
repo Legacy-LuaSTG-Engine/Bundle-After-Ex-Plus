@@ -81,6 +81,30 @@ class.list_default = {
     { GROUP_INDES, { 255, 255, 165, 10 } },
 }
 
+local known_group_values = {
+    GROUP_GHOST = 0,
+    GROUP_ENEMY_BULLET = 1,
+    GROUP_ENEMY = 2,
+    GROUP_PLAYER_BULLET = 3,
+    GROUP_PLAYER = 4,
+    GROUP_INDES = 5,
+    GROUP_ITEM = 6,
+    GROUP_NONTJT = 7,
+    GROUP_SPELL = 8,
+    GROUP_CPLAYER = 9,
+}
+for k, v in pairs(known_group_values) do
+    known_group_values[v] = k
+end
+class.group_enum = {}
+for i = 0, GROUP_ALL - 1 do
+    if known_group_values[i] then
+        class.group_enum[i] = known_group_values[i]
+    else
+        class.group_enum[i] = string.format("UNKNOWN_GROUP_%d", i)
+    end
+end
+
 function class.init()
     toggleColliderRender = false
     keyDownCollider = false
@@ -297,32 +321,34 @@ function colliderShapeDebugger:layout()
         toggleColliderRender = false
     end
     ImGui.Separator()
-    ImGui.Columns(7, "##ColliderShapeDebugger##ListColumns", true)
-    ImGui.Text("Group ID")
-    ImGui.NextColumn()
-    ImGui.Text("Color")
-    ImGui.NextColumn()
-    ImGui.Text("Color A")
-    ImGui.NextColumn()
-    ImGui.Text("Color R")
-    ImGui.NextColumn()
-    ImGui.Text("Color G")
-    ImGui.NextColumn()
-    ImGui.Text("Color B")
-    ImGui.NextColumn()
-    ImGui.Text("Action")
-    ImGui.NextColumn()
+    ImGui.BeginTable("##ColliderShapeDebugger##ListColumns", 7, imgui.ImGuiTableFlags.Borders)
+    ImGui.TableSetupColumn("Group ID", imgui.ImGuiTableColumnFlags.WidthStretch, 400)
+    ImGui.TableSetupColumn("Color", imgui.ImGuiTableColumnFlags.WidthStretch, 100)
+    ImGui.TableSetupColumn("Color A", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableSetupColumn("Color R", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableSetupColumn("Color G", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableSetupColumn("Color B", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableSetupColumn("Action", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableHeadersRow()
+    ImGui.TableNextRow()
     local need_delete = {}
     for i = 1, #list do
-        ImGui.Separator()
         local item = list[i]
         local label = "##item_" .. i
-        ImGui.Text(tostring(item[1]))
+        local group_name = class.group_enum[item[1]]
+        if group_name then
+            group_name = group_name:match("^%s*GROUP_%s*(.+)$")
+        end
+        if group_name and not group_name:match("%S") then
+            group_name = nil
+        end
+        ImGui.TableNextColumn()
+        ImGui.Text(group_name or tostring(i))
         --给这行加一个颜色块用来显示颜色
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         local a, r, g, b = unpack(item[2])
         ImGui.ColorButton("##ColliderShapeDebugger##ColorBtn" .. label, imgui.ImVec4(r / 255, g / 255, b / 255, a / 255))
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         local ret, value
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##A" .. label, a, 1, 0, 255)
@@ -330,55 +356,51 @@ function colliderShapeDebugger:layout()
             item[2][1] = value
         end
         ImGui.PopItemWidth()
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##R" .. label, r, 1, 0, 255)
         if ret then
             item[2][2] = value
         end
         ImGui.PopItemWidth()
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##G" .. label, g, 1, 0, 255)
         if ret then
             item[2][3] = value
         end
         ImGui.PopItemWidth()
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         ImGui.PushItemWidth(-1)
         ret, value = ImGui.DragInt("##ColliderShapeDebugger##B" .. label, b, 1, 0, 255)
         if ret then
             item[2][4] = value
         end
         ImGui.PopItemWidth()
-        ImGui.NextColumn()
+        ImGui.TableNextColumn()
         if ImGui.Button("Delete##ColliderShapeDebugger##BtnDelete" .. label) then
             table.insert(need_delete, i)
         end
-        ImGui.NextColumn()
+        ImGui.TableNextRow()
     end
     for i = #need_delete, 1, -1 do
         table.remove(list, need_delete[i])
     end
-    ImGui.Columns(1)
-    ImGui.Separator()
-    ImGui.Text("Add New Group")
-    ImGui.Separator()
-    ImGui.Columns(7, "##ColliderShapeDebugger##AddColumns", true)
     local id = self._user_add[1] or 0
     local a, r, g, b = self._user_add[2] or 255, self._user_add[3] or 255, self._user_add[4] or 255,
     self._user_add[5] or 255
     local ret, value, changed
+    ImGui.TableNextColumn()
     ImGui.PushItemWidth(-1)
-    ret, value = ImGui.DragInt("##ColliderShapeDebugger##GroupID", id, 1, 0, 15)
+    ret, value = ImGui.Combo("##ColliderShapeDebugger##GroupID", id, class.group_enum, #class.group_enum)
     if ret then
         changed = true
         id = value
     end
     ImGui.PopItemWidth()
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     ImGui.ColorButton("##ColliderShapeDebugger##ColorBtn", imgui.ImVec4(r / 255, g / 255, b / 255, a / 255))
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     ImGui.PushItemWidth(-1)
     ret, value = ImGui.DragInt("##ColliderShapeDebugger##ColorA", a, 1, 0, 255)
     if ret then
@@ -386,7 +408,7 @@ function colliderShapeDebugger:layout()
         a = value
     end
     ImGui.PopItemWidth()
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     ImGui.PushItemWidth(-1)
     ret, value = ImGui.DragInt("##ColliderShapeDebugger##ColorR", r, 1, 0, 255)
     if ret then
@@ -394,7 +416,7 @@ function colliderShapeDebugger:layout()
         r = value
     end
     ImGui.PopItemWidth()
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     ImGui.PushItemWidth(-1)
     ret, value = ImGui.DragInt("##ColliderShapeDebugger##ColorG", g, 1, 0, 255)
     if ret then
@@ -402,7 +424,7 @@ function colliderShapeDebugger:layout()
         g = value
     end
     ImGui.PopItemWidth()
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     ImGui.PushItemWidth(-1)
     ret, value = ImGui.DragInt("##ColliderShapeDebugger##ColorB", b, 1, 0, 255)
     if ret then
@@ -410,16 +432,18 @@ function colliderShapeDebugger:layout()
         b = value
     end
     ImGui.PopItemWidth()
-    ImGui.NextColumn()
+    ImGui.TableNextColumn()
     if changed then
         self._user_add = { id, a, r, g, b }
     end
+    ImGui.PushItemWidth(-1)
     if ImGui.Button("Add##ColliderShapeDebugger##NewGroup") then
         table.insert(list,
                 { self._user_add[1], { self._user_add[2], self._user_add[3], self._user_add[4], self._user_add[5] } })
         self._user_add = { 0, 255, 255, 255, 255 }
     end
-    ImGui.Columns(1)
+    ImGui.PopItemWidth()
+    ImGui.EndTable()
     ImGui.Separator()
     if ImGui.Button("Save##ColliderShapeDebugger##Save") then
         class.save()
