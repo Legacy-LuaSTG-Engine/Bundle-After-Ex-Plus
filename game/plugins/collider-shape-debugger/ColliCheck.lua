@@ -1,5 +1,6 @@
 local lstg = lstg
 local io = io
+local math = math
 local string = string
 local table = table
 local type = type
@@ -320,15 +321,18 @@ function colliderShapeDebugger:layout()
     if ImGui.Button("Disable##ColliderShapeDebugger##Disable") then
         toggleColliderRender = false
     end
-    ImGui.Separator()
-    ImGui.BeginTable("##ColliderShapeDebugger##ListColumns", 7, imgui.ImGuiTableFlags.Borders)
+    local remainHeight = ImGui.GetContentRegionAvail().y
+    ImGui.BeginChild("##ColliderShapeDebugger##ListColumnsArea", imgui.ImVec2(0, math.max(0, remainHeight - 80)))
+    ImGui.BeginTable("##ColliderShapeDebugger##ListColumns", 9, imgui.ImGuiTableFlags.Borders)
     ImGui.TableSetupColumn("Group ID", imgui.ImGuiTableColumnFlags.WidthStretch, 400)
-    ImGui.TableSetupColumn("Color", imgui.ImGuiTableColumnFlags.WidthStretch, 100)
+    ImGui.TableSetupColumn("Color", imgui.ImGuiTableColumnFlags.WidthFixed, 60)
     ImGui.TableSetupColumn("Color A", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
     ImGui.TableSetupColumn("Color R", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
     ImGui.TableSetupColumn("Color G", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
     ImGui.TableSetupColumn("Color B", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
     ImGui.TableSetupColumn("Action", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
+    ImGui.TableSetupColumn("/\\", imgui.ImGuiTableColumnFlags.WidthFixed, 40)
+    ImGui.TableSetupColumn("\\/", imgui.ImGuiTableColumnFlags.WidthFixed, 40)
     ImGui.TableHeadersRow()
     ImGui.TableNextRow()
     local need_delete = {}
@@ -344,7 +348,6 @@ function colliderShapeDebugger:layout()
         end
         ImGui.TableNextColumn()
         ImGui.Text(group_name or tostring(i))
-        --给这行加一个颜色块用来显示颜色
         ImGui.TableNextColumn()
         local a, r, g, b = unpack(item[2])
         ImGui.ColorButton("##ColliderShapeDebugger##ColorBtn" .. label, imgui.ImVec4(r / 255, g / 255, b / 255, a / 255))
@@ -380,6 +383,18 @@ function colliderShapeDebugger:layout()
         ImGui.TableNextColumn()
         if ImGui.Button("Delete##ColliderShapeDebugger##BtnDelete" .. label) then
             table.insert(need_delete, i)
+        end
+        ImGui.TableNextColumn()
+        if i > 1 and ImGui.Button("/\\##ColliderShapeDebugger##BtnUp" .. label) then
+            local tmp = list[i - 1]
+            list[i - 1] = list[i]
+            list[i] = tmp
+        end
+        ImGui.TableNextColumn()
+        if i < #list and ImGui.Button("\\/##ColliderShapeDebugger##BtnDown" .. label) then
+            local tmp = list[i + 1]
+            list[i + 1] = list[i]
+            list[i] = tmp
         end
         ImGui.TableNextRow()
     end
@@ -444,7 +459,7 @@ function colliderShapeDebugger:layout()
     end
     ImGui.PopItemWidth()
     ImGui.EndTable()
-    ImGui.Separator()
+    ImGui.EndChild()
     if ImGui.Button("Save##ColliderShapeDebugger##Save") then
         class.save()
     end
