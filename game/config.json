@@ -51,6 +51,11 @@
                 "path": "packages/thlib-scripts-v2/"
             },
             {
+                "name": "community-creations",
+                "type": "directory",
+                "path": "packages/community-creations/"
+            },
+            {
                 "name": "secret-garden",
                 "type": "archive",
                 "path": "packages/secret-garden-v1.zip"
