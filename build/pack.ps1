@@ -170,6 +170,7 @@ foreach ($EngineFileName in $EngineFileNameList) {
 # 复制包
 
 [string[]] $PackageNameList = @(
+    'community-creations'
     'thlib-resources'
     'thlib-scripts'
     'thlib-scripts-v2'
@@ -185,7 +186,6 @@ foreach ($PackageName in $PackageNameList) {
     'collider-shape-debugger'
     'thlib-legacy-default-players'
     'thlib-legacy-stage-backgrounds'
-    'thlib-legacy-bullet-definitions'
     'danmaku-recorder'
 )
 
