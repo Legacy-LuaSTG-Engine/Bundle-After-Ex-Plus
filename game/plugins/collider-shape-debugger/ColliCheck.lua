@@ -452,8 +452,8 @@ function colliderShapeDebugger:layoutTableChild()
     local remainHeight = ImGui.GetContentRegionAvail().y
     if ImGui.BeginChild("##ColliderShapeDebugger##ListColumnsArea", imgui.ImVec2(0, math.max(0, remainHeight - 80))) then
         self:layoutTable()
-        ImGui.EndChild()
     end
+    ImGui.EndChild()
 end
 
 function colliderShapeDebugger:layout()
@@ -481,8 +481,8 @@ function colliderShapeDebugger:layout()
         if ImGui.Button("Reset to default##ColliderShapeDebugger##Reset") then
             class.resetToDefault()
         end
-        ImGui.EndChild()
     end
+    ImGui.EndChild()
 end
 
 lstg_debug.addView("lstg.debug.ColliderShapeDebugger", colliderShapeDebugger)
