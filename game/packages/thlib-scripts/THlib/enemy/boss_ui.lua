@@ -120,501 +120,45 @@ function hpbar:render()
     SetImageState("hpbar2", "", Color(0, 255, 255, 255))
     SetImageState("life_node", "", Color(alpha1 * 255, 255, 255, 255))
 
-    local mode, type
-    if not b.__hpbartype2 then
-        if not (_ui.hpbarcolor1) and not (_ui.hpbarcolor2) then
-            mode = -1 --无血条（时符等）
-        elseif not (_ui.hpbarcolor2) then
-            mode = 0
-            type = 1 --全血条（符卡）
-        elseif not (_ui.hpbarcolor1) then
-            mode = 0
-            type = 2 --全血条（非符）
-        elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-            mode = 2 --组合血条（符卡）
-        elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-            mode = 1 --组合血条（非符）
+    local mode = b.__hpbartype
+    if mode == -1 then
+    elseif mode == 0 or mode == 3 then -- 完整血条
+        misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
+        misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / 60))
+        Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
+        Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
+        if b.sp_point and #b.sp_point ~= 0 then
+            for i = 1, #b.sp_point do
+                Render("life_node", b.x + 61 * cos(b.sp_point[i]), b.y + 61 * sin(b.sp_point[i]), b.sp_point[i] - 90, 0.5)
+            end
         end
-        if mode == -1 then
-        elseif mode == 0 and type == 1 then
-            misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-            misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / 60))
-            Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-            Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-            if b.sp_point and #b.sp_point ~= 0 then
-                for i = 1, #b.sp_point do
-                    Render("life_node", b.x + 61 * cos(b.sp_point[i]), b.y + 61 * sin(b.sp_point[i]), b.sp_point[i] - 90, 0.5)
-                end
+        if b._sp_point_auto and #b._sp_point_auto ~= 0 then
+            local p, a
+            for i = 1, #b._sp_point_auto do
+                p = b._sp_point_auto[i]
+                a = 90 - (p.dmg / b.maxhp) * 360
+                Render("life_node", b.x + 61 * cos(a), b.y + 61 * sin(a), a - 90, 0.5)
             end
-            if b._sp_point_auto and #b._sp_point_auto ~= 0 then
-                local p, a
-                for i = 1, #b._sp_point_auto do
-                    p = b._sp_point_auto[i]
-                    a = 90 - (p.dmg / b.maxhp) * 360
-                    Render("life_node", b.x + 61 * cos(a), b.y + 61 * sin(a), a - 90, 0.5)
-                end
-            end
-        elseif mode == 0 and type == 2 then
-            misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-            misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / 60))
-            Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-            Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-            if b.sp_point and #b.sp_point ~= 0 then
-                for i = 1, #b.sp_point do
-                    Render("life_node", b.x + 61 * cos(b.sp_point[i]), b.y + 61 * sin(b.sp_point[i]), b.sp_point[i] - 90, 0.5)
-                end
-            end
-            if b._sp_point_auto and #b._sp_point_auto ~= 0 then
-                local p, a
-                for i = 1, #b._sp_point_auto do
-                    p = b._sp_point_auto[i]
-                    a = 90 - (p.dmg / b.maxhp) * 360
-                    Render("life_node", b.x + 61 * cos(a), b.y + 61 * sin(a), a - 90, 0.5)
-                end
-            end
-        elseif mode == 2 then
-            misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-            misc.Renderhp(b.x, b.y, 90, b.lifepoint - 90, 60, 64, b.lifepoint - 88, b.hpbarlen)
-            Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-            Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-        elseif mode == 1 then
-            misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-            if b.timer <= 60 then
-                misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / 60))
-            else
-                misc.Renderhp(b.x, b.y, 90, b.lifepoint - 90, 60, 64, b.lifepoint - 88, 1)
-                misc.Renderhp(b.x, b.y, b.lifepoint, 450 - b.lifepoint, 60, 64, 450 - b.lifepoint, b.hpbarlen)
-            end
-            Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-            Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-            Render("life_node", b.x + 61 * cos(b.lifepoint), b.y + 61 * sin(b.lifepoint), b.lifepoint - 90, 0.55)
-            SetFontState("bonus", "", Color(255, 255, 255, 255))
         end
-    else
-        if not _ui.hpbarcolor3 then
-            if not (_ui.hpbarcolor1) and not (_ui.hpbarcolor2) then
-                mode = -1 --无血条（时符等）
-            elseif not (_ui.hpbarcolor2) then
-                mode = 0
-                type = 1 --全血条（符卡）
-            elseif not (_ui.hpbarcolor1) then
-                mode = 0
-                type = 2 --全血条（非符）（mode=3）
-            elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-                mode = 2 --组合血条（符卡）
-            elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-                mode = 1 --组合血条（非符）
-            end
+    elseif mode == 2 then
+        misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
+        misc.Renderhp(b.x, b.y, 90, b.lifepoint - 90, 60, 64, b.lifepoint - 88, b.hpbarlen)
+        Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
+        Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
+    elseif mode == 1 then
+        misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
+        if b.timer <= 60 then
+            misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / 60))
         else
-            if not (_ui.hpbarcolor2) then
-                mode = 4
-            elseif not (_ui.hpbarcolor1) then
-                mode = 5
-            elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-                mode = 6
-            elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-                mode = 7
-            end
+            misc.Renderhp(b.x, b.y, 90, b.lifepoint - 90, 60, 64, b.lifepoint - 88, 1)
+            misc.Renderhp(b.x, b.y, b.lifepoint, 450 - b.lifepoint, 60, 64, 450 - b.lifepoint, b.hpbarlen)
         end
-
-        local flag2 = int(b.__hpbartype2 / 10)
-        if flag2 == 1 then
-            if mode == -1 then
-            elseif mode == 0 and type == 1 then
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                if b.sp_point and #b.sp_point ~= 0 then
-                    for i = 1, #b.sp_point do
-                        Render("life_node", b.x + 61 * cos(b.sp_point[i]), b.y + 61 * sin(b.sp_point[i]), b.sp_point[i] - 90, 0.5)
-                    end
-                end
-                if b._sp_point_auto and #b._sp_point_auto ~= 0 then
-                    local p, a
-                    for i = 1, #b._sp_point_auto do
-                        p = b._sp_point_auto[i]
-                        a = 90 - (p.dmg / b.maxhp) * 360
-                        Render("life_node", b.x + 61 * cos(a), b.y + 61 * sin(a), a - 90, 0.5)
-                    end
-                end
-            elseif mode == 0 and type == 2 then
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90, 360, 60, 64, 360, b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                if b.sp_point and #b.sp_point ~= 0 then
-                    for i = 1, #b.sp_point do
-                        Render("life_node", b.x + 61 * cos(b.sp_point[i]), b.y + 61 * sin(b.sp_point[i]), b.sp_point[i] - 90, 0.5)
-                    end
-                end
-                if b._sp_point_auto and #b._sp_point_auto ~= 0 then
-                    local p, a
-                    for i = 1, #b._sp_point_auto do
-                        p = b._sp_point_auto[i]
-                        a = 90 - (p.dmg / b.maxhp) * 360
-                        Render("life_node", b.x + 61 * cos(a), b.y + 61 * sin(a), a - 90, 0.5)
-                    end
-                end
-            elseif mode == 2 then
-                local now = b.cards[b.card_num]
-                local rate = b.__hpbar_defaultpercent * now.hp / b.__hpbar_defaultvalue
-                local ang = min(360 * rate, 359)
-
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90, ang, 60, 64, ang + 2, b.hpbarlen)
-                Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-
-
-            elseif mode == 1 then
-                local nextcard
-                for n = b.card_num + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        nextcard = b.cards[n]
-                        break
-                    end
-                end
-                local rate = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                local ang = min(360 * rate, 359)
-
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                if b.__hpbar_timer <= (b.__hpbar_rendertime * rate) then
-                    misc.Renderhp(b.x, b.y, 90, ang, 60, 64, 360, min(1, b.__hpbar_timer / (b.__hpbar_rendertime * rate)))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                else
-                    misc.Renderhp(b.x, b.y, 90, ang, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang, 360 - ang, 60, 64, 360, b.hpbarlen * min(1, (b.__hpbar_timer - (b.__hpbar_rendertime * rate)) / (b.__hpbar_rendertime - (b.__hpbar_rendertime * rate))))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                    Render("life_node", b.x + 61 * cos(ang + 90), b.y + 61 * sin(ang + 90), ang, 0.55)
-                end
-            elseif mode == 4 then
-                local now = b.cards[b.card_num]
-                local rate1 = b.__hpbar_defaultpercent * now.hp / b.__hpbar_defaultvalue
-                --local ang1 = min (360 * rate1 , 179)
-                local ang1 = 360 * rate1
-                local nextcard
-                for n = b.card_num + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        nextcard = b.cards[n]
-                        break
-                    end
-                end
-                local rate2 = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                --local ang2 = min (360 * rate2 , 179)
-                local ang2 = 360 * rate2
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90 + ang2, ang1, 60, 64, ang1 + 2, b.hpbarlen)
-                Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                Render("life_node", b.x + 61 * cos(ang2 + 90), b.y + 61 * sin(ang2 + 90), ang2, 0.55)
-            elseif mode == 5 then
-                local nextcard, next2card, temp
-                for n = b.card_num + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        nextcard = b.cards[n]
-                        temp = n
-                        break
-                    end
-                end
-                local rate1 = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                --local ang1 = min (360 * rate1 , 179)
-                local ang1 = 360 * rate1
-                local R1 = b.__hpbar_rendertime * rate1
-
-                for n = temp + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        next2card = b.cards[n]
-                        break
-                    end
-                end
-                local rate2 = b.__hpbar_defaultpercent * next2card.hp / b.__hpbar_defaultvalue
-                --local ang2 = min (360 * rate2 , 179)
-                local ang2 = 360 * rate2
-                local R2 = b.__hpbar_rendertime * rate2
-
-                local rate_all = rate1 + rate2
-                local ang_all = ang1 + ang2
-                local R_all = R1 + R2
-
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                if b.__hpbar_timer <= (R2) then
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, min(1, b.__hpbar_timer / (R2)))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                elseif b.__hpbar_timer <= (R1 + R2) then
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang2, ang1, 60, 64, 360, min(1, (b.__hpbar_timer - (R2)) / (R1)))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                    Render("life_node", b.x + 61 * cos(ang2 + 90), b.y + 61 * sin(ang2 + 90), ang2, 0.55)
-                else
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang2, ang1, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang_all, 360 - ang_all, 60, 64, 360, b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime * (1 - rate_all))))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                    Render("life_node", b.x + 61 * cos(ang2 + 90), b.y + 61 * sin(ang2 + 90), ang2, 0.55)
-                    Render("life_node", b.x + 61 * cos(ang_all + 90), b.y + 61 * sin(ang_all + 90), ang_all, 0.55)
-                end
-            elseif mode == 6 then
-                local nextcard
-                for n = b.card_num + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        nextcard = b.cards[n]
-                        break
-                    end
-                end
-                local now = b.cards[b.card_num]
-                local lastcard
-                for n = b.card_num - 1, 1, -1 do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        lastcard = b.cards[n]
-                        break
-                    end
-                end
-
-                local rate = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                --local ang = min (360 * rate , 179)
-                local ang = 360 * rate
-                local rate2 = (1 - rate) * now.hp / (now.hp + lastcard.hp)
-                local ang2 = 360 * rate2
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90, ang, 60, 64, 360, 1)
-                misc.Renderhp(b.x, b.y, 90 + ang, ang2, 60, 64, ang2 + 2, b.hpbarlen)
-                Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                Render("life_node", b.x + 61 * cos(ang + 90), b.y + 61 * sin(ang + 90), ang, 0.55)
-            elseif mode == 7 then
-                local nextcard, next2card, temp
-                local now = b.cards[b.card_num]
-
-                for n = b.card_num + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        nextcard = b.cards[n]
-                        temp = n
-                        break
-                    end
-                end
-
-                for n = temp + 1, #b.cards do
-                    if b.cards[n] and b.cards[n].is_combat then
-                        next2card = b.cards[n]
-                        break
-                    end
-                end
-                local rate2 = b.__hpbar_defaultpercent * next2card.hp / b.__hpbar_defaultvalue
-                --local ang2 = min (360 * rate2 , 179)
-                local ang2 = 360 * rate2
-                local R2 = b.__hpbar_rendertime * rate2
-
-                local rate1 = (1 - rate2) * nextcard.hp / (now.hp + nextcard.hp)
-                local ang1 = 360 * rate1
-                local R1 = b.__hpbar_rendertime * rate1
-
-                local rate_all = rate1 + rate2
-                local ang_all = ang1 + ang2
-                local R_all = R1 + R2
-
-                misc.Renderhpbar(b.x, b.y, 90, 360, 60, 64, 360, 1)
-                if b.__hpbar_timer <= (R2) then
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, min(1, b.__hpbar_timer / (R2)))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                elseif b.__hpbar_timer <= (R1 + R2) then
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang2, ang1, 60, 64, 360, min(1, (b.__hpbar_timer - (R2)) / (R1)))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                    Render("life_node", b.x + 61 * cos(ang2 + 90), b.y + 61 * sin(ang2 + 90), ang2, 0.55)
-                else
-                    misc.Renderhp(b.x, b.y, 90, ang2, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang2, ang1, 60, 64, 360, 1)
-                    misc.Renderhp(b.x, b.y, 90 + ang_all, 360 - ang_all, 60, 64, 360, b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime * (1 - rate_all))))
-                    Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
-                    Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
-                    Render("life_node", b.x + 61 * cos(ang2 + 90), b.y + 61 * sin(ang2 + 90), ang2, 0.55)
-                    Render("life_node", b.x + 61 * cos(ang_all + 90), b.y + 61 * sin(ang_all + 90), ang_all, 0.55)
-                end
-            end
-        elseif flag2 == 2 then
-            if mode == -1 then
-            else
-                local c0 = b.__c0
-                local c1 = b.__c1
-                local c2 = b.__c2
-                local c3 = b.__c3
-                local c4 = b.__c4
-
-                SetImageState('hpbar', '', c0)
-                if mode == 0 and type == 1 then
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                elseif mode == 0 and type == 2 then
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                    SetImageState('hpbar', '', c1)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * b.hpbarlen * min(1, b.__hpbar_timer / b.__hpbar_rendertime))
-                elseif mode == 2 then
-                    local now = b.cards[b.card_num]
-                    local rate = b.__hpbar_defaultpercent * now.hp / b.__hpbar_defaultvalue
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * b.hpbarlen * rate)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * b.hpbarlen * rate)
-                elseif mode == 1 then
-                    local nextcard
-                    for n = b.card_num + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            nextcard = b.cards[n]
-                            break
-                        end
-                    end
-                    local rate = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (b.__hpbar_rendertime * rate)) * rate)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (b.__hpbar_rendertime * rate)) * rate)
-
-                    if b.__hpbar_timer > (b.__hpbar_rendertime * rate) then
-                        SetImageState('hpbar', '', c0)
-                        Render('hpbar', -183 + 2.55 * 128 * rate, 217, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (b.__hpbar_rendertime * rate)) / (b.__hpbar_rendertime - (b.__hpbar_rendertime * rate))) * (1 - rate))
-                        SetImageState('hpbar', '', c1)
-                        Render('hpbar', -184 + 2.55 * 128 * rate, 218, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (b.__hpbar_rendertime * rate)) / (b.__hpbar_rendertime - (b.__hpbar_rendertime * rate))) * (1 - rate))
-                    end
-                elseif mode == 4 then
-                    local now = b.cards[b.card_num]
-                    local rate = b.__hpbar_defaultpercent * now.hp / b.__hpbar_defaultvalue
-                    local nextcard
-                    for n = b.card_num + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            nextcard = b.cards[n]
-                            break
-                        end
-                    end
-                    local rate_2 = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * rate)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * rate)
-                    SetImageState('hpbar', '', c0)
-                    Render('hpbar', -183 + 2.55 * 128 * rate, 217, 90, 0.25, 2.55 * b.hpbarlen * rate_2)
-                    SetImageState('hpbar', '', c4)
-                    Render('hpbar', -184 + 2.55 * 128 * rate, 218, 90, 0.25, 2.55 * b.hpbarlen * rate_2)
-                elseif mode == 5 then
-                    local nextcard, next2card, temp
-                    for n = b.card_num + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            nextcard = b.cards[n]
-                            temp = n
-                            break
-                        end
-                    end
-                    local rate = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                    for n = temp + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            next2card = b.cards[n]
-                            break
-                        end
-                    end
-                    local rate_2 = b.__hpbar_defaultpercent * next2card.hp / b.__hpbar_defaultvalue
-                    local R1 = b.__hpbar_rendertime * rate
-                    local R2 = b.__hpbar_rendertime * rate_2
-                    local rate_all = rate + rate_2
-                    local R_all = R1 + R2
-
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (R2)) * rate_2)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (R2)) * rate_2)
-
-                    if b.__hpbar_timer > (R2) then
-                        SetImageState('hpbar', '', c0)
-                        Render('hpbar', -183 + 2.55 * 128 * rate_2, 217, 90, 0.25, 2.55 * min(1, (b.__hpbar_timer - R2) / R1) * rate)
-                        SetImageState('hpbar', '', c4)
-                        Render('hpbar', -184 + 2.55 * 128 * rate_2, 218, 90, 0.25, 2.55 * min(1, (b.__hpbar_timer - R2) / R1) * rate)
-                    end
-
-                    if b.__hpbar_timer > (R1 + R2) then
-                        SetImageState('hpbar', '', c0)
-                        Render('hpbar', -183 + 2.55 * 128 * rate_all, 217, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime - (R_all))) * (1 - rate_all))
-                        SetImageState('hpbar', '', c1)
-                        Render('hpbar', -184 + 2.55 * 128 * rate_all, 218, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime - (R_all))) * (1 - rate_all))
-                    end
-                elseif mode == 6 then
-                    local nextcard
-                    for n = b.card_num + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            nextcard = b.cards[n]
-                            break
-                        end
-                    end
-                    local now = b.cards[b.card_num]
-                    local lastcard
-                    for n = b.card_num - 1, 1, -1 do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            lastcard = b.cards[n]
-                            break
-                        end
-                    end
-                    local rate = b.__hpbar_defaultpercent * nextcard.hp / b.__hpbar_defaultvalue
-                    local rate_2 = (1 - rate) * now.hp / (now.hp + lastcard.hp)
-
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * rate)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * rate)
-
-                    SetImageState('hpbar', '', c0)
-                    Render('hpbar', -183 + 2.55 * 128 * rate, 217, 90, 0.25, 2.55 * b.hpbarlen * rate_2)
-                    SetImageState('hpbar', '', c3)
-                    Render('hpbar', -184 + 2.55 * 128 * rate, 218, 90, 0.25, 2.55 * b.hpbarlen * rate_2)
-                elseif mode == 7 then
-                    local nextcard, next2card, temp
-                    local now = b.cards[b.card_num]
-
-                    for n = b.card_num + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            nextcard = b.cards[n]
-                            temp = n
-                            break
-                        end
-                    end
-
-                    for n = temp + 1, #b.cards do
-                        if b.cards[n] and b.cards[n].is_combat then
-                            next2card = b.cards[n]
-                            break
-                        end
-                    end
-                    local rate_2 = b.__hpbar_defaultpercent * next2card.hp / b.__hpbar_defaultvalue
-                    local R2 = b.__hpbar_rendertime * rate_2
-
-                    local rate = (1 - rate_2) * nextcard.hp / (now.hp + nextcard.hp)
-                    local R1 = b.__hpbar_rendertime * rate
-                    local rate_all = rate + rate_2
-                    local R_all = R1 + R2
-
-                    Render('hpbar', -183, 217, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (R2)) * rate_2)
-                    SetImageState('hpbar', '', c2)
-                    Render('hpbar', -184, 218, 90, 0.25, 2.55 * min(1, b.__hpbar_timer / (R2)) * rate_2)
-
-                    if b.__hpbar_timer > (R2) then
-                        SetImageState('hpbar', '', c0)
-                        Render('hpbar', -183 + 2.55 * 128 * rate_2, 217, 90, 0.25, 2.55 * min(1, (b.__hpbar_timer - R2) / R1) * rate)
-                        SetImageState('hpbar', '', c3)
-                        Render('hpbar', -184 + 2.55 * 128 * rate_2, 218, 90, 0.25, 2.55 * min(1, (b.__hpbar_timer - R2) / R1) * rate)
-                    end
-
-                    if b.__hpbar_timer > (R1 + R2) then
-                        SetImageState('hpbar', '', c0)
-                        Render('hpbar', -183 + 2.55 * 128 * rate_all, 217, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime - (R_all))) * (1 - rate_all))
-                        SetImageState('hpbar', '', c1)
-                        Render('hpbar', -184 + 2.55 * 128 * rate_all, 218, 90, 0.25, 2.55 * b.hpbarlen * min(1, (b.__hpbar_timer - (R_all)) / (b.__hpbar_rendertime - (R_all))) * (1 - rate_all))
-                    end
-
-                end
-            end
-        end
+        Render("base_hp", b.x, b.y, 0, 0.274, 0.274)
+        Render("base_hp", b.x, b.y, 0, 0.256, 0.256)
+        Render("life_node", b.x + 61 * cos(b.lifepoint), b.y + 61 * sin(b.lifepoint), b.lifepoint - 90, 0.55)
+        SetFontState("bonus", "", Color(255, 255, 255, 255))
     end
+
     if b.show_hp then
         SetFontState("bonus", "", Color(255, 0, 0, 0))
         RenderText("bonus", int(max(0, b.hp)) .. "/" .. b.maxhp, b.x - 1, b.y - 40 - 1, 0.6, "centerpoint")
@@ -635,13 +179,7 @@ function timeCounter:init(ui, system)
     self.ui = ui
     self.system = system
     local b = self.system.boss
-    if b.__hpbartype2 and int(b.__hpbartype2 / 10) == 2 then
-        self.x, self.y = 176, 214
-        self.oldstyle = true
-    else
-        self.x, self.y = 2, 192
-        self.oldstyle = false
-    end
+    self.x, self.y = 2, 192
     self.scale = 0.5
     self.scalewarning = 1
     self.scalewarning_current = 1.0
@@ -666,13 +204,7 @@ function timeCounter:frame()
         return
     end
     assert(self.t2 <= self.t1, "time counter's t1 > t2 must be satisfied.")
-    if b.__hpbartype2 and int(b.__hpbartype2 / 10) == 2 then
-        self.x, self.y = 176, 214
-        self.oldstyle = true
-    else
-        self.x, self.y = 2, 192
-        self.oldstyle = false
-    end
+    self.x, self.y = 2, 192
     if _ui.countdown and self.sound then
         if _ui.countdown > self.t2 and _ui.countdown <= self.t1 and _ui.countdown % 1 == 0 then
             PlaySound("timeout", 0.6)
@@ -757,12 +289,7 @@ function timeCounter:render()
         local cd1, cd2 = max(self.cd1, 0), max(self.cd2, 0)
         local dy = (b.ui_slot - 1) * 44
         local x = self.x
-        local y1
-        if self.oldstyle then
-            y1 = self.y - dy
-        else
-            y1 = self.y + self.yoffset - dy
-        end
+        local y1 = self.y + self.yoffset - dy
         local y2 = y1 - 3
         local scalew = self.scalewarning
         local scale1 = self.scale

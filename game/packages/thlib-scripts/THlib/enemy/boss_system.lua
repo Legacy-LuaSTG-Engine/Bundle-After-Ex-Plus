@@ -101,204 +101,47 @@ function CardsSystem:next()
         self.is_finish = true
         return false
     end
-    local mode
-    if not b.__hpbartype2 then
-        local last, now, next
-        for n = b.card_num - 1, 1, -1 do
-            if b.cards[n] and b.cards[n].is_combat then
-                last = b.cards[n]
-                break
-            end
+    local mode, last, now, next
+    for n = b.card_num - 1, 1, -1 do
+        if b.cards[n] and b.cards[n].is_combat then
+            last = b.cards[n]
+            break
         end
-        now = b.cards[b.card_num]
-        for n = b.card_num + 1, #b.cards do
-            if b.cards[n] and b.cards[n].is_combat then
-                next = b.cards[n]
-                break
-            end
+    end
+    now = b.cards[b.card_num]
+    for n = b.card_num + 1, #b.cards do
+        if b.cards[n] and b.cards[n].is_combat then
+            next = b.cards[n]
+            break
         end
-        if now.is_sc then
-            if last and last.is_sc then
-                mode = 0
-            elseif last and not (last.is_sc) then
-                if (last.t1 ~= last.t3) then
-                    mode = 2
-                else
-                    mode = 0
-                end
-            elseif not (last) then
-                mode = 0
-            end
-        elseif not (now.is_sc) then
-            if next and next.is_sc then
-                if (next.t1 ~= next.t3) then
-                    mode = 1
-                else
-                    mode = 0
-                end
-            elseif next and not (next.is_sc) then
-                mode = 3
-            elseif not (next) then
-                mode = 3
-            end
-        end
-        if now.t1 == now.t3 then
-            mode = -1
-        end
-    else
-        local last, last2, last3, now, next, next2, next3, temp, flag
-        local flag1 = b.__hpbartype2 % 10
-        --local flag2=int(b.__hpbartype2/10)
-        --b.__hpbartype2=nil -->去你妹的共用血条，我要使用旧版血条
-        --b.__hpbartype2=x1 -->除了终符使用独立血条，其余使用三段共用血条
-        --b.__hpbartype2=x2 -->无论如何都使用三段共用血条
-        --b.__hpbartype2=x3 -->无论如何都不使用三段共用血条
-        --b.__hpbartype2=1x -->庙城传璋血条
-        --b.__hpbartype2=2x -->预留位
-        --b.__hpbartype2=3x -->报错警告
-        --GET LAST
-        flag = false
-        for n = b.card_num - 1, 1, -1 do
-            if b.cards[n] and b.cards[n].is_combat then
-                last = b.cards[n]
-                temp = n
-                flag = true
-                break
-            end
-        end
-        --GET LAST2
-        if flag then
-            flag = false
-            for n = temp - 1, 1, -1 do
-                if b.cards[n] and b.cards[n].is_combat then
-                    last2 = b.cards[n]
-                    temp = n
-                    flag = true
-                    break
-                end
-            end
-        end
-        --GET LAST3
-        if flag then
-            for n = temp - 1, 1, -1 do
-                if b.cards[n] and b.cards[n].is_combat then
-                    last3 = b.cards[n]
-                    break
-                end
-            end
-        end
-        --GET NOW
-        now = b.cards[b.card_num]
-        flag = false
-        --GET NEXT
-        for n = b.card_num + 1, #b.cards do
-            if b.cards[n] and b.cards[n].is_combat then
-                next = b.cards[n]
-                temp = n
-                flag = true
-                break
-            end
-        end
-        --GET NEXT2
-        if flag then
-            flag = false
-            for n = temp + 1, #b.cards do
-                if b.cards[n] and b.cards[n].is_combat then
-                    next2 = b.cards[n]
-                    temp = n
-                    flag = true
-                    break
-                end
-            end
-
-        end
-        --GET NEXT3
-        if flag then
-            for n = temp + 1, #b.cards do
-                if b.cards[n] and b.cards[n].is_combat then
-                    next3 = b.cards[n]
-                    break
-                end
-            end
-        end
-        --START!!
-        local IsAllowNSS = false
-        local IsAllowFinalNSS = false
-        if flag1 ~= 3 then
-            IsAllowNSS = true
-            if flag1 == 1 then
-                IsAllowFinalNSS = false
-            else
-                IsAllowFinalNSS = true
-            end
-        end
-
-        if now.is_sc then
-            if last and last.is_sc then
-                mode = 0
-                if last.t1 ~= last.t3 then
-                    if IsAllowNSS then
-                        if (next or ((not next) and IsAllowFinalNSS)) then
-                            if last2 and not last2.is_sc and ((not last3) or last3.is_sc) then
-                                mode = 2
-                            end
-                        end
-                    end
-                end
-            elseif last and not (last.is_sc) then
-                if (last.t1 ~= last.t3) then
-                    mode = 2
-                    if IsAllowNSS then
-                        if (next2 or ((not next2) and IsAllowFinalNSS)) then
-                            if next and next.is_sc and next.t1 ~= next.t3 and ((not last2) or last2.is_sc) then
-                                mode = 4
-                            end
-                        end
-                    end
-                else
-                    mode = 0
-                end
+    end
+    if now.is_sc then
+        if last and last.is_sc then
+            mode = 0
+        elseif last and not (last.is_sc) then
+            if (last.t1 ~= last.t3) then
+                mode = 2
             else
                 mode = 0
             end
-        elseif not (now.is_sc) then
-            if next and next.is_sc then
-                if (next.t1 ~= next.t3) then
-                    mode = 1
-                    if IsAllowNSS then
-                        if ((not last) or (not last.is_combat) or (last.is_sc)) then
-                            if (next3 or ((not next3) and IsAllowFinalNSS)) then
-                                if next2 and next2.is_sc and next2.t1 ~= next2.t3 then
-                                    mode = 5
-                                end
-                            end
-                        else
-                            if ((not last2) or (not last2.is_combat) or (last2.is_sc)) then
-                                if (next2 or ((not next2) and IsAllowFinalNSS)) then
-                                    mode = 6
-                                end
-                            end
-                        end
-                    end
-                else
-                    mode = 3
-                end
-            elseif next and not (next.is_sc) then
-                mode = 3
-                if IsAllowNSS then
-                    if (next3 or ((not next3) and IsAllowFinalNSS)) then
-                        if next.t1 ~= next.t3 and ((not last) or (not last.is_combat) or (last.is_sc)) and next2 and next2.is_sc and next2.t1 ~= next2.t3 then
-                            mode = 7
-                        end
-                    end
-                end
-            elseif not next then
-                mode = 3
+        elseif not (last) then
+            mode = 0
+        end
+    elseif not (now.is_sc) then
+        if next and next.is_sc then
+            if (next.t1 ~= next.t3) then
+                mode = 1
+            else
+                mode = 0
             end
+        elseif next and not (next.is_sc) then
+            mode = 3
+        elseif not (next) then
+            mode = 3
         end
-        if now.t1 == now.t3 then
-            mode = -1
-        end
+    end
+    if now.t1 == now.t3 then
+        mode = -1
     end
     self:doCard(b.cards[b.card_num], mode, b.card_num == b.last_card)
     return true
@@ -344,19 +187,6 @@ function system:init(b, name, cards, bg, diff)
     b.spell_damage = 0
     b.__is_waiting = true --boss是否在等待操作
     b.__hpbartype = -1 --boss血条样式
-    b.__hpbartype2 = nil --boss血条样式2
-    --b.__hpbartype2=nil -->去你妹的共用血条，我要使用旧版血条
-    --b.__hpbartype2=x1 -->除了终符使用独立血条，其余使用三段共用血条
-    --b.__hpbartype2=x2 -->无论如何都使用三段共用血条
-    --b.__hpbartype2=x3 -->无论如何都不使用三段共用血条
-    --b.__hpbartype2=1x -->庙城传璋血条
-    --b.__hpbartype2=2x -->预留位
-    --b.__hpbartype2=3x -->报错警告
-    b.__c0 = Color(0xFF000000)        --底色，默认黑
-    b.__c1 = Color(0xFFFFFFFF)        --一非色
-    b.__c2 = Color(0xFFFF8080)        --一卡色
-    b.__c3 = Color(0xFFC0C0C0)        --二非色
-    b.__c4 = Color(0xFFFFC0C0)        --二卡色
     b.__card_timer = 0 --阶段已进行时长
     b.__hpbar_timer = 0 --血条计时器
     b.__hpbar_rendertime = 60 --血条填满时间
@@ -397,11 +227,7 @@ function system:frame()
     if self.aura then
         self.aura:frame()
     end
-    if b.hp < 1145141919810 then
-        b.hpbarlen = b.hp / b.maxhp --更新血条长度
-    else
-        b.hpbarlen = 0
-    end
+    b.hpbarlen = b.hp / b.maxhp
     --符卡逻辑
     if b.current_card then
         b.current_card.frame(b)
@@ -783,54 +609,7 @@ end
 ---更新血条Flag
 function system:updateHPFlags()
     local b = self.boss
-    local mode, type
-    if IsValid(b.ui) then
-        local _ui = b.ui
-        if not b.__hpbartype2 then
-            if not (_ui.hpbarcolor1) and not (_ui.hpbarcolor2) then
-                mode = -1 --无血条（时符等）
-            elseif not (_ui.hpbarcolor2) then
-                mode = 0
-                type = 1 --全血条（符卡）
-            elseif not (_ui.hpbarcolor1) then
-                mode = 0
-                type = 2 --全血条（非符）
-            elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-                mode = 2 --组合血条（符卡）
-            elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-                mode = 1 --组合血条（非符）
-            end
-        else
-            if not _ui.hpbarcolor3 then
-                if not (_ui.hpbarcolor1) and not (_ui.hpbarcolor2) then
-                    mode = -1 --无血条（时符等）
-                elseif not (_ui.hpbarcolor2) then
-                    mode = 0
-                    type = 1 --全血条（符卡）
-                elseif not (_ui.hpbarcolor1) then
-                    mode = 0
-                    type = 2 --全血条（非符）（mode=3）
-                elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-                    mode = 2 --组合血条（符卡）
-                elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-                    mode = 1 --组合血条（非符）
-                end
-            else
-                if not (_ui.hpbarcolor2) then
-                    mode = 4    --non->'sp'->sp
-                elseif not (_ui.hpbarcolor1) then
-                    mode = 5    --'non'->sp->sp
-                elseif _ui.hpbarcolor1 == _ui.hpbarcolor2 then
-                    mode = 6    --non->'non'->sp
-                elseif _ui.hpbarcolor1 ~= _ui.hpbarcolor2 then
-                    mode = 7    --'non'->non->sp
-                end
-            end
-        end
-    else
-        mode = b.__hpbartype
-        type = 1
-    end
+    local mode = b.__hpbartype
     if not (b.__is_waiting) and mode ~= -1 then
         b.__hpbar_timer = b.__hpbar_timer + 1
         local players
@@ -1185,70 +964,6 @@ end
 function system:setHPBar(mode)
     local b = self.boss
     b.__hpbartype = mode
-    local color1, color2 = Color(0xFFFF8080), Color(0xFFFFFFFF)
-    if IsValid(b.ui) then
-        if not b.__hpbartype2 or b.__hpbartype2 % 10 == 3 then
-            if mode == -1 then
-                b.ui.hpbarcolor1 = nil
-                b.ui.hpbarcolor2 = nil
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 0 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = nil
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 1 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color2
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 2 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 3 then
-                b.ui.hpbarcolor1 = nil
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = nil
-            end
-        else
-            if mode == -1 then
-                b.ui.hpbarcolor1 = nil
-                b.ui.hpbarcolor2 = nil
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 0 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = nil
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 1 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color2
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 2 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 3 then
-                b.ui.hpbarcolor1 = nil
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = nil
-            elseif mode == 4 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = nil
-                b.ui.hpbarcolor3 = color1
-            elseif mode == 5 then
-                b.ui.hpbarcolor1 = nil
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = color1
-            elseif mode == 6 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color1
-                b.ui.hpbarcolor3 = color1
-            elseif mode == 7 then
-                b.ui.hpbarcolor1 = color1
-                b.ui.hpbarcolor2 = color2
-                b.ui.hpbarcolor3 = color1
-            end
-        end
-    end
 end
 
 ---设置掉落物
