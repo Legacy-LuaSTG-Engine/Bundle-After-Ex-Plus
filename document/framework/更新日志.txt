@@ -8,6 +8,10 @@
 
 更新日志：
 
+    aex+ v0.9.0-alpha.7
+        THlib
+            修复：修复 arrow_mid 的图片渲染中心问题
+            修改：插件 collider-shape-debugger 新增设置界面，可以自由添加碰撞组、修改叠加层颜色等
     aex+ v0.9.0-alpha.6
         THlib
             修复：修复高光弹型碰撞判定消失的问题
