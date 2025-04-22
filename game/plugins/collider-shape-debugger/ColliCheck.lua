@@ -310,7 +310,6 @@ end
 function colliderShapeDebugger:layoutTable()
     local list = class.list
     if ImGui.BeginTable("##ColliderShapeDebugger##ListColumns", 9, imgui.ImGuiTableFlags.Borders) then
-        ImGui.BeginTable("##ColliderShapeDebugger##ListColumns", 9, imgui.ImGuiTableFlags.Borders)
         ImGui.TableSetupColumn("Group ID", imgui.ImGuiTableColumnFlags.WidthStretch, 400)
         ImGui.TableSetupColumn("Color", imgui.ImGuiTableColumnFlags.WidthFixed, 60)
         ImGui.TableSetupColumn("Color A", imgui.ImGuiTableColumnFlags.WidthStretch, 200)
