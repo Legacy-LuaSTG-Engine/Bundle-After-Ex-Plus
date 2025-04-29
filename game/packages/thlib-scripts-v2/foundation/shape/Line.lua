@@ -1,5 +1,7 @@
 local ffi = require("ffi")
+
 local math = math
+local ipairs = ipairs
 local tostring = tostring
 local string = string
 
@@ -76,7 +78,7 @@ end
 
 ---检查与其他形状的相交
 ---@param other any
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:intersects(other)
     if other.__type == "foundation.shape.Segment" then
         return self:__intersectToSegment(other)
@@ -94,8 +96,9 @@ end
 
 ---检查与线段的相交
 ---@param other foundation.shape.Segment
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToSegment(other)
+    local points = {}
     local a = self.point
     local b = self.point + self.direction
     local c = other.point1
@@ -103,7 +106,7 @@ function Line:__intersectToSegment(other)
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
     if math.abs(denom) < 1e-10 then
-        return false, nil
+        return false, points
     end
 
     local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
@@ -112,34 +115,54 @@ function Line:__intersectToSegment(other)
     if u >= 0 and u <= 1 then
         local x = a.x + t * (b.x - a.x)
         local y = a.y + t * (b.y - a.y)
-        return true, Vector2.create(x, y)
+        points[#points + 1] = Vector2.create(x, y)
     end
 
-    return false, nil
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查与三角形的相交
 ---@param other foundation.shape.Triangle
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToTriangle(other)
+    local points = {}
     local edges = {
         Segment.create(other.point1, other.point2),
         Segment.create(other.point2, other.point3),
         Segment.create(other.point3, other.point1)
     }
     for i = 1, #edges do
-        local isIntersect, intersectPoint = self:__intersectToSegment(edges[i])
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = self:__intersectToSegment(edges[i])
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查与另一条直线的相交
 ---@param other foundation.shape.Line
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToLine(other)
+    local points = {}
     local a = self.point
     local b = self.point + self.direction
     local c = other.point
@@ -147,19 +170,34 @@ function Line:__intersectToLine(other)
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
     if math.abs(denom) < 1e-10 then
-        return false, nil
+        local dir_cross = self.direction:cross(other.direction)
+        if math.abs(dir_cross) < 1e-10 then
+            local point_diff = other.point - self.point
+            if math.abs(point_diff:cross(self.direction)) < 1e-10 then
+                points[#points + 1] = self.point:clone()
+                points[#points + 1] = self:getPoint(1)
+            end
+        end
+
+        if #points == 0 then
+            return false, nil
+        end
+        return true, points
     end
 
     local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
     local x = a.x + t * (b.x - a.x)
     local y = a.y + t * (b.y - a.y)
-    return true, Vector2.create(x, y)
+    points[#points + 1] = Vector2.create(x, y)
+
+    return true, points
 end
 
 ---检查与射线的相交
 ---@param other foundation.shape.Ray
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToRay(other)
+    local points = {}
     local a = self.point
     local b = self.point + self.direction
     local c = other.point
@@ -176,16 +214,20 @@ function Line:__intersectToRay(other)
     if u >= 0 then
         local x = a.x + t * (b.x - a.x)
         local y = a.y + t * (b.y - a.y)
-        return true, Vector2.create(x, y)
+        points[#points + 1] = Vector2.create(x, y)
     end
 
-    return false, nil
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查与圆的相交
 ---@param other foundation.shape.Circle
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToCircle(other)
+    local points = {}
     local dir = self.direction
     local len = dir:length()
     if len == 0 then
@@ -197,19 +239,20 @@ function Line:__intersectToCircle(other)
     local b = 2 * L:dot(dir)
     local c = L:dot(L) - other.radius * other.radius
     local discriminant = b * b - 4 * a * c
-    if discriminant < 0 then
+    if discriminant >= 0 then
+        local sqrt_d = math.sqrt(discriminant)
+        local t1 = (-b - sqrt_d) / (2 * a)
+        local t2 = (-b + sqrt_d) / (2 * a)
+        points[#points + 1] = self.point + dir * t1
+        if math.abs(t2 - t1) > 1e-10 then
+            points[#points + 1] = self.point + dir * t2
+        end
+    end
+
+    if #points == 0 then
         return false, nil
     end
-    local t = (-b - math.sqrt(discriminant)) / (2 * a)
-    local p1 = self.point + dir * t
-    --[[ -- 因为只求一个交点，所以不用判断其他解
-    if discriminant == 0 then
-        return true, p1
-    end
-    local t2 = (-b + math.sqrt(discriminant)) / (2 * a)
-    local p2 = self.point + dir * t2
-    --]]
-    return true, p1
+    return true, points
 end
 
 ffi.metatype("foundation_shape_Line", Line)

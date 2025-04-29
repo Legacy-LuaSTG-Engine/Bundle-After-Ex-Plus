@@ -1,6 +1,7 @@
 local ffi = require("ffi")
 
 local type = type
+local ipairs = ipairs
 local tostring = tostring
 local string = string
 local math = math
@@ -234,7 +235,7 @@ end
 
 ---检查线段是否与其他形状相交
 ---@param other any 其他的形状
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:intersects(other)
     if other.__type == "foundation.shape.Segment" then
         return self:__intersectToSegment(other)
@@ -252,8 +253,9 @@ end
 
 ---检查线段是否与另一个线段相交
 ---@param other foundation.shape.Segment 要检查的线段
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:__intersectToSegment(other)
+    local points = {}
     local a = self.point1
     local b = self.point2
     local c = other.point1
@@ -261,7 +263,37 @@ function Segment:__intersectToSegment(other)
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
     if math.abs(denom) < 1e-10 then
-        return false, nil
+        local dir = self.point2 - self.point1
+        local len = dir:length()
+        if len == 0 then
+            if other:isPointOnLine(self.point1) then
+                points[#points + 1] = self.point1:clone()
+            end
+
+            if #points == 0 then
+                return false, nil
+            end
+            return true, points
+        end
+        dir = dir / len
+        local t1 = ((c.x - a.x) * dir.x + (c.y - a.y) * dir.y) / len
+        local t2 = ((d.x - a.x) * dir.x + (d.y - a.y) * dir.y) / len
+        if t1 > 1 or t2 < 0 or (t1 < 0 and t2 < 0) or (t1 > 1 and t2 > 1) then
+            return false, nil
+        end
+        local start_t = math.max(0, math.min(t1, t2))
+        local end_t = math.min(1, math.max(t1, t2))
+        if start_t <= end_t then
+            points[#points + 1] = self.point1 + dir * start_t * len
+            if math.abs(end_t - start_t) > 1e-10 then
+                points[#points + 1] = self.point1 + dir * end_t * len
+            end
+        end
+
+        if #points == 0 then
+            return false, nil
+        end
+        return true, points
     end
 
     local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
@@ -270,41 +302,60 @@ function Segment:__intersectToSegment(other)
     if t >= 0 and t <= 1 and u >= 0 and u <= 1 then
         local x = a.x + t * (b.x - a.x)
         local y = a.y + t * (b.y - a.y)
-        return true, Vector2.create(x, y)
+        points[#points + 1] = Vector2.create(x, y)
     end
 
-    return false, nil
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查线段是否与三角形相交
 ---@param other foundation.shape.Triangle 要检查的三角形
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:__intersectToTriangle(other)
+    local points = {}
     local edges = {
         Segment.create(other.point1, other.point2),
         Segment.create(other.point2, other.point3),
         Segment.create(other.point3, other.point1)
     }
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = self:__intersectToSegment(edge)
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = self:__intersectToSegment(edges[i])
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
     if other:contains(self.point1) then
-        return true, self.point1:clone()
+        points[#points + 1] = self.point1:clone()
     end
-    if other:contains(self.point2) then
-        return true, self.point2:clone()
+    if self.point1 ~= self.point2 and other:contains(self.point2) then
+        points[#points + 1] = self.point2:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查线段是否与直线相交
 ---@param other foundation.shape.Line 要检查的直线
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:__intersectToLine(other)
+    local points = {}
     local a = self.point1
     local b = self.point2
     local c = other.point
@@ -319,16 +370,20 @@ function Segment:__intersectToLine(other)
     if t >= 0 and t <= 1 then
         local x = a.x + t * (b.x - a.x)
         local y = a.y + t * (b.y - a.y)
-        return true, Vector2.create(x, y)
+        points[#points + 1] = Vector2.create(x, y)
     end
 
-    return false, nil
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查线段是否与射线相交
 ---@param other foundation.shape.Ray 要检查的射线
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:__intersectToRay(other)
+    local points = {}
     local a = self.point1
     local b = self.point2
     local c = other.point
@@ -345,21 +400,54 @@ function Segment:__intersectToRay(other)
     if t >= 0 and t <= 1 and u >= 0 then
         local x = a.x + t * (b.x - a.x)
         local y = a.y + t * (b.y - a.y)
-        return true, Vector2.create(x, y)
+        points[#points + 1] = Vector2.create(x, y)
     end
 
-    return false, nil
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查线段是否与圆相交
 ---@param other foundation.shape.Circle 要检查的圆
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Segment:__intersectToCircle(other)
-    local closest = self:closestPoint(other.center)
-    if (closest - other.center):length() <= other.radius then
-        return true, closest
+    local points = {}
+    local dir = self.point2 - self.point1
+    local len = dir:length()
+    if len == 0 then
+        if (self.point1 - other.center):length() <= other.radius then
+            points[#points + 1] = self.point1:clone()
+        end
+
+        if #points == 0 then
+            return false, nil
+        end
+        return true, points
     end
-    return false, nil
+    dir = dir / len
+    local L = self.point1 - other.center
+    local a = dir:dot(dir)
+    local b = 2 * L:dot(dir)
+    local c = L:dot(L) - other.radius * other.radius
+    local discriminant = b * b - 4 * a * c
+    if discriminant >= 0 then
+        local sqrt_d = math.sqrt(discriminant)
+        local t1 = (-b - sqrt_d) / (2 * a)
+        local t2 = (-b + sqrt_d) / (2 * a)
+        if t1 >= 0 and t1 <= len then
+            points[#points + 1] = self.point1 + dir * t1
+        end
+        if t2 >= 0 and t2 <= len and math.abs(t2 - t1) > 1e-10 then
+            points[#points + 1] = self.point1 + dir * t2
+        end
+    end
+
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---计算点到线段的最近点

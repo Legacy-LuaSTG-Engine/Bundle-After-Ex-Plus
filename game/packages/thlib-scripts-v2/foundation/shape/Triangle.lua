@@ -1,6 +1,7 @@
 local ffi = require("ffi")
 
 local type = type
+local ipairs = ipairs
 local tostring = tostring
 local string = string
 local math = math
@@ -273,7 +274,7 @@ end
 
 ---检查三角形是否与其他形状相交
 ---@param other any 其他的形状
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:intersects(other)
     if other.__type == "foundation.shape.Segment" then
         return self:__intersectToSegment(other)
@@ -291,135 +292,202 @@ end
 
 ---检查三角形是否与线段相交
 ---@param other foundation.shape.Segment 要检查的线段
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToSegment(other)
+    local points = {}
     local edges = {
         Segment.create(self.point1, self.point2),
         Segment.create(self.point2, self.point3),
         Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = edge:intersects(other)
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = edges[i]:intersects(other)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
     if self:contains(other.point1) then
-        return true, other.point1:clone()
+        points[#points + 1] = other.point1:clone()
     end
-    if self:contains(other.point2) then
-        return true, other.point2:clone()
+    if other.point1 ~= other.point2 and self:contains(other.point2) then
+        points[#points + 1] = other.point2:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查三角形是否与另一个三角形相交
 ---@param other foundation.shape.Triangle 要检查的三角形
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToTriangle(other)
+    local points = {}
     local edges = {
         Segment.create(self.point1, self.point2),
         Segment.create(self.point2, self.point3),
         Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = edge:intersects(other)
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = edges[i]:intersects(other)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
     if self:contains(other.point1) then
-        return true, other.point1:clone()
+        points[#points + 1] = other.point1:clone()
     end
     if self:contains(other.point2) then
-        return true, other.point2:clone()
+        points[#points + 1] = other.point2:clone()
     end
     if self:contains(other.point3) then
-        return true, other.point3:clone()
+        points[#points + 1] = other.point3:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查三角形是否与直线相交
 ---@param other foundation.shape.Line 要检查的直线
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToLine(other)
+    local points = {}
     local edges = {
         Segment.create(self.point1, self.point2),
         Segment.create(self.point2, self.point3),
         Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = edge:intersects(other)
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = edges[i]:intersects(other)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查三角形是否与射线相交
 ---@param other foundation.shape.Ray 要检查的射线
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToRay(other)
+    local points = {}
     local edges = {
         Segment.create(self.point1, self.point2),
         Segment.create(self.point2, self.point3),
         Segment.create(self.point3, self.point1)
     }
-    local closestPoint, minT = nil, math.huge
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = edge:intersects(other)
-        if isIntersect then
-            local t = ((intersectPoint.x - other.point.x) * other.direction.x + (intersectPoint.y - other.point.y) * other.direction.y) / (other.direction:length() ^ 2)
-            if t < minT then
-                minT = t
-                closestPoint = intersectPoint
+        local success, edge_points = edges[i]:intersects(other)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
             end
         end
     end
-    if closestPoint then
-        return true, closestPoint
-    end
     if self:contains(other.point) then
-        return true, other.point:clone()
+        points[#points + 1] = other.point:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查三角形是否与圆相交
 ---@param other foundation.shape.Circle 要检查的圆
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToCircle(other)
+    local points = {}
     local edges = {
         Segment.create(self.point1, self.point2),
         Segment.create(self.point2, self.point3),
         Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
-        local edge = edges[i]
-        local isIntersect, intersectPoint = edge:intersects(other)
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = edges[i]:intersects(other)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
     if other:contains(self.point1) then
-        return true, self.point1:clone()
+        points[#points + 1] = self.point1:clone()
     end
     if other:contains(self.point2) then
-        return true, self.point2:clone()
+        points[#points + 1] = self.point2:clone()
     end
     if other:contains(self.point3) then
-        return true, self.point3:clone()
+        points[#points + 1] = self.point3:clone()
     end
     if self:contains(other.center) then
-        return true, other.center:clone()
+        points[#points + 1] = other.center:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ffi.metatype("foundation_shape_Triangle", Triangle)

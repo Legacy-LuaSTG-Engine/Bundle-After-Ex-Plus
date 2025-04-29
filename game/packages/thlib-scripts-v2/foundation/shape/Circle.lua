@@ -1,6 +1,8 @@
 local ffi = require("ffi")
+
 local math = math
 local type = type
+local ipairs = ipairs
 local tostring = tostring
 local string = string
 
@@ -97,7 +99,7 @@ end
 
 ---检查与其他形状的相交
 ---@param other any
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:intersects(other)
     if other.__type == "foundation.shape.Segment" then
         return self:__intersectToSegment(other)
@@ -115,49 +117,99 @@ end
 
 ---检查与线段的相交
 ---@param other foundation.shape.Segment
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToSegment(other)
     local closest = other:closestPoint(self.center)
+    local points = {}
     if (closest - self.center):length() <= self.radius then
-        return true, closest
+        local dir = other.point2 - other.point1
+        local len = dir:length()
+        if len == 0 then
+            if (other.point1 - self.center):length() <= self.radius then
+                points[#points + 1] = other.point1:clone()
+            end
+
+            if #points == 0 then
+                return false, nil
+            end
+            return true, points
+        end
+        dir = dir / len
+        local L = other.point1 - self.center
+        local a = dir:dot(dir)
+        local b = 2 * L:dot(dir)
+        local c = L:dot(L) - self.radius * self.radius
+        local discriminant = b * b - 4 * a * c
+        if discriminant >= 0 then
+            local sqrt_d = math.sqrt(discriminant)
+            local t1 = (-b - sqrt_d) / (2 * a)
+            local t2 = (-b + sqrt_d) / (2 * a)
+            if t1 >= 0 and t1 <= len then
+                points[#points + 1] = other.point1 + dir * t1
+            end
+            if t2 >= 0 and t2 <= len and math.abs(t2 - t1) > 1e-10 then
+                points[#points + 1] = other.point1 + dir * t2
+            end
+        end
     end
-    return false, nil
+
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ---检查与三角形的相交
 ---@param other foundation.shape.Triangle
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToTriangle(other)
+    local points = {}
     local edges = {
         Segment.create(other.point1, other.point2),
         Segment.create(other.point2, other.point3),
         Segment.create(other.point3, other.point1)
     }
     for i = 1, #edges do
-        local isIntersect, intersectPoint = self:__intersectToSegment(edges[i])
-        if isIntersect then
-            return true, intersectPoint
+        local success, edge_points = self:__intersectToSegment(edges[i])
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
         end
     end
     if other:contains(self.center) then
-        return true, self.center:clone()
+        points[#points + 1] = self.center:clone()
     end
     if self:contains(other.point1) then
-        return true, other.point1:clone()
+        points[#points + 1] = other.point1:clone()
     end
     if self:contains(other.point2) then
-        return true, other.point2:clone()
+        points[#points + 1] = other.point2:clone()
     end
     if self:contains(other.point3) then
-        return true, other.point3:clone()
+        points[#points + 1] = other.point3:clone()
     end
-    return false, nil
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
 end
 
 ---检查与直线的相交
 ---@param other foundation.shape.Line
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToLine(other)
+    local points = {}
     local dir = other.direction
     local len = dir:length()
     if len == 0 then
@@ -169,18 +221,27 @@ function Circle:__intersectToLine(other)
     local b = 2 * L:dot(dir)
     local c = L:dot(L) - self.radius * self.radius
     local discriminant = b * b - 4 * a * c
-    if discriminant < 0 then
+    if discriminant >= 0 then
+        local sqrt_d = math.sqrt(discriminant)
+        local t1 = (-b - sqrt_d) / (2 * a)
+        local t2 = (-b + sqrt_d) / (2 * a)
+        points[#points + 1] = other.point + dir * t1
+        if math.abs(t2 - t1) > 1e-10 then
+            points[#points + 1] = other.point + dir * t2
+        end
+    end
+
+    if #points == 0 then
         return false, nil
     end
-    local t = (-b - math.sqrt(discriminant)) / (2 * a)
-    local p1 = other.point + dir * t
-    return true, p1
+    return true, points
 end
 
 ---检查与射线的相交
 ---@param other foundation.shape.Ray
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToRay(other)
+    local points = {}
     local dir = other.direction
     local len = dir:length()
     if len == 0 then
@@ -192,33 +253,45 @@ function Circle:__intersectToRay(other)
     local b = 2 * L:dot(dir)
     local c = L:dot(L) - self.radius * self.radius
     local discriminant = b * b - 4 * a * c
-    if discriminant < 0 then
+    if discriminant >= 0 then
+        local sqrt_d = math.sqrt(discriminant)
+        local t1 = (-b - sqrt_d) / (2 * a)
+        local t2 = (-b + sqrt_d) / (2 * a)
+        if t1 >= 0 then
+            points[#points + 1] = other.point + dir * t1
+        end
+        if t2 >= 0 and math.abs(t2 - t1) > 1e-10 then
+            points[#points + 1] = other.point + dir * t2
+        end
+    end
+
+    if #points == 0 then
         return false, nil
     end
-    local t = (-b - math.sqrt(discriminant)) / (2 * a)
-    if t >= 0 then
-        local p1 = other.point + dir * t
-        return true, p1
-    end
-    local t2 = (-b + math.sqrt(discriminant)) / (2 * a)
-    if t2 >= 0 then
-        local p2 = other.point + dir * t2
-        return true, p2
-    end
-    return false, nil
+    return true, points
 end
 
 ---检查与另一个圆的相交
 ---@param other foundation.shape.Circle
----@return boolean, foundation.math.Vector2|nil
+---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToCircle(other)
+    local points = {}
     local d = (self.center - other.center):length()
     if d <= self.radius + other.radius and d >= math.abs(self.radius - other.radius) then
-        local dir = (other.center - self.center):normalized()
-        local point = self.center + dir * self.radius
-        return true, point
+        local a = (self.radius * self.radius - other.radius * other.radius + d * d) / (2 * d)
+        local h = math.sqrt(self.radius * self.radius - a * a)
+        local p2 = self.center + (other.center - self.center) * (a / d)
+        local perp = Vector2.create(-(other.center.y - self.center.y), other.center.x - self.center.x):normalized() * h
+        points[#points + 1] = p2 + perp
+        if math.abs(h) > 1e-10 then
+            points[#points + 1] = p2 - perp
+        end
     end
-    return false, nil
+
+    if #points == 0 then
+        return false, nil
+    end
+    return true, points
 end
 
 ffi.metatype("foundation_shape_Circle", Circle)
