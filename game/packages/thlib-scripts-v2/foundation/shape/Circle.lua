@@ -111,6 +111,8 @@ function Circle:intersects(other)
         return self:__intersectToRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__intersectToCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__intersectToRectangle(other)
     end
     return false, nil
 end
@@ -129,6 +131,8 @@ function Circle:hasIntersection(other)
         return self:__hasIntersectionWithRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__hasIntersectionWithCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__hasIntersectionWithRectangle(other)
     end
     return false
 end
@@ -395,6 +399,20 @@ end
 function Circle:__hasIntersectionWithCircle(other)
     local d = (self.center - other.center):length()
     return d <= self.radius + other.radius and d >= math.abs(self.radius - other.radius)
+end
+
+---检查与矩形的相交
+---@param other foundation.shape.Rectangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Circle:__intersectToRectangle(other)
+    return other:__intersectToCircle(self)
+end
+
+---仅检查是否与矩形相交
+---@param other foundation.shape.Rectangle
+---@return boolean
+function Circle:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithCircle(self)
 end
 
 ---计算点到圆的最近点

@@ -27,8 +27,16 @@ Line.__type = "foundation.shape.Line"
 ---@param direction foundation.math.Vector2 方向向量
 ---@return foundation.shape.Line
 function Line.create(point, direction)
+    local dist = direction and direction:length() or 0
+    if dist == 0 then
+        direction = Vector2.create(1, 0)
+    elseif dist ~= 1 then
+        direction = direction:normalized()
+    else
+        direction = direction:clone()
+    end
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("foundation_shape_Line", point, direction:normalized())
+    return ffi.new("foundation_shape_Line", point, direction)
 end
 
 ---根据两个点创建一条直线
@@ -40,9 +48,18 @@ function Line.createFromPoints(p1, p2)
     return Line.create(p1, direction)
 end
 
+---根据一个点、弧度创建一条直线
+---@param point foundation.math.Vector2 起始点
+---@param rad number 弧度
+---@return foundation.shape.Line
+function Line.createFromPointAndRad(point, rad)
+    local direction = Vector2.createFromRad(rad, 1)
+    return Line.create(point, direction)
+end
+
 ---根据一个点、角度创建一条直线
 ---@param point foundation.math.Vector2 起始点
----@param angle number 角度（度）
+---@param angle number 角度
 ---@return foundation.shape.Line
 function Line.createFromPointAndAngle(point, angle)
     local direction = Vector2.createFromAngle(angle, 1)
@@ -90,6 +107,8 @@ function Line:intersects(other)
         return self:__intersectToRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__intersectToCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__intersectToRectangle(other)
     end
     return false, nil
 end
@@ -108,6 +127,8 @@ function Line:hasIntersection(other)
         return self:__hasIntersectionWithRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__hasIntersectionWithCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__hasIntersectionWithRectangle(other)
     end
     return false
 end
@@ -353,6 +374,20 @@ function Line:__hasIntersectionWithCircle(other)
     local c = L:dot(L) - other.radius * other.radius
     local discriminant = b * b - 4 * a * c
     return discriminant >= 0
+end
+
+---检查与矩形的相交
+---@param other foundation.shape.Rectangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Line:__intersectToRectangle(other)
+    return other:__intersectToLine(self)
+end
+
+---仅检查是否与矩形相交
+---@param other foundation.shape.Rectangle
+---@return boolean
+function Line:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithLine(self)
 end
 
 ---计算点到直线的距离

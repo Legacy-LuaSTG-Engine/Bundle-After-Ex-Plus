@@ -107,7 +107,10 @@ end
 ---@param b foundation.math.Vector4 第二个操作数
 ---@return boolean 两个向量是否相等
 function Vector4.__eq(a, b)
-    return a.x == b.x and a.y == b.y and a.z == b.z and a.w == b.w
+    return math.abs(a.x - b.x) < 1e-10 and
+            math.abs(a.y - b.y) < 1e-10 and
+            math.abs(a.z - b.z) < 1e-10 and
+            math.abs(a.w - b.w) < 1e-10
 end
 
 ---向量字符串表示

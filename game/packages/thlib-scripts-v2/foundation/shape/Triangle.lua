@@ -286,8 +286,30 @@ function Triangle:intersects(other)
         return self:__intersectToRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__intersectToCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__intersectToRectangle(other)
     end
     return false, nil
+end
+
+---仅检查三角形是否与其他形状相交，不返回相交点
+---@param other any 其他的形状
+---@return boolean
+function Triangle:hasIntersection(other)
+    if other.__type == "foundation.shape.Segment" then
+        return self:__hasIntersectionWithSegment(other)
+    elseif other.__type == "foundation.shape.Triangle" then
+        return self:__hasIntersectionWithTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__hasIntersectionWithLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__hasIntersectionWithRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__hasIntersectionWithCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__hasIntersectionWithRectangle(other)
+    end
+    return false
 end
 
 ---检查三角形是否与线段相交
@@ -490,24 +512,6 @@ function Triangle:__intersectToCircle(other)
     return true, unique_points
 end
 
----仅检查三角形是否与其他形状相交，不返回相交点
----@param other any 其他的形状
----@return boolean
-function Triangle:hasIntersection(other)
-    if other.__type == "foundation.shape.Segment" then
-        return self:__hasIntersectionWithSegment(other)
-    elseif other.__type == "foundation.shape.Triangle" then
-        return self:__hasIntersectionWithTriangle(other)
-    elseif other.__type == "foundation.shape.Line" then
-        return self:__hasIntersectionWithLine(other)
-    elseif other.__type == "foundation.shape.Ray" then
-        return self:__hasIntersectionWithRay(other)
-    elseif other.__type == "foundation.shape.Circle" then
-        return self:__hasIntersectionWithCircle(other)
-    end
-    return false
-end
-
 ---仅检查三角形是否与线段相交
 ---@param other foundation.shape.Segment 要检查的线段
 ---@return boolean
@@ -627,6 +631,20 @@ function Triangle:__hasIntersectionWithCircle(other)
     end
 
     return false
+end
+
+---检查与矩形的相交
+---@param other foundation.shape.Rectangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Triangle:__intersectToRectangle(other)
+    return other:__intersectToTriangle(self)
+end
+
+---仅检查是否与矩形相交
+---@param other foundation.shape.Rectangle
+---@return boolean
+function Triangle:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithTriangle(self)
 end
 
 ---计算点到三角形的最近点

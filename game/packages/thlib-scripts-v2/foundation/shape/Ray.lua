@@ -27,13 +27,30 @@ Ray.__type = "foundation.shape.Ray"
 ---@param direction foundation.math.Vector2 方向向量
 ---@return foundation.shape.Ray
 function Ray.create(point, direction)
+    local dist = direction and direction:length() or 0
+    if dist == 0 then
+        direction = Vector2.create(1, 0)
+    elseif dist ~= 1 then
+        direction = direction:normalized()
+    else
+        direction = direction:clone()
+    end
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("foundation_shape_Ray", point, direction:normalized())
+    return ffi.new("foundation_shape_Ray", point, direction)
+end
+
+---根据起始点、弧度创建射线
+---@param point foundation.math.Vector2 起始点
+---@param radian number 弧度
+---@return foundation.shape.Ray
+function Ray.createFromRad(point, radian)
+    local direction = Vector2.createFromRad(radian, 1)
+    return Ray.create(point, direction)
 end
 
 ---根据起始点、角度创建射线
 ---@param point foundation.math.Vector2 起始点
----@param angle number 角度（度）
+---@param angle number 角度
 ---@return foundation.shape.Ray
 function Ray.createFromAngle(point, angle)
     local direction = Vector2.createFromAngle(angle, 1)
@@ -76,8 +93,30 @@ function Ray:intersects(other)
         return self:__intersectToRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__intersectToCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__intersectToRectangle(other)
     end
     return false, nil
+end
+
+---检查是否与其他形状相交，只返回是否相交的布尔值
+---@param other any
+---@return boolean
+function Ray:hasIntersection(other)
+    if other.__type == "foundation.shape.Segment" then
+        return self:__hasIntersectionWithSegment(other)
+    elseif other.__type == "foundation.shape.Triangle" then
+        return self:__hasIntersectionWithTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__hasIntersectionWithLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__hasIntersectionWithRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__hasIntersectionWithCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__hasIntersectionWithRectangle(other)
+    end
+    return false
 end
 
 ---检查与线段的相交
@@ -250,24 +289,6 @@ function Ray:__intersectToCircle(other)
     return true, points
 end
 
----检查是否与其他形状相交，只返回是否相交的布尔值
----@param other any
----@return boolean
-function Ray:hasIntersection(other)
-    if other.__type == "foundation.shape.Segment" then
-        return self:__hasIntersectionWithSegment(other)
-    elseif other.__type == "foundation.shape.Triangle" then
-        return self:__hasIntersectionWithTriangle(other)
-    elseif other.__type == "foundation.shape.Line" then
-        return self:__hasIntersectionWithLine(other)
-    elseif other.__type == "foundation.shape.Ray" then
-        return self:__hasIntersectionWithRay(other)
-    elseif other.__type == "foundation.shape.Circle" then
-        return self:__hasIntersectionWithCircle(other)
-    end
-    return false
-end
-
 ---检查是否与线段相交
 ---@param other foundation.shape.Segment
 ---@return boolean
@@ -372,6 +393,20 @@ function Ray:__hasIntersectionWithCircle(other)
     local sqrt_d = math.sqrt(discriminant)
     local t1 = (-b - sqrt_d) / (2 * a)
     return t1 >= 0
+end
+
+---检查与矩形的相交
+---@param other foundation.shape.Rectangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Ray:__intersectToRectangle(other)
+    return other:__intersectToRay(self)
+end
+
+---仅检查是否与矩形相交
+---@param other foundation.shape.Rectangle
+---@return boolean
+function Ray:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithRay(self)
 end
 
 ---计算点到射线的距离

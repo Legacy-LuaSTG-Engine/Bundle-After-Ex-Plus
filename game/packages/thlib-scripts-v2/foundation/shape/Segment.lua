@@ -35,7 +35,7 @@ end
 ---@param rad number 线段的弧度
 ---@param length number 线段的长度
 ---@return foundation.shape.Segment
-function Segment.createFromPointAndRad(point, rad, length)
+function Segment.createFromRad(point, rad, length)
     local v2 = Vector2.create(point.x + math.cos(rad) * length, point.y + math.sin(rad) * length)
     return Segment.create(point, v2)
 end
@@ -45,9 +45,9 @@ end
 ---@param angle number 线段的角度
 ---@param length number 线段的长度
 ---@return foundation.shape.Segment
-function Segment.createFromPointAndAngle(point, angle, length)
+function Segment.createFromAngle(point, angle, length)
     local rad = math.rad(angle)
-    return Segment.createFromPointAndRad(point, rad, length)
+    return Segment.createFromRad(point, rad, length)
 end
 
 ---线段相等比较
@@ -247,6 +247,8 @@ function Segment:intersects(other)
         return self:__intersectToRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__intersectToCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__intersectToRectangle(other)
     end
     return false, nil
 end
@@ -265,6 +267,8 @@ function Segment:hasIntersection(other)
         return self:__hasIntersectionWithRay(other)
     elseif other.__type == "foundation.shape.Circle" then
         return self:__hasIntersectionWithCircle(other)
+    elseif other.__type == "foundation.shape.Rectangle" then
+        return self:__hasIntersectionWithRectangle(other)
     end
     return false
 end
@@ -588,6 +592,20 @@ function Segment:__intersectToCircle(other)
         return false, nil
     end
     return true, points
+end
+
+---检查与矩形的相交
+---@param other foundation.shape.Rectangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Segment:__intersectToRectangle(other)
+    return other:__intersectToSegment(self)
+end
+
+---仅检查是否与矩形相交
+---@param other foundation.shape.Rectangle
+---@return boolean
+function Segment:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithSegment(self)
 end
 
 ---计算点到线段的最近点
