@@ -1,12 +1,10 @@
 local ffi = require("ffi")
 
 local math = math
-local ipairs = ipairs
 local tostring = tostring
 local string = string
 
 local Vector2 = require("foundation.math.Vector2")
-local Segment = require("foundation.shape.Segment")
 
 ffi.cdef [[
 typedef struct {

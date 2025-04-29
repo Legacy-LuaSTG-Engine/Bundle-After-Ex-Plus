@@ -1,7 +1,6 @@
 local ffi = require("ffi")
 
 local type = type
-local ipairs = ipairs
 local tostring = tostring
 local string = string
 local math = math
