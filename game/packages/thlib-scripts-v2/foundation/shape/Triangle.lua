@@ -6,6 +6,7 @@ local string = string
 local math = math
 
 local Vector2 = require("foundation.math.Vector2")
+local Segment = require("foundation.shape.Segment")
 
 ffi.cdef [[
 typedef struct {
@@ -28,69 +29,6 @@ Triangle.__index = Triangle
 function Triangle.create(v1, v2, v3)
     ---@diagnostic disable-next-line: return-type-mismatch
     return ffi.new("foundation_shape_Triangle", v1, v2, v3)
-end
-
----三角形加法运算，可以是三角形与三角形相加，或者三角形与标量相加
----@param a foundation.shape.Triangle|number 第一个操作数
----@param b foundation.shape.Triangle|number 第二个操作数
----@return foundation.shape.Triangle 相加后的三角形
-function Triangle.__add(a, b)
-    if type(a) == "number" then
-        return Triangle.create(a + b.v1, a + b.v2, a + b.v3)
-    elseif type(b) == "number" then
-        return Triangle.create(a.v1 + b, a.v2 + b, a.v3 + b)
-    else
-        return Triangle.create(a.v1 + b.v1, a.v2 + b.v2, a.v3 + b.v3)
-    end
-end
-
----三角形减法运算，可以是三角形与三角形相减，或者三角形与标量相减
----@param a foundation.shape.Triangle|number 第一个操作数
----@param b foundation.shape.Triangle|number 第二个操作数
----@return foundation.shape.Triangle 相减后的三角形
-function Triangle.__sub(a, b)
-    if type(a) == "number" then
-        return Triangle.create(a - b.v1, a - b.v2, a - b.v3)
-    elseif type(b) == "number" then
-        return Triangle.create(a.v1 - b, a.v2 - b, a.v3 - b)
-    else
-        return Triangle.create(a.v1 - b.v1, a.v2 - b.v2, a.v3 - b.v3)
-    end
-end
-
----三角形乘法运算，可以是三角形与三角形相乘，或者三角形与标量相乘
----@param a foundation.shape.Triangle|number 第一个操作数
----@param b foundation.shape.Triangle|number 第二个操作数
----@return foundation.shape.Triangle 相乘后的三角形
-function Triangle.__mul(a, b)
-    if type(a) == "number" then
-        return Triangle.create(a * b.v1, a * b.v2, a * b.v3)
-    elseif type(b) == "number" then
-        return Triangle.create(a.v1 * b, a.v2 * b, a.v3 * b)
-    else
-        return Triangle.create(a.v1 * b.v1, a.v2 * b.v2, a.v3 * b.v3)
-    end
-end
-
----三角形除法运算，可以是三角形与三角形相除，或者三角形与标量相除
----@param a foundation.shape.Triangle|number 第一个操作数
----@param b foundation.shape.Triangle|number 第二个操作数
----@return foundation.shape.Triangle 相除后的三角形
-function Triangle.__div(a, b)
-    if type(a) == "number" then
-        return Triangle.create(a / b.v1, a / b.v2, a / b.v3)
-    elseif type(b) == "number" then
-        return Triangle.create(a.v1 / b, a.v2 / b, a.v3 / b)
-    else
-        return Triangle.create(a.v1 / b.v1, a.v2 / b.v2, a.v3 / b.v3)
-    end
-end
-
----三角形取反运算
----@param t foundation.shape.Triangle 要取反的三角形
----@return foundation.shape.Triangle 取反后的三角形
-function Triangle.__unm(t)
-    return Triangle.create(-t.v1, -t.v2, -t.v3)
 end
 
 ---三角形相等比较
@@ -330,6 +268,75 @@ function Triangle:contains(point)
     local v = (dot00 * dot12 - dot01 * dot02) * invDenom
 
     return (u >= 0) and (v >= 0) and (u + v <= 1)
+end
+
+---检查三角形是否与其他形状相交
+---@param other any 其他的形状
+---@return boolean, foundation.math.Vector2|nil
+function Triangle:intersects(other)
+    if ffi.istype("foundation_shape_Segment", other) then
+        return self:__intersectToSegment(other)
+    elseif ffi.istype("foundation_shape_Triangle", other) then
+        return self:__intersectToTriangle(other)
+    end
+    return false, nil
+end
+
+---检查三角形是否与线段相交
+---@param other foundation.shape.Segment 要检查的线段
+---@return boolean, foundation.math.Vector2|nil
+function Triangle:__intersectToSegment(other)
+    local edges = {
+        Segment.create(self.v1, self.v2),
+        Segment.create(self.v2, self.v3),
+        Segment.create(self.v3, self.v1)
+    }
+    for i = 1, #edges do
+        local edge = edges[i]
+        local isIntersect, intersectPoint = edge:intersects(other)
+        if isIntersect then
+            return true, intersectPoint
+        end
+    end
+
+    if self:contains(other.v1) then
+        return true, Vector2.create(other.v1.x, other.v1.y)
+    end
+    if self:contains(other.v2) then
+        return true, Vector2.create(other.v2.x, other.v2.y)
+    end
+
+    return false, nil
+end
+
+---检查三角形是否与另一个三角形相交
+---@param other foundation.shape.Triangle 要检查的三角形
+---@return boolean, foundation.math.Vector2|nil
+function Segment:__intersectToTriangle(other)
+    local edges = {
+        Segment.create(other.v1, other.v2),
+        Segment.create(other.v2, other.v3),
+        Segment.create(other.v3, other.v1)
+    }
+    for i = 1, #edges do
+        local edge = edges[i]
+        local isIntersect, intersectPoint = self:intersects(edge)
+        if isIntersect then
+            return true, intersectPoint
+        end
+    end
+
+    if other:contains(self.v1) then
+        return true, Vector2.create(self.v1.x, self.v1.y)
+    end
+    if other:contains(self.v2) then
+        return true, Vector2.create(self.v2.x, self.v2.y)
+    end
+    if other:contains(self.v3) then
+        return true, Vector2.create(self.v3.x, self.v3.y)
+    end
+
+    return false, nil
 end
 
 ffi.metatype("foundation_shape_Triangle", Triangle)
