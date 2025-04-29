@@ -31,11 +31,13 @@ function Line.create(point, direction)
     if dist == 0 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:normalized()
     else
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Line", point, direction)
 end
 
@@ -53,7 +55,7 @@ end
 ---@param rad number 弧度
 ---@return foundation.shape.Line
 function Line.createFromPointAndRad(point, rad)
-    local direction = Vector2.createFromRad(rad, 1)
+    local direction = Vector2.createFromRad(rad)
     return Line.create(point, direction)
 end
 
@@ -62,7 +64,7 @@ end
 ---@param angle number 角度
 ---@return foundation.shape.Line
 function Line.createFromPointAndAngle(point, angle)
-    local direction = Vector2.createFromAngle(angle, 1)
+    local direction = Vector2.createFromAngle(angle)
     return Line.create(point, direction)
 end
 
@@ -109,6 +111,8 @@ function Line:intersects(other)
         return self:__intersectToCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__intersectToRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__intersectToSector(other)
     end
     return false, nil
 end
@@ -129,6 +133,8 @@ function Line:hasIntersection(other)
         return self:__hasIntersectionWithCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__hasIntersectionWithRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__hasIntersectionWithSector(other)
     end
     return false
 end
@@ -181,57 +187,6 @@ function Line:__hasIntersectionWithSegment(other)
     local u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denom
 
     return u >= 0 and u <= 1
-end
-
----检查与三角形的相交
----@param other foundation.shape.Triangle
----@return boolean, foundation.math.Vector2[] | nil
-function Line:__intersectToTriangle(other)
-    local points = {}
-    local edges = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = self:__intersectToSegment(edges[i])
-        if success then
-            for _, p in ipairs(edge_points) do
-                points[#points + 1] = p
-            end
-        end
-    end
-    local unique_points = {}
-    local seen = {}
-    for _, p in ipairs(points) do
-        local key = tostring(p.x) .. "," .. tostring(p.y)
-        if not seen[key] then
-            seen[key] = true
-            unique_points[#unique_points + 1] = p
-        end
-    end
-
-    if #unique_points == 0 then
-        return false, nil
-    end
-    return true, unique_points
-end
-
----检查是否与三角形相交
----@param other foundation.shape.Triangle
----@return boolean
-function Line:__hasIntersectionWithTriangle(other)
-    local edges = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
-    for i = 1, #edges do
-        if self:__hasIntersectionWithSegment(edges[i]) then
-            return true
-        end
-    end
-    return false
 end
 
 ---检查与另一条直线的相交
@@ -326,54 +281,32 @@ function Line:__hasIntersectionWithRay(other)
     return u >= 0
 end
 
+---检查与三角形的相交
+---@param other foundation.shape.Triangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Line:__intersectToTriangle(other)
+    return other:__intersectToLine(self)
+end
+
+---检查是否与三角形相交
+---@param other foundation.shape.Triangle
+---@return boolean
+function Line:__hasIntersectionWithTriangle(other)
+    return other:__hasIntersectionWithLine(self)
+end
+
 ---检查与圆的相交
 ---@param other foundation.shape.Circle
 ---@return boolean, foundation.math.Vector2[] | nil
 function Line:__intersectToCircle(other)
-    local points = {}
-    local dir = self.direction
-    local len = dir:length()
-    if len == 0 then
-        return false, nil
-    end
-    dir = dir / len
-    local L = self.point - other.center
-    local a = dir:dot(dir)
-    local b = 2 * L:dot(dir)
-    local c = L:dot(L) - other.radius * other.radius
-    local discriminant = b * b - 4 * a * c
-    if discriminant >= 0 then
-        local sqrt_d = math.sqrt(discriminant)
-        local t1 = (-b - sqrt_d) / (2 * a)
-        local t2 = (-b + sqrt_d) / (2 * a)
-        points[#points + 1] = self.point + dir * t1
-        if math.abs(t2 - t1) > 1e-10 then
-            points[#points + 1] = self.point + dir * t2
-        end
-    end
-
-    if #points == 0 then
-        return false, nil
-    end
-    return true, points
+    return other:__intersectToLine(self)
 end
 
 ---检查是否与圆相交
 ---@param other foundation.shape.Circle
 ---@return boolean
 function Line:__hasIntersectionWithCircle(other)
-    local dir = self.direction
-    local len = dir:length()
-    if len == 0 then
-        return false
-    end
-    dir = dir / len
-    local L = self.point - other.center
-    local a = dir:dot(dir)
-    local b = 2 * L:dot(dir)
-    local c = L:dot(L) - other.radius * other.radius
-    local discriminant = b * b - 4 * a * c
-    return discriminant >= 0
+    return other:__hasIntersectionWithLine(self)
 end
 
 ---检查与矩形的相交
@@ -387,6 +320,20 @@ end
 ---@param other foundation.shape.Rectangle
 ---@return boolean
 function Line:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithLine(self)
+end
+
+---检查与扇形的相交
+---@param other foundation.shape.Sector
+---@return boolean, foundation.math.Vector2[] | nil
+function Line:__intersectToSector(other)
+    return other:__intersectToLine(self)
+end
+
+---仅检查是否与扇形相交
+---@param other foundation.shape.Sector
+---@return boolean
+function Line:__hasIntersectionWithSector(other)
     return other:__hasIntersectionWithLine(self)
 end
 

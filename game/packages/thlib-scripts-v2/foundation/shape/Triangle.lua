@@ -29,7 +29,7 @@ Triangle.__type = "foundation.shape.Triangle"
 ---@param v3 foundation.math.Vector2 三角形的第三个顶点
 ---@return foundation.shape.Triangle 新创建的三角形
 function Triangle.create(v1, v2, v3)
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Triangle", v1, v2, v3)
 end
 
@@ -288,6 +288,8 @@ function Triangle:intersects(other)
         return self:__intersectToCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__intersectToRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__intersectToSector(other)
     end
     return false, nil
 end
@@ -308,6 +310,8 @@ function Triangle:hasIntersection(other)
         return self:__hasIntersectionWithCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__hasIntersectionWithRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__hasIntersectionWithSector(other)
     end
     return false
 end
@@ -339,7 +343,7 @@ function Triangle:__intersectToSegment(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = edge:__intersectToSegment(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -375,10 +379,10 @@ function Triangle:__intersectToTriangle(other)
     local points = {}
     local edges1 = self:getEdges()
     local edges2 = other:getEdges()
-    
+
     for _, edge1 in ipairs(edges1) do
         for _, edge2 in ipairs(edges2) do
-            local success, edge_points = edge1:intersects(edge2)
+            local success, edge_points = edge1:__intersectToSegment(edge2)
             if success then
                 for _, p in ipairs(edge_points) do
                     points[#points + 1] = p
@@ -386,21 +390,21 @@ function Triangle:__intersectToTriangle(other)
             end
         end
     end
-    
+
     local vertices = other:getVertices()
     for _, vertex in ipairs(vertices) do
         if self:contains(vertex) then
             points[#points + 1] = vertex:clone()
         end
     end
-    
+
     vertices = self:getVertices()
     for _, vertex in ipairs(vertices) do
         if other:contains(vertex) then
             points[#points + 1] = vertex:clone()
         end
     end
-    
+
     local unique_points = {}
     local seen = {}
     for _, p in ipairs(points) do
@@ -424,7 +428,7 @@ function Triangle:__intersectToLine(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = edge:__intersectToLine(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -454,7 +458,7 @@ function Triangle:__intersectToRay(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = edge:__intersectToRay(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -487,25 +491,25 @@ function Triangle:__intersectToCircle(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = edge:__intersectToCircle(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
             end
         end
     end
-    
+
     local vertices = self:getVertices()
     for _, vertex in ipairs(vertices) do
         if other:contains(vertex) then
             points[#points + 1] = vertex:clone()
         end
     end
-    
+
     if self:contains(other.center) then
         points[#points + 1] = other.center:clone()
     end
-    
+
     local unique_points = {}
     local seen = {}
     for _, p in ipairs(points) do
@@ -643,6 +647,20 @@ end
 ---@param other foundation.shape.Rectangle
 ---@return boolean
 function Triangle:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithTriangle(self)
+end
+
+---检查与扇形的相交
+---@param other foundation.shape.Sector
+---@return boolean, foundation.math.Vector2[] | nil
+function Triangle:__intersectToSector(other)
+    return other:__intersectToTriangle(self)
+end
+
+---仅检查是否与扇形相交
+---@param other foundation.shape.Sector
+---@return boolean
+function Triangle:__hasIntersectionWithSector(other)
     return other:__hasIntersectionWithTriangle(self)
 end
 

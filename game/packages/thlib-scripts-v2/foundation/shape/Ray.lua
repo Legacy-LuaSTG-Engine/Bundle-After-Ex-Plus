@@ -31,11 +31,13 @@ function Ray.create(point, direction)
     if dist == 0 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:normalized()
     else
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Ray", point, direction)
 end
 
@@ -44,7 +46,7 @@ end
 ---@param radian number 弧度
 ---@return foundation.shape.Ray
 function Ray.createFromRad(point, radian)
-    local direction = Vector2.createFromRad(radian, 1)
+    local direction = Vector2.createFromRad(radian)
     return Ray.create(point, direction)
 end
 
@@ -53,7 +55,7 @@ end
 ---@param angle number 角度
 ---@return foundation.shape.Ray
 function Ray.createFromAngle(point, angle)
-    local direction = Vector2.createFromAngle(angle, 1)
+    local direction = Vector2.createFromAngle(angle)
     return Ray.create(point, direction)
 end
 
@@ -95,6 +97,8 @@ function Ray:intersects(other)
         return self:__intersectToCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__intersectToRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__intersectToSector(other)
     end
     return false, nil
 end
@@ -115,6 +119,8 @@ function Ray:hasIntersection(other)
         return self:__hasIntersectionWithCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__hasIntersectionWithRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__hasIntersectionWithSector(other)
     end
     return false
 end
@@ -149,38 +155,24 @@ function Ray:__intersectToSegment(other)
     return true, points
 end
 
----检查与三角形的相交
----@param other foundation.shape.Triangle
----@return boolean, foundation.math.Vector2[] | nil
-function Ray:__intersectToTriangle(other)
-    local points = {}
-    local edges = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = self:__intersectToSegment(edges[i])
-        if success then
-            for _, p in ipairs(edge_points) do
-                points[#points + 1] = p
-            end
-        end
-    end
-    local unique_points = {}
-    local seen = {}
-    for _, p in ipairs(points) do
-        local key = tostring(p.x) .. "," .. tostring(p.y)
-        if not seen[key] then
-            seen[key] = true
-            unique_points[#unique_points + 1] = p
-        end
+---检查是否与线段相交
+---@param other foundation.shape.Segment
+---@return boolean
+function Ray:__hasIntersectionWithSegment(other)
+    local a = self.point
+    local b = self.point + self.direction
+    local c = other.point1
+    local d = other.point2
+
+    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    if math.abs(denom) < 1e-10 then
+        return false
     end
 
-    if #unique_points == 0 then
-        return false, nil
-    end
-    return true, unique_points
+    local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
+    local u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denom
+
+    return t >= 0 and u >= 0 and u <= 1
 end
 
 ---检查与直线的相交
@@ -211,6 +203,24 @@ function Ray:__intersectToLine(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与直线相交
+---@param other foundation.shape.Line
+---@return boolean
+function Ray:__hasIntersectionWithLine(other)
+    local a = self.point
+    local b = self.point + self.direction
+    local c = other.point
+    local d = other.point + other.direction
+
+    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    if math.abs(denom) < 1e-10 then
+        return false
+    end
+
+    local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
+    return t >= 0
 end
 
 ---检查与另一条射线的相交
@@ -255,95 +265,6 @@ function Ray:__intersectToRay(other)
     return true, points
 end
 
----检查与圆的相交
----@param other foundation.shape.Circle
----@return boolean, foundation.math.Vector2[] | nil
-function Ray:__intersectToCircle(other)
-    local points = {}
-    local dir = self.direction
-    local len = dir:length()
-    if len == 0 then
-        return false, nil
-    end
-    dir = dir / len
-    local L = self.point - other.center
-    local a = dir:dot(dir)
-    local b = 2 * L:dot(dir)
-    local c = L:dot(L) - other.radius * other.radius
-    local discriminant = b * b - 4 * a * c
-    if discriminant >= 0 then
-        local sqrt_d = math.sqrt(discriminant)
-        local t1 = (-b - sqrt_d) / (2 * a)
-        local t2 = (-b + sqrt_d) / (2 * a)
-        if t1 >= 0 then
-            points[#points + 1] = self.point + dir * t1
-        end
-        if t2 >= 0 and math.abs(t2 - t1) > 1e-10 then
-            points[#points + 1] = self.point + dir * t2
-        end
-    end
-
-    if #points == 0 then
-        return false, nil
-    end
-    return true, points
-end
-
----检查是否与线段相交
----@param other foundation.shape.Segment
----@return boolean
-function Ray:__hasIntersectionWithSegment(other)
-    local a = self.point
-    local b = self.point + self.direction
-    local c = other.point1
-    local d = other.point2
-
-    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
-        return false
-    end
-
-    local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
-    local u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denom
-
-    return t >= 0 and u >= 0 and u <= 1
-end
-
----检查是否与三角形相交
----@param other foundation.shape.Triangle
----@return boolean
-function Ray:__hasIntersectionWithTriangle(other)
-    local edges = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
-    for i = 1, #edges do
-        if self:__hasIntersectionWithSegment(edges[i]) then
-            return true
-        end
-    end
-    return false
-end
-
----检查是否与直线相交
----@param other foundation.shape.Line
----@return boolean
-function Ray:__hasIntersectionWithLine(other)
-    local a = self.point
-    local b = self.point + self.direction
-    local c = other.point
-    local d = other.point + other.direction
-
-    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
-        return false
-    end
-
-    local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
-    return t >= 0
-end
-
 ---检查是否与另一条射线相交
 ---@param other foundation.shape.Ray
 ---@return boolean
@@ -370,29 +291,32 @@ function Ray:__hasIntersectionWithRay(other)
     return t >= 0 and u >= 0
 end
 
+---检查与三角形的相交
+---@param other foundation.shape.Triangle
+---@return boolean, foundation.math.Vector2[] | nil
+function Ray:__intersectToTriangle(other)
+    return other:__intersectToRay(self)
+end
+
+---检查是否与三角形相交
+---@param other foundation.shape.Triangle
+---@return boolean
+function Ray:__hasIntersectionWithTriangle(other)
+    return other:__hasIntersectionWithRay(self)
+end
+
+---检查与圆的相交
+---@param other foundation.shape.Circle
+---@return boolean, foundation.math.Vector2[] | nil
+function Ray:__intersectToCircle(other)
+    return other:__intersectToRay(self)
+end
+
 ---检查是否与圆相交
 ---@param other foundation.shape.Circle
 ---@return boolean
 function Ray:__hasIntersectionWithCircle(other)
-    local dir = self.direction
-    local len = dir:length()
-    if len == 0 then
-        return false
-    end
-    dir = dir / len
-    local L = self.point - other.center
-    local a = dir:dot(dir)
-    local b = 2 * L:dot(dir)
-    local c = L:dot(L) - other.radius * other.radius
-    local discriminant = b * b - 4 * a * c
-
-    if discriminant < 0 then
-        return false
-    end
-
-    local sqrt_d = math.sqrt(discriminant)
-    local t1 = (-b - sqrt_d) / (2 * a)
-    return t1 >= 0
+    return other:__hasIntersectionWithRay(self)
 end
 
 ---检查与矩形的相交
@@ -406,6 +330,20 @@ end
 ---@param other foundation.shape.Rectangle
 ---@return boolean
 function Ray:__hasIntersectionWithRectangle(other)
+    return other:__hasIntersectionWithRay(self)
+end
+
+---检查与扇形的相交
+---@param other foundation.shape.Sector
+---@return boolean, foundation.math.Vector2[] | nil
+function Ray:__intersectToSector(other)
+    return other:__intersectToRay(self)
+end
+
+---仅检查是否与扇形相交
+---@param other foundation.shape.Sector
+---@return boolean
+function Ray:__hasIntersectionWithSector(other)
     return other:__hasIntersectionWithRay(self)
 end
 

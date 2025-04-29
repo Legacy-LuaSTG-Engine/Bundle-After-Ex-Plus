@@ -38,11 +38,13 @@ function Rectangle.create(center, width, height, direction)
     if dist == 0 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:normalized()
     else
+        ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Rectangle", center, width, height, direction)
 end
 
@@ -53,7 +55,7 @@ end
 ---@param rad number 旋转弧度
 ---@return foundation.shape.Rectangle
 function Rectangle.createFromRad(center, width, height, rad)
-    local direction = Vector2.createFromRad(rad, 1)
+    local direction = Vector2.createFromRad(rad)
     return Rectangle.create(center, width, height, direction)
 end
 
@@ -64,7 +66,7 @@ end
 ---@param angle number 旋转角度
 ---@return foundation.shape.Rectangle
 function Rectangle.createFromAngle(center, width, height, angle)
-    local direction = Vector2.createFromAngle(angle, 1)
+    local direction = Vector2.createFromAngle(angle)
     return Rectangle.create(center, width, height, direction)
 end
 
@@ -228,6 +230,8 @@ function Rectangle:intersects(other)
         return self:__intersectToCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__intersectToRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__intersectToSector(other)
     end
     return false, nil
 end
@@ -248,6 +252,8 @@ function Rectangle:hasIntersection(other)
         return self:__hasIntersectionWithCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__hasIntersectionWithRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__hasIntersectionWithSector(other)
     end
     return false
 end
@@ -259,7 +265,7 @@ function Rectangle:__intersectToSegment(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = other:__intersectToSegment(edge)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -300,6 +306,93 @@ function Rectangle:__hasIntersectionWithSegment(other)
     return self:contains(other.point1) or self:contains(other.point2)
 end
 
+---检查与直线的相交
+---@param other foundation.shape.Line
+---@return boolean, foundation.math.Vector2[] | nil
+function Rectangle:__intersectToLine(other)
+    local points = {}
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = other:__intersectToSegment(edge)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
+        end
+    end
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
+end
+
+---仅检查是否与直线相交
+---@param other foundation.shape.Line
+---@return boolean
+function Rectangle:__hasIntersectionWithLine(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
+            return true
+        end
+    end
+    return false
+end
+
+---检查与射线的相交
+---@param other foundation.shape.Ray
+---@return boolean, foundation.math.Vector2[] | nil
+function Rectangle:__intersectToRay(other)
+    local points = {}
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = other:__intersectToSegment(edge)
+        if success then
+            for _, p in ipairs(edge_points) do
+                points[#points + 1] = p
+            end
+        end
+    end
+    if self:contains(other.point) then
+        points[#points + 1] = other.point:clone()
+    end
+    local unique_points = {}
+    local seen = {}
+    for _, p in ipairs(points) do
+        local key = tostring(p.x) .. "," .. tostring(p.y)
+        if not seen[key] then
+            seen[key] = true
+            unique_points[#unique_points + 1] = p
+        end
+    end
+    if #unique_points == 0 then
+        return false, nil
+    end
+    return true, unique_points
+end
+
+---仅检查是否与射线相交
+---@param other foundation.shape.Ray
+---@return boolean
+function Rectangle:__hasIntersectionWithRay(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
+            return true
+        end
+    end
+    return self:contains(other.point)
+end
+
 ---检查与三角形的相交
 ---@param other foundation.shape.Triangle
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -307,7 +400,7 @@ function Rectangle:__intersectToTriangle(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = other:__intersectToSegment(edge)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -351,94 +444,6 @@ function Rectangle:__hasIntersectionWithTriangle(other)
     return self:contains(other.point1) or self:contains(other.point2) or self:contains(other.point3)
 end
 
----检查与直线的相交
----@param other foundation.shape.Line
----@return boolean, foundation.math.Vector2[] | nil
-function Rectangle:__intersectToLine(other)
-    local points = {}
-    local edges = self:getEdges()
-    for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
-        if success then
-            for _, p in ipairs(edge_points) do
-                points[#points + 1] = p
-            end
-        end
-    end
-    local unique_points = {}
-    local seen = {}
-    for _, p in ipairs(points) do
-        local key = tostring(p.x) .. "," .. tostring(p.y)
-        if not seen[key] then
-            seen[key] = true
-            unique_points[#unique_points + 1] = p
-        end
-    end
-    if #unique_points == 0 then
-        return false, nil
-    end
-    return true, unique_points
-end
-
----仅检查是否与直线相交
----@param other foundation.shape.Line
----@return boolean
-function Rectangle:__hasIntersectionWithLine(other)
-    local edges = self:getEdges()
-    for _, edge in ipairs(edges) do
-        if edge:hasIntersection(other) then
-            return true
-        end
-    end
-    return false
-end
-
----检查与射线的相交
----@param other foundation.shape.Ray
----@return boolean, foundation.math.Vector2[] | nil
-function Rectangle:__intersectToRay(other)
-    local points = {}
-    local edges = self:getEdges()
-    for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
-        if success then
-            for _, p in ipairs(edge_points) do
-                points[#points + 1] = p
-            end
-        end
-    end
-    if self:contains(other.point) then
-        points[#points + 1] = other.point
-        points[#points + 1] = other.point:clone()
-    end
-    local unique_points = {}
-    local seen = {}
-    for _, p in ipairs(points) do
-        local key = tostring(p.x) .. "," .. tostring(p.y)
-        if not seen[key] then
-            seen[key] = true
-            unique_points[#unique_points + 1] = p
-        end
-    end
-    if #unique_points == 0 then
-        return false, nil
-    end
-    return true, unique_points
-end
-
----仅检查是否与射线相交
----@param other foundation.shape.Ray
----@return boolean
-function Rectangle:__hasIntersectionWithRay(other)
-    local edges = self:getEdges()
-    for _, edge in ipairs(edges) do
-        if edge:hasIntersection(other) then
-            return true
-        end
-    end
-    return self:contains(other.point)
-end
-
 ---检查与圆的相交
 ---@param other foundation.shape.Circle
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -446,7 +451,7 @@ function Rectangle:__intersectToCircle(other)
     local points = {}
     local edges = self:getEdges()
     for _, edge in ipairs(edges) do
-        local success, edge_points = edge:intersects(other)
+        local success, edge_points = other:__intersectToSegment(edge)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -508,7 +513,7 @@ function Rectangle:__intersectToRectangle(other)
     local edges2 = other:getEdges()
     for _, edge1 in ipairs(edges1) do
         for _, edge2 in ipairs(edges2) do
-            local success, edge_points = edge1:intersects(edge2)
+            local success, edge_points = edge1:__intersectToSegment(edge2)
             if success then
                 for _, p in ipairs(edge_points) do
                     points[#points + 1] = p
@@ -569,6 +574,26 @@ function Rectangle:__hasIntersectionWithRectangle(other)
         end
     end
     return false
+end
+
+---检查与扇形的相交
+---@param other foundation.shape.Sector
+---@return boolean, foundation.math.Vector2[] | nil
+function Rectangle:__intersectToSector(other)
+    return other:__intersectToRay(self)
+end
+
+---仅检查是否与扇形相交
+---@param other foundation.shape.Sector
+---@return boolean
+function Rectangle:__hasIntersectionWithSector(other)
+    return other:__hasIntersectionWithRay(self)
+end
+
+---计算矩形的面积
+---@return number 矩形的面积
+function Rectangle:area()
+    return self.width * self.height
 end
 
 ---计算点到矩形的最近点

@@ -28,7 +28,7 @@ Circle.__type = "foundation.shape.Circle"
 ---@param radius number 半径
 ---@return foundation.shape.Circle
 function Circle.create(center, radius)
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Circle", center, radius)
 end
 
@@ -113,6 +113,8 @@ function Circle:intersects(other)
         return self:__intersectToCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__intersectToRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__intersectToSector(other)
     end
     return false, nil
 end
@@ -133,6 +135,8 @@ function Circle:hasIntersection(other)
         return self:__hasIntersectionWithCircle(other)
     elseif other.__type == "foundation.shape.Rectangle" then
         return self:__hasIntersectionWithRectangle(other)
+    elseif other.__type == "foundation.shape.Sector" then
+        return self:__hasIntersectionWithSector(other)
     end
     return false
 end
@@ -194,11 +198,7 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function Circle:__intersectToTriangle(other)
     local points = {}
-    local edges = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
+    local edges = other:getEdges()
     for i = 1, #edges do
         local success, edge_points = self:__intersectToSegment(edges[i])
         if success then
@@ -413,6 +413,26 @@ end
 ---@return boolean
 function Circle:__hasIntersectionWithRectangle(other)
     return other:__hasIntersectionWithCircle(self)
+end
+
+---检查与扇形的相交
+---@param other foundation.shape.Sector
+---@return boolean, foundation.math.Vector2[] | nil
+function Circle:__intersectToSector(other)
+    return other:__intersectToCircle(self)
+end
+
+---仅检查是否与扇形相交
+---@param other foundation.shape.Sector
+---@return boolean
+function Circle:__hasIntersectionWithSector(other)
+    return other:__hasIntersectionWithCircle(self)
+end
+
+---计算圆的面积
+---@return number 圆的面积
+function Circle:area()
+    return math.pi * self.radius * self.radius
 end
 
 ---计算点到圆的最近点

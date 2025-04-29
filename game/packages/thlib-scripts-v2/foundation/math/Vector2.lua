@@ -41,6 +41,7 @@ end
 ---@param length number 向量长度
 ---@return foundation.math.Vector2 新创建的向量
 function Vector2.createFromRad(rad, length)
+    length = length or 1
     local x = length * math.cos(rad)
     local y = length * math.sin(rad)
     return Vector2.create(x, y)
