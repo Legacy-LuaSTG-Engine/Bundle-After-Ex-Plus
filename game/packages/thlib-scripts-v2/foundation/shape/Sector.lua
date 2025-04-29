@@ -37,7 +37,7 @@ Sector.__type = "foundation.shape.Sector"
 function Sector.create(center, radius, startDirection, endDirection)
     local startDir = startDirection:normalized()
     local endDir = endDirection:normalized()
-    ---@diagnostic disable-next-line: return-type-mismatch
+    ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.new("foundation_shape_Sector", center, radius, startDir, endDir)
 end
 

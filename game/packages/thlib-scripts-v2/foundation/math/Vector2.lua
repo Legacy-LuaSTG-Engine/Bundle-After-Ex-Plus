@@ -40,6 +40,7 @@ end
 ---@param rad number 弧度
 ---@param length number 向量长度
 ---@return foundation.math.Vector2 新创建的向量
+---@overload fun(rad: number): foundation.math.Vector2
 function Vector2.createFromRad(rad, length)
     length = length or 1
     local x = length * math.cos(rad)
@@ -51,6 +52,7 @@ end
 ---@param angle number 角度
 ---@param length number 向量长度
 ---@return foundation.math.Vector2 新创建的向量
+---@overload fun(angle: number): foundation.math.Vector2
 function Vector2.createFromAngle(angle, length)
     local rad = math.rad(angle)
     return Vector2.createFromRad(rad, length)
