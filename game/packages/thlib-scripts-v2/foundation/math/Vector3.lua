@@ -4,9 +4,6 @@ local type = type
 local string = string
 local math = math
 
-local Vector2 = require("foundation.math.Vector2")
-local Vector4 = require("foundation.math.Vector4")
-
 ffi.cdef [[
 typedef struct {
     double x;
@@ -136,6 +133,7 @@ end
 ---将Vector3转换为Vector2
 ---@return foundation.math.Vector2 转换后的Vector2
 function Vector3:toVector2()
+    local Vector2 = require("foundation.math.Vector2")
     return Vector2.create(self.x, self.y)
 end
 
@@ -143,6 +141,7 @@ end
 ---@param w number|nil W坐标分量，默认为0
 ---@return foundation.math.Vector4 转换后的Vector4
 function Vector3:toVector4(w)
+    local Vector4 = require("foundation.math.Vector4")
     return Vector4.create(self.x, self.y, self.z, w or 0)
 end
 
@@ -210,7 +209,7 @@ end
 ---@param rad number 旋转弧度
 ---@return foundation.math.Vector3 旋转后的向量（自身引用）
 function Vector3:rotate(axis, rad)
-    local axis = axis:normalized()
+    axis = axis:normalized()
     local c = math.cos(rad)
     local s = math.sin(rad)
     local k = 1 - c
