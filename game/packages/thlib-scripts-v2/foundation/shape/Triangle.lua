@@ -1,6 +1,7 @@
 local ffi = require("ffi")
 
 local type = type
+local tostring = tostring
 local string = string
 local math = math
 
@@ -172,7 +173,43 @@ function Triangle:incenter()
     return p
 end
 
----将当前三角形旋转指定弧度(更改当前三角形)
+---将当前三角形平移指定距离（更改当前三角形）
+---@param v foundation.math.Vector2 | number 移动距离
+---@return foundation.shape.Triangle 移动后的三角形（自身引用）
+function Triangle:move(v)
+    local moveX, moveY
+    if type(v) == "number" then
+        moveX, moveY = v, v
+    else
+        moveX, moveY = v.x, v.y
+    end
+    self.v1.x = self.v1.x + moveX
+    self.v1.y = self.v1.y + moveY
+    self.v2.x = self.v2.x + moveX
+    self.v2.y = self.v2.y + moveY
+    self.v3.x = self.v3.x + moveX
+    self.v3.y = self.v3.y + moveY
+    return self
+end
+
+---获取三角形平移指定距离的副本
+---@param v foundation.math.Vector2 | number 移动距离
+---@return foundation.shape.Triangle 移动后的三角形副本
+function Triangle:moved(v)
+    local moveX, moveY
+    if type(v) == "number" then
+        moveX, moveY = v, v
+    else
+        moveX, moveY = v.x, v.y
+    end
+    return Triangle.create(
+            Vector2.create(self.v1.x + moveX, self.v1.y + moveY),
+            Vector2.create(self.v2.x + moveX, self.v2.y + moveY),
+            Vector2.create(self.v3.x + moveX, self.v3.y + moveY)
+    )
+end
+
+---将当前三角形旋转指定弧度（更改当前三角形）
 ---@param rad number 旋转弧度
 ---@param center foundation.math.Vector2 旋转中心
 ---@return foundation.shape.Triangle 旋转后的三角形（自身引用）
@@ -193,7 +230,7 @@ function Triangle:rotate(rad, center)
     return self
 end
 
----将当前三角形旋转指定角度(更改当前三角形)
+---将当前三角形旋转指定角度（更改当前三角形）
 ---@param angle number 旋转角度
 ---@param center foundation.math.Vector2 旋转中心
 ---@return foundation.shape.Triangle 旋转后的三角形（自身引用）
