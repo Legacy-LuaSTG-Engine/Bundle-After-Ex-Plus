@@ -312,18 +312,34 @@ function Triangle:hasIntersection(other)
     return false
 end
 
+---获取三角形的顶点
+---@return foundation.math.Vector2[]
+function Triangle:getVertices()
+    return {
+        self.point1:clone(),
+        self.point2:clone(),
+        self.point3:clone()
+    }
+end
+
+---获取三角形的边（线段）
+---@return foundation.shape.Segment[]
+function Triangle:getEdges()
+    return {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+end
+
 ---检查三角形是否与线段相交
 ---@param other foundation.shape.Segment 要检查的线段
 ---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToSegment(other)
     local points = {}
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = edges[i]:intersects(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = edge:intersects(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -357,28 +373,34 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToTriangle(other)
     local points = {}
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = edges[i]:intersects(other)
-        if success then
-            for _, p in ipairs(edge_points) do
-                points[#points + 1] = p
+    local edges1 = self:getEdges()
+    local edges2 = other:getEdges()
+    
+    for _, edge1 in ipairs(edges1) do
+        for _, edge2 in ipairs(edges2) do
+            local success, edge_points = edge1:intersects(edge2)
+            if success then
+                for _, p in ipairs(edge_points) do
+                    points[#points + 1] = p
+                end
             end
         end
     end
-    if self:contains(other.point1) then
-        points[#points + 1] = other.point1:clone()
+    
+    local vertices = other:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if self:contains(vertex) then
+            points[#points + 1] = vertex:clone()
+        end
     end
-    if self:contains(other.point2) then
-        points[#points + 1] = other.point2:clone()
+    
+    vertices = self:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if other:contains(vertex) then
+            points[#points + 1] = vertex:clone()
+        end
     end
-    if self:contains(other.point3) then
-        points[#points + 1] = other.point3:clone()
-    end
+    
     local unique_points = {}
     local seen = {}
     for _, p in ipairs(points) do
@@ -400,13 +422,9 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToLine(other)
     local points = {}
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = edges[i]:intersects(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = edge:intersects(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -434,13 +452,9 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToRay(other)
     local points = {}
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = edges[i]:intersects(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = edge:intersects(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
@@ -471,31 +485,27 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function Triangle:__intersectToCircle(other)
     local points = {}
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        local success, edge_points = edges[i]:intersects(other)
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        local success, edge_points = edge:intersects(other)
         if success then
             for _, p in ipairs(edge_points) do
                 points[#points + 1] = p
             end
         end
     end
-    if other:contains(self.point1) then
-        points[#points + 1] = self.point1:clone()
+    
+    local vertices = self:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if other:contains(vertex) then
+            points[#points + 1] = vertex:clone()
+        end
     end
-    if other:contains(self.point2) then
-        points[#points + 1] = self.point2:clone()
-    end
-    if other:contains(self.point3) then
-        points[#points + 1] = self.point3:clone()
-    end
+    
     if self:contains(other.center) then
         points[#points + 1] = other.center:clone()
     end
+    
     local unique_points = {}
     local seen = {}
     for _, p in ipairs(points) do
@@ -516,14 +526,10 @@ end
 ---@param other foundation.shape.Segment 要检查的线段
 ---@return boolean
 function Triangle:__hasIntersectionWithSegment(other)
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
+    local edges = self:getEdges()
 
-    for i = 1, #edges do
-        if edges[i]:hasIntersection(other) then
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
             return true
         end
     end
@@ -539,29 +545,29 @@ end
 ---@param other foundation.shape.Triangle 要检查的三角形
 ---@return boolean
 function Triangle:__hasIntersectionWithTriangle(other)
-    local edges1 = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
+    local edges1 = self:getEdges()
+    local edges2 = other:getEdges()
 
-    local edges2 = {
-        Segment.create(other.point1, other.point2),
-        Segment.create(other.point2, other.point3),
-        Segment.create(other.point3, other.point1)
-    }
-
-    for i = 1, #edges1 do
-        for j = 1, #edges2 do
-            if edges1[i]:hasIntersection(edges2[j]) then
+    for _, edge1 in ipairs(edges1) do
+        for _, edge2 in ipairs(edges2) do
+            if edge1:hasIntersection(edge2) then
                 return true
             end
         end
     end
 
-    if self:contains(other.point1) or self:contains(other.point2) or self:contains(other.point3) or
-            other:contains(self.point1) or other:contains(self.point2) or other:contains(self.point3) then
-        return true
+    local vertices = other:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if self:contains(vertex) then
+            return true
+        end
+    end
+
+    vertices = self:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if other:contains(vertex) then
+            return true
+        end
     end
 
     return false
@@ -571,14 +577,10 @@ end
 ---@param other foundation.shape.Line 要检查的直线
 ---@return boolean
 function Triangle:__hasIntersectionWithLine(other)
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
+    local edges = self:getEdges()
 
-    for i = 1, #edges do
-        if edges[i]:hasIntersection(other) then
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
             return true
         end
     end
@@ -590,14 +592,10 @@ end
 ---@param other foundation.shape.Ray 要检查的射线
 ---@return boolean
 function Triangle:__hasIntersectionWithRay(other)
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
+    local edges = self:getEdges()
 
-    for i = 1, #edges do
-        if edges[i]:hasIntersection(other) then
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
             return true
         end
     end
@@ -617,15 +615,16 @@ function Triangle:__hasIntersectionWithCircle(other)
         return true
     end
 
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        if edge:hasIntersection(other) then
+            return true
+        end
+    end
 
-    for i = 1, #edges do
-        local distance = edges[i]:distanceToPoint(other.center)
-        if distance <= other.radius then
+    local vertices = self:getVertices()
+    for _, vertex in ipairs(vertices) do
+        if other:contains(vertex) then
             return true
         end
     end
@@ -655,17 +654,12 @@ function Triangle:closestPoint(point)
         return point:clone()
     end
 
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-
+    local edges = self:getEdges()
     local minDistance = math.huge
     local closestPoint
 
-    for i = 1, #edges do
-        local edgeClosest = edges[i]:closestPoint(point)
+    for _, edge in ipairs(edges) do
+        local edgeClosest = edge:closestPoint(point)
         local distance = (point - edgeClosest):length()
 
         if distance < minDistance then
@@ -717,13 +711,9 @@ end
 ---@overload fun(self:foundation.shape.Triangle, point:foundation.math.Vector2): boolean
 function Triangle:containsPoint(point, tolerance)
     tolerance = tolerance or 1e-10
-    local edges = {
-        Segment.create(self.point1, self.point2),
-        Segment.create(self.point2, self.point3),
-        Segment.create(self.point3, self.point1)
-    }
-    for i = 1, #edges do
-        if edges[i]:containsPoint(point, tolerance) then
+    local edges = self:getEdges()
+    for _, edge in ipairs(edges) do
+        if edge:containsPoint(point, tolerance) then
             return true
         end
     end
