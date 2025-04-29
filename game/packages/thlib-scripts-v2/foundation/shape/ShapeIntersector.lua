@@ -1587,14 +1587,6 @@ local intersectionMap = {
         ["foundation.shape.Rectangle"] = ShapeIntersector.sectorToRectangle,
         ["foundation.shape.Sector"] = ShapeIntersector.sectorToSector,
     },
-    ["foundation.shape.Triangle"] = {
-        ["foundation.shape.Segment"] = ShapeIntersector.triangleToSegment,
-        ["foundation.shape.Triangle"] = ShapeIntersector.triangleToTriangle,
-        ["foundation.shape.Line"] = ShapeIntersector.triangleToLine,
-        ["foundation.shape.Ray"] = ShapeIntersector.triangleToRay,
-        ["foundation.shape.Circle"] = ShapeIntersector.triangleToCircle,
-        ["foundation.shape.Rectangle"] = ShapeIntersector.rectangleToTriangle,
-    },
     ["foundation.shape.Rectangle"] = {
         ["foundation.shape.Triangle"] = ShapeIntersector.rectangleToTriangle,
         ["foundation.shape.Segment"] = ShapeIntersector.rectangleToSegment,
@@ -1602,6 +1594,13 @@ local intersectionMap = {
         ["foundation.shape.Ray"] = ShapeIntersector.rectangleToRay,
         ["foundation.shape.Circle"] = ShapeIntersector.rectangleToCircle,
         ["foundation.shape.Rectangle"] = ShapeIntersector.rectangleToRectangle,
+    },
+    ["foundation.shape.Triangle"] = {
+        ["foundation.shape.Segment"] = ShapeIntersector.triangleToSegment,
+        ["foundation.shape.Triangle"] = ShapeIntersector.triangleToTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.triangleToLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.triangleToRay,
+        ["foundation.shape.Circle"] = ShapeIntersector.triangleToCircle,
     },
     ["foundation.shape.Line"] = {
         ["foundation.shape.Segment"] = ShapeIntersector.lineToSegment,
@@ -1655,14 +1654,6 @@ local hasIntersectionMap = {
         ["foundation.shape.Rectangle"] = ShapeIntersector.sectorHasIntersectionWithRectangle,
         ["foundation.shape.Sector"] = ShapeIntersector.sectorHasIntersectionWithSector,
     },
-    ["foundation.shape.Triangle"] = {
-        ["foundation.shape.Segment"] = ShapeIntersector.triangleHasIntersectionWithSegment,
-        ["foundation.shape.Triangle"] = ShapeIntersector.triangleHasIntersectionWithTriangle,
-        ["foundation.shape.Line"] = ShapeIntersector.triangleHasIntersectionWithLine,
-        ["foundation.shape.Ray"] = ShapeIntersector.triangleHasIntersectionWithRay,
-        ["foundation.shape.Circle"] = ShapeIntersector.triangleHasIntersectionWithCircle,
-        ["foundation.shape.Rectangle"] = ShapeIntersector.rectangleHasIntersectionWithTriangle,
-    },
     ["foundation.shape.Rectangle"] = {
         ["foundation.shape.Triangle"] = ShapeIntersector.rectangleHasIntersectionWithTriangle,
         ["foundation.shape.Segment"] = ShapeIntersector.rectangleHasIntersectionWithSegment,
@@ -1670,6 +1661,13 @@ local hasIntersectionMap = {
         ["foundation.shape.Ray"] = ShapeIntersector.rectangleHasIntersectionWithRay,
         ["foundation.shape.Circle"] = ShapeIntersector.rectangleHasIntersectionWithCircle,
         ["foundation.shape.Rectangle"] = ShapeIntersector.rectangleHasIntersectionWithRectangle,
+    },
+    ["foundation.shape.Triangle"] = {
+        ["foundation.shape.Segment"] = ShapeIntersector.triangleHasIntersectionWithSegment,
+        ["foundation.shape.Triangle"] = ShapeIntersector.triangleHasIntersectionWithTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.triangleHasIntersectionWithLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.triangleHasIntersectionWithRay,
+        ["foundation.shape.Circle"] = ShapeIntersector.triangleHasIntersectionWithCircle,
     },
     ["foundation.shape.Line"] = {
         ["foundation.shape.Segment"] = ShapeIntersector.lineHasIntersectionWithSegment,
