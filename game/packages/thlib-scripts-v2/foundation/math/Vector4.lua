@@ -118,6 +118,13 @@ function Vector4.__len(v)
 end
 Vector4.length = Vector4.__len
 
+---计算两个向量的点积
+---@param other foundation.math.Vector4 另一个向量
+---@return number 两个向量的点积
+function Vector4:dot(other)
+    return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
+end
+
 ---将当前向量归一化（更改当前向量）
 ---@return foundation.math.Vector4 归一化后的向量（自身引用）
 function Vector4:normalize()
@@ -139,13 +146,6 @@ function Vector4:normalized()
         return Vector4.create(0, 0, 0, 0)
     end
     return Vector4.create(self.x / len, self.y / len, self.z / len, self.w / len)
-end
-
----计算两个向量的点积
----@param other foundation.math.Vector4 另一个向量
----@return number 两个向量的点积
-function Vector4:dot(other)
-    return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
 end
 
 ffi.metatype("Vector4", Vector4)

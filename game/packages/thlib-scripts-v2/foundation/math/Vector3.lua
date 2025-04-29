@@ -115,6 +115,13 @@ function Vector3.__len(v)
 end
 Vector3.length = Vector3.__len
 
+---计算两个向量的点积
+---@param other foundation.math.Vector3 另一个向量
+---@return number 两个向量的点积
+function Vector3:dot(other)
+    return self.x * other.x + self.y * other.y + self.z * other.z
+end
+
 ---将当前向量归一化（更改当前向量）
 ---@return foundation.math.Vector3 归一化后的向量（自身引用）
 function Vector3:normalize()
@@ -135,13 +142,6 @@ function Vector3:normalized()
         return Vector3.create(0, 0, 0)
     end
     return Vector3.create(self.x / len, self.y / len, self.z / len)
-end
-
----计算两个向量的点积
----@param other foundation.math.Vector3 另一个向量
----@return number 两个向量的点积
-function Vector3:dot(other)
-    return self.x * other.x + self.y * other.y + self.z * other.z
 end
 
 ffi.metatype("Vector3", Vector3)
