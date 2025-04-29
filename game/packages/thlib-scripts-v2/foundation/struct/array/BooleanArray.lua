@@ -5,21 +5,32 @@ local error = error
 local tostring = tostring
 local setmetatable = setmetatable
 local table = table
+local math = math
 
 ---@class foundation.struct.array.BooleanArray
 ---@field size number 数组大小
+---@field offset number 偏移量
 ---@field data userdata FFI布尔数组
 local BooleanArray = {}
 
 ---创建一个新的布尔数组
 ---@param size number 数组大小(必须为正整数)
+---@param offset number 偏移量(默认为1)
 ---@return foundation.struct.array.BooleanArray 新创建的布尔数组
-function BooleanArray.create(size)
+---@overload fun(size:number):foundation.struct.array.BooleanArray
+function BooleanArray.create(size, offset)
     if type(size) ~= "number" or size <= 0 then
         error("Invalid size: " .. tostring(size))
     end
+    if type(offset) == "nil" then
+        offset = 1
+    end
+    if type(offset) ~= "number" or offset ~= math.floor(offset) then
+        error("Invalid offset: " .. tostring(offset))
+    end
     local self = setmetatable({
         size = size,
+        offset = offset,
         data = ffi.new("bool[?]", size)
     }, BooleanArray)
     return self
@@ -31,10 +42,11 @@ end
 ---@return boolean|function 数组元素值或方法
 function BooleanArray.__index(self, key)
     if type(key) == "number" then
-        if key < 0 or key >= self.size then
+        local c_key = key - self.offset
+        if c_key < 0 or c_key >= self.size then
             error("Index out of bounds: " .. key)
         end
-        return self.data[key]
+        return self.data[c_key]
     end
     return BooleanArray[key]
 end
@@ -47,13 +59,14 @@ function BooleanArray.__newindex(self, key, value)
     if type(key) ~= "number" then
         error("Invalid index type: " .. type(key))
     end
-    if key < 0 or key >= self.size then
+    local c_key = key - self.offset
+    if c_key < 0 or c_key >= self.size then
         error("Index out of bounds: " .. key)
     end
     if type(value) ~= "boolean" then
         error("Invalid value type: " .. type(value))
     end
-    self.data[key] = value
+    self.data[c_key] = value
 end
 
 ---加法元方法 (逻辑OR操作)
@@ -177,8 +190,25 @@ function BooleanArray.__tostring(self)
     return "BooleanArray: [" .. table.concat(result, ", ") .. "]"
 end
 
+---获取数组索引的偏移量
+---@return number 数组偏移量
+function BooleanArray:getOffset()
+    return self.offset
+end
+
+---设置数组的偏移量
+---@param offset number 新的偏移量
+function BooleanArray:setOffset(offset)
+    if type(offset) ~= "number" then
+        error("Invalid offset type: " .. type(offset))
+    end
+    if offset ~= math.floor(offset) then
+        error("Offset must be an integer")
+    end
+    self.offset = offset
+end
+
 ---用指定的值填充整个数组
----@param self foundation.struct.array.BooleanArray
 ---@param value boolean 填充值
 function BooleanArray:fill(value)
     for i = 0, self.size - 1 do
@@ -187,7 +217,6 @@ function BooleanArray:fill(value)
 end
 
 ---获取数组的迭代器
----@param self foundation.struct.array.BooleanArray
 ---@return function,foundation.struct.array.BooleanArray,number 迭代器函数、数组对象和初始索引
 function BooleanArray:ipairs()
     return function(t, i)
@@ -199,7 +228,6 @@ function BooleanArray:ipairs()
 end
 
 ---克隆数组
----@param self foundation.struct.array.BooleanArray
 ---@return foundation.struct.array.BooleanArray 数组副本
 function BooleanArray:clone()
     local clone = BooleanArray.create(self.size)
