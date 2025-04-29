@@ -26,6 +26,25 @@ function Vector2.create(x, y)
     return ffi.new("Vector2", x or 0, y or 0)
 end
 
+---通过给定的弧度和长度创建一个新的二维向量
+---@param rad number 弧度
+---@param length number 向量长度
+---@return foundation.math.Vector2 新创建的向量
+function Vector2.createFromRad(rad, length)
+    local x = length * math.cos(rad)
+    local y = length * math.sin(rad)
+    return Vector2.create(x, y)
+end
+
+---通过给定的角度和长度创建一个新的二维向量
+---@param angle number 角度
+---@param length number 向量长度
+---@return foundation.math.Vector2 新创建的向量
+function Vector2.createFromAngle(angle, length)
+    local rad = math.rad(angle)
+    return Vector2.createFromRad(rad, length)
+end
+
 ---向量加法运算符重载
 ---@param a foundation.math.Vector2|number 第一个操作数
 ---@param b foundation.math.Vector2|number 第二个操作数
