@@ -153,13 +153,12 @@ function Vector2:normalized()
     return Vector2.create(self.x / len, self.y / len)
 end
 
----将当前向量旋转指定角度（更改当前向量）
----@param angle number 旋转角度，单位为度
+---将当前向量旋转指定弧度（更改当前向量）
+---@param rad number 旋转弧度
 ---@return foundation.math.Vector2 旋转后的向量（自身引用）
-function Vector2:rotate(angle)
-    angle = math.rad(angle)
-    local cos = math.cos(angle)
-    local sin = math.sin(angle)
+function Vector2:rotate(rad)
+    local cos = math.cos(rad)
+    local sin = math.sin(rad)
     local x = self.x * cos - self.y * sin
     local y = self.x * sin + self.y * cos
     self.x = x
@@ -167,16 +166,31 @@ function Vector2:rotate(angle)
     return self
 end
 
----获取向量的旋转副本
----@param angle number 旋转角度，单位为度
----@return foundation.math.Vector2 旋转后的向量副本
-function Vector2:rotated(angle)
+---将向量旋转指定角度（更改当前向量）
+---@param angle number 旋转角度
+---@return foundation.math.Vector2 旋转后的向量（自身引用）
+function Vector2:degreeRotate(angle)
     angle = math.rad(angle)
-    local cos = math.cos(angle)
-    local sin = math.sin(angle)
+    return self:rotate(angle)
+end
+
+---获取向量的旋转指定弧度的副本
+---@param rad number 旋转弧度
+---@return foundation.math.Vector2 旋转后的向量副本
+function Vector2:rotated(rad)
+    local cos = math.cos(rad)
+    local sin = math.sin(rad)
     local x = self.x * cos - self.y * sin
     local y = self.x * sin + self.y * cos
     return Vector2.create(x, y)
+end
+
+---获取向量的旋转指定角度的副本
+---@param angle number 旋转角度
+---@return foundation.math.Vector2 旋转后的向量副本
+function Vector2:degreeRotate(angle)
+    angle = math.rad(angle)
+    return self:rotated(angle)
 end
 
 --region LuaSTG Evo API
