@@ -132,6 +132,13 @@ function Vector2:dot(other)
     return self.x * other.x + self.y * other.y
 end
 
+---计算两个向量的叉积
+---@param other foundation.math.Vector2 另一个向量
+---@return number 两个向量的叉积
+function Vector2:cross(other)
+    return self.x * other.y - self.y * other.x
+end
+
 ---将当前向量归一化（更改当前向量）
 ---@return foundation.math.Vector2 归一化后的向量（自身引用）
 function Vector2:normalize()
