@@ -9,8 +9,8 @@ local Vector2 = require("foundation.math.Vector2")
 
 ffi.cdef [[
 typedef struct {
-    Vector2 v1, v2, v3;
-} Triangle;
+    foundation_math_Vector2 v1, v2, v3;
+} foundation_shape_Triangle;
 ]]
 
 ---@class foundation.shape.Triangle
@@ -27,7 +27,7 @@ Triangle.__index = Triangle
 ---@return foundation.shape.Triangle 新创建的三角形
 function Triangle.create(v1, v2, v3)
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("Triangle", v1, v2, v3)
+    return ffi.new("foundation_shape_Triangle", v1, v2, v3)
 end
 
 ---三角形加法运算，可以是三角形与三角形相加，或者三角形与标量相加
@@ -332,6 +332,6 @@ function Triangle:contains(point)
     return (u >= 0) and (v >= 0) and (u + v <= 1)
 end
 
-ffi.metatype("Triangle", Triangle)
+ffi.metatype("foundation_shape_Triangle", Triangle)
 
 return Triangle

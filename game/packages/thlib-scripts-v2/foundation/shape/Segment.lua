@@ -9,8 +9,8 @@ local Vector2 = require("foundation.math.Vector2")
 
 ffi.cdef [[
 typedef struct {
-    Vector2 v1, v2;
-} Segment;
+    foundation_math_Vector2 v1, v2;
+} foundation_shape_Segment;
 ]]
 
 ---@class foundation.shape.Segment
@@ -25,7 +25,7 @@ Segment.__index = Segment
 ---@return foundation.shape.Segment
 function Segment.create(v1, v2)
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("Segment", v1, v2)
+    return ffi.new("foundation_shape_Segment", v1, v2)
 end
 
 ---根据给定点和弧度与长度创建线段
@@ -270,6 +270,6 @@ function Segment:isPointOnLine(point, tolerance)
     return t >= 0 and t <= 1
 end
 
-ffi.metatype("Segment", Segment)
+ffi.metatype("foundation_shape_Segment", Segment)
 
 return Segment

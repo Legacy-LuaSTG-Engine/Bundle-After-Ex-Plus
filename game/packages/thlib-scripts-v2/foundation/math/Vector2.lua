@@ -8,7 +8,7 @@ ffi.cdef [[
 typedef struct {
     double x;
     double y;
-} Vector2;
+} foundation_math_Vector2;
 ]]
 
 ---@class foundation.math.Vector2
@@ -23,7 +23,7 @@ Vector2.__index = Vector2
 ---@return foundation.math.Vector2 新创建的向量
 function Vector2.create(x, y)
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("Vector2", x or 0, y or 0)
+    return ffi.new("foundation_math_Vector2", x or 0, y or 0)
 end
 
 ---通过给定的弧度和长度创建一个新的二维向量
@@ -239,6 +239,6 @@ do
 end
 --endregion
 
-ffi.metatype("Vector2", Vector2)
+ffi.metatype("foundation_math_Vector2", Vector2)
 
 return Vector2

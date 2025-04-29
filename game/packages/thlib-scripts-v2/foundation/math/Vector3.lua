@@ -9,7 +9,7 @@ typedef struct {
     double x;
     double y;
     double z;
-} Vector3;
+} foundation_math_Vector3;
 ]]
 
 ---@class foundation.math.Vector3
@@ -26,7 +26,7 @@ Vector3.__index = Vector3
 ---@return foundation.math.Vector3 新创建的向量
 function Vector3.create(x, y, z)
     ---@diagnostic disable-next-line: return-type-mismatch
-    return ffi.new("Vector3", x or 0, y or 0, z or 0)
+    return ffi.new("foundation_math_Vector3", x or 0, y or 0, z or 0)
 end
 
 ---向量加法运算符重载
@@ -144,6 +144,6 @@ function Vector3:normalized()
     return Vector3.create(self.x / len, self.y / len, self.z / len)
 end
 
-ffi.metatype("Vector3", Vector3)
+ffi.metatype("foundation_math_Vector3", Vector3)
 
 return Vector3
