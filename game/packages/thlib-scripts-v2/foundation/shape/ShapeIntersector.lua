@@ -48,8 +48,8 @@ function ShapeIntersector.sectorContainsPoint(sector, point)
         angle = angle + 2 * math.pi
     end
 
-    local start = sector.startDirection
-    local end_dir = sector.endDirection
+    local start = sector.startDirection:angle()
+    local end_dir = sector.endDirection:angle()
 
     if start > end_dir then
         end_dir = end_dir + 2 * math.pi
