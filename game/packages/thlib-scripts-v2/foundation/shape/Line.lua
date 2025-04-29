@@ -1,5 +1,6 @@
 local ffi = require("ffi")
 
+local type = type
 local math = math
 local tostring = tostring
 local string = string
@@ -92,6 +93,104 @@ end
 ---@return foundation.math.Vector2
 function Line:getPoint(length)
     return self.point + self.direction * length
+end
+
+---获取直线的角度（弧度）
+---@return number 直线的角度，单位为弧度
+function Line:angle()
+    return math.atan2(self.direction.y, self.direction.x)
+end
+
+---获取直线的角度（度）
+---@return number 直线的角度，单位为度
+function Line:degreeAngle()
+    return math.deg(self:angle())
+end
+
+---平移直线（更改当前直线）
+---@param v foundation.math.Vector2 | number 移动距离
+---@return foundation.shape.Line 平移后的直线（自身引用）
+function Line:move(v)
+    local moveX, moveY
+    if type(v) == "number" then
+        moveX = v
+        moveY = v
+    else
+        moveX = v.x
+        moveY = v.y
+    end
+    self.point.x = self.point.x + moveX
+    self.point.y = self.point.y + moveY
+    return self
+end
+
+---获取当前直线平移指定距离的副本
+---@param v foundation.math.Vector2 | number 移动距离
+---@return foundation.shape.Line 移动后的直线副本
+function Line:moved(v)
+    local moveX, moveY
+    if type(v) == "number" then
+        moveX = v
+        moveY = v
+    else
+        moveX = v.x
+        moveY = v.y
+    end
+    return Line.create(
+            Vector2.create(self.point.x + moveX, self.point.y + moveY),
+            self.direction:clone()
+    )
+end
+
+---将当前直线旋转指定弧度（更改当前直线）
+---@param rad number 旋转弧度
+---@param center foundation.math.Vector2 旋转中心
+---@return foundation.shape.Line 旋转后的直线（自身引用）
+---@overload fun(self: foundation.shape.Line, rad: number): foundation.shape.Line 将当前直线绕定义的点旋转指定弧度（更改当前直线）
+function Line:rotate(rad, center)
+    center = center or self.point
+    local cosRad = math.cos(rad)
+    local sinRad = math.sin(rad)
+    local v = self.direction
+    self.direction.x = v.x * cosRad - v.y * sinRad
+    self.direction.y = v.x * sinRad + v.y * cosRad
+    return self
+end
+
+---将当前直线旋转指定角度（更改当前直线）
+---@param angle number 旋转角度
+---@param center foundation.math.Vector2 旋转中心
+---@return foundation.shape.Line 旋转后的直线（自身引用）
+---@overload fun(self: foundation.shape.Line, angle: number): foundation.shape.Line 将当前直线绕定义的点旋转指定角度（更改当前直线）
+function Line:degreeRotate(angle, center)
+    angle = math.rad(angle)
+    return self:rotate(angle, center)
+end
+
+---获取当前直线旋转指定弧度的副本
+---@param rad number 旋转弧度
+---@param center foundation.math.Vector2 旋转中心
+---@return foundation.shape.Line 旋转后的直线副本
+---@overload fun(self: foundation.shape.Line, rad: number): foundation.shape.Line 获取当前直线绕定义的点旋转指定弧度的副本
+function Line:rotated(rad, center)
+    center = center or self.point
+    local cosRad = math.cos(rad)
+    local sinRad = math.sin(rad)
+    local v = self.direction
+    return Line.create(
+            Vector2.create(v.x * cosRad - v.y * sinRad + center.x, v.x * sinRad + v.y * cosRad + center.y),
+            Vector2.create(v.x * cosRad - v.y * sinRad, v.x * sinRad + v.y * cosRad)
+    )
+end
+
+---获取当前直线旋转指定角度的副本
+---@param angle number 旋转角度
+---@param center foundation.math.Vector2 旋转中心
+---@return foundation.shape.Line 旋转后的直线副本
+------@overload fun(self: foundation.shape.Line, angle: number): foundation.shape.Line 获取当前直线绕定义的点旋转指定角度的副本
+function Line:degreeRotated(angle, center)
+    angle = math.rad(angle)
+    return self:rotated(angle, center)
 end
 
 ---检查与其他形状的相交

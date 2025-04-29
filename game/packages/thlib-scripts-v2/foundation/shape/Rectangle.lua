@@ -164,6 +164,13 @@ function Rectangle:rotate(rad)
     return self
 end
 
+---旋转矩形（更改当前矩形）
+---@param angle number 旋转角度
+---@return foundation.shape.Rectangle 自身引用
+function Rectangle:degreeRotate(angle)
+    return self:rotate(math.rad(angle))
+end
+
 ---获取旋转后的矩形副本
 ---@param rad number 旋转弧度
 ---@return foundation.shape.Rectangle
@@ -172,6 +179,13 @@ function Rectangle:rotated(rad)
     local x = self.direction.x * cosA - self.direction.y * sinA
     local y = self.direction.x * sinA + self.direction.y * cosA
     return Rectangle.create(self.center, self.width, self.height, Vector2.create(x, y):normalized())
+end
+
+---获取旋转后的矩形副本
+---@param angle number 旋转角度
+---@return foundation.shape.Rectangle
+function Rectangle:degreeRotated(angle)
+    return self:rotated(math.rad(angle))
 end
 
 ---缩放矩形（更改当前矩形）

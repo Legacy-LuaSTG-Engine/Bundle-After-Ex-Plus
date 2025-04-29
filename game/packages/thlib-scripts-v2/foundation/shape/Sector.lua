@@ -151,6 +151,13 @@ function Sector:rotate(rad)
     return self
 end
 
+---旋转扇形（修改当前扇形）
+---@param angle number 旋转角度
+---@return foundation.shape.Sector
+function Sector:degreeRotate(angle)
+    return self:rotate(math.rad(angle))
+end
+
 ---获取旋转后的扇形副本
 ---@param rad number 旋转弧度
 ---@return foundation.shape.Sector
@@ -160,6 +167,13 @@ function Sector:rotated(rad)
             self.startDirection:rotated(rad),
             self.endDirection:rotated(rad)
     )
+end
+
+---获取旋转后的扇形副本
+---@param angle number 旋转角度
+---@return foundation.shape.Sector
+function Sector:degreeRotated(angle)
+    return self:rotated(math.rad(angle))
 end
 
 ---缩放扇形（修改当前扇形）
