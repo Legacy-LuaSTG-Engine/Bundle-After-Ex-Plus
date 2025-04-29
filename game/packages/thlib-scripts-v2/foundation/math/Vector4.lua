@@ -4,6 +4,9 @@ local type = type
 local string = string
 local math = math
 
+local Vector2 = require("foundation.math.Vector2")
+local Vector3 = require("foundation.math.Vector3")
+
 ffi.cdef [[
 typedef struct {
     double x;
@@ -134,6 +137,18 @@ function Vector4:clone()
     return Vector4.create(self.x, self.y, self.z, self.w)
 end
 
+---将Vector4转换为Vector2
+---@return foundation.math.Vector2 转换后的Vector2
+function Vector4:toVector2()
+    return Vector2.create(self.x, self.y)
+end
+
+---将Vector4转换为Vector3
+---@return foundation.math.Vector3 转换后的Vector3
+function Vector4:toVector3()
+    return Vector3.create(self.x, self.y, self.z)
+end
+
 ---计算两个向量的点积
 ---@param other foundation.math.Vector4 另一个向量
 ---@return number 两个向量的点积
@@ -162,6 +177,162 @@ function Vector4:normalized()
         return Vector4.zero()
     end
     return Vector4.create(self.x / len, self.y / len, self.z / len, self.w / len)
+end
+
+---获取向量的齐次坐标（将w分量归一化为1）
+---@return foundation.math.Vector4 归一化后的齐次坐标向量
+function Vector4:homogeneous()
+    if math.abs(self.w) < 1e-10 then
+        return self:clone()
+    end
+    return Vector4.create(self.x / self.w, self.y / self.w, self.z / self.w, 1)
+end
+
+---获取向量的投影坐标（将w分量归一化为1后返回一个Vector3）
+---@return foundation.math.Vector3 投影后的三维向量
+function Vector4:projectTo3D()
+    if math.abs(self.w) < 1e-10 then
+        return Vector3.create(self.x, self.y, self.z)
+    end
+    return Vector3.create(self.x / self.w, self.y / self.w, self.z / self.w)
+end
+
+---将当前向量的三维部分围绕任意轴旋转指定弧度（更改当前向量）
+---@param axis foundation.math.Vector3 旋转轴（应为单位向量）
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:rotate(axis, rad)
+    local vec3 = self:toVector3()
+    vec3:rotate(axis, rad)
+    self.x, self.y, self.z = vec3.x, vec3.y, vec3.z
+    return self
+end
+
+---获取向量的三维部分围绕任意轴旋转指定弧度后的副本
+---@param axis foundation.math.Vector3 旋转轴（应为单位向量）
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:rotated(axis, rad)
+    local result = self:clone()
+    return result:rotate(axis, rad)
+end
+
+---将向量的三维部分围绕任意轴旋转指定角度（更改当前向量）
+---@param axis foundation.math.Vector3 旋转轴（应为单位向量）
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:degreeRotate(axis, angle)
+    return self:rotate(axis, math.rad(angle))
+end
+
+---获取向量的三维部分围绕任意轴旋转指定角度后的副本
+---@param axis foundation.math.Vector3 旋转轴（应为单位向量）
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:degreeRotated(axis, angle)
+    return self:rotated(axis, math.rad(angle))
+end
+
+---将向量的三维部分围绕X轴旋转指定弧度（更改当前向量）
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:rotateX(rad)
+    local c = math.cos(rad)
+    local s = math.sin(rad)
+    local y = self.y * c - self.z * s
+    local z = self.y * s + self.z * c
+    self.y, self.z = y, z
+    return self
+end
+
+---获取向量的三维部分围绕X轴旋转指定弧度后的副本
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:rotatedX(rad)
+    local result = self:clone()
+    return result:rotateX(rad)
+end
+
+---将向量的三维部分围绕Y轴旋转指定弧度（更改当前向量）
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:rotateY(rad)
+    local c = math.cos(rad)
+    local s = math.sin(rad)
+    local x = self.x * c + self.z * s
+    local z = -self.x * s + self.z * c
+    self.x, self.z = x, z
+    return self
+end
+
+---获取向量的三维部分围绕Y轴旋转指定弧度后的副本
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:rotatedY(rad)
+    local result = self:clone()
+    return result:rotateY(rad)
+end
+
+---将向量的三维部分围绕Z轴旋转指定弧度（更改当前向量）
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:rotateZ(rad)
+    local c = math.cos(rad)
+    local s = math.sin(rad)
+    local x = self.x * c - self.y * s
+    local y = self.x * s + self.y * c
+    self.x, self.y = x, y
+    return self
+end
+
+---获取向量的三维部分围绕Z轴旋转指定弧度后的副本
+---@param rad number 旋转弧度
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:rotatedZ(rad)
+    local result = self:clone()
+    return result:rotateZ(rad)
+end
+
+---将向量的三维部分围绕X轴旋转指定角度（更改当前向量）
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:degreeRotateX(angle)
+    return self:rotateX(math.rad(angle))
+end
+
+---获取向量的三维部分围绕X轴旋转指定角度后的副本
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:degreeRotatedX(angle)
+    return self:rotatedX(math.rad(angle))
+end
+
+---将向量的三维部分围绕Y轴旋转指定角度（更改当前向量）
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:degreeRotateY(angle)
+    return self:rotateY(math.rad(angle))
+end
+
+---获取向量的三维部分围绕Y轴旋转指定角度后的副本
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:degreeRotatedY(angle)
+    return self:rotatedY(math.rad(angle))
+end
+
+---将向量的三维部分围绕Z轴旋转指定角度（更改当前向量）
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量（自身引用）
+function Vector4:degreeRotateZ(angle)
+    return self:rotateZ(math.rad(angle))
+end
+
+---获取向量的三维部分围绕Z轴旋转指定角度后的副本
+---@param angle number 旋转角度（度）
+---@return foundation.math.Vector4 旋转后的向量副本
+function Vector4:degreeRotatedZ(angle)
+    return self:rotatedZ(math.rad(angle))
 end
 
 ffi.metatype("foundation_math_Vector4", Vector4)

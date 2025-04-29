@@ -4,6 +4,9 @@ local type = type
 local string = string
 local math = math
 
+local Vector3 = require("foundation.math.Vector3")
+local Vector4 = require("foundation.math.Vector4")
+
 ffi.cdef [[
 typedef struct {
     double x;
@@ -227,9 +230,24 @@ end
 ---获取向量的旋转指定角度的副本
 ---@param angle number 旋转角度
 ---@return foundation.math.Vector2 旋转后的向量副本
-function Vector2:degreeRotate(angle)
+function Vector2:degreeRotated(angle)
     angle = math.rad(angle)
     return self:rotated(angle)
+end
+
+---将Vector2转换为Vector3
+---@param z number|nil Z坐标分量，默认为0
+---@return foundation.math.Vector3 转换后的Vector3
+function Vector2:toVector3(z)
+    return Vector3.create(self.x, self.y, z or 0)
+end
+
+---将Vector2转换为Vector4
+---@param z number|nil Z坐标分量，默认为0
+---@param w number|nil W坐标分量，默认为0
+---@return foundation.math.Vector4 转换后的Vector4
+function Vector2:toVector4(z, w)
+    return Vector4.create(self.x, self.y, z or 0, w or 0)
 end
 
 --region LuaSTG Evo API
