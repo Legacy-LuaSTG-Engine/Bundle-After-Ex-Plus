@@ -94,6 +94,24 @@ function Line:intersects(other)
     return false, nil
 end
 
+---检查是否与其他形状相交，只返回是否相交的布尔值
+---@param other any
+---@return boolean
+function Line:hasIntersection(other)
+    if other.__type == "foundation.shape.Segment" then
+        return self:__hasIntersectionWithSegment(other)
+    elseif other.__type == "foundation.shape.Triangle" then
+        return self:__hasIntersectionWithTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__hasIntersectionWithLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__hasIntersectionWithRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__hasIntersectionWithCircle(other)
+    end
+    return false
+end
+
 ---检查与线段的相交
 ---@param other foundation.shape.Segment
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -122,6 +140,26 @@ function Line:__intersectToSegment(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与线段相交
+---@param other foundation.shape.Segment
+---@return boolean
+function Line:__hasIntersectionWithSegment(other)
+    local a = self.point
+    local b = self.point + self.direction
+    local c = other.point1
+    local d = other.point2
+
+    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    if math.abs(denom) < 1e-10 then
+        return false
+    end
+
+    --local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
+    local u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denom
+
+    return u >= 0 and u <= 1
 end
 
 ---检查与三角形的相交
@@ -158,6 +196,23 @@ function Line:__intersectToTriangle(other)
     return true, unique_points
 end
 
+---检查是否与三角形相交
+---@param other foundation.shape.Triangle
+---@return boolean
+function Line:__hasIntersectionWithTriangle(other)
+    local edges = {
+        Segment.create(other.point1, other.point2),
+        Segment.create(other.point2, other.point3),
+        Segment.create(other.point3, other.point1)
+    }
+    for i = 1, #edges do
+        if self:__hasIntersectionWithSegment(edges[i]) then
+            return true
+        end
+    end
+    return false
+end
+
 ---检查与另一条直线的相交
 ---@param other foundation.shape.Line
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -168,29 +223,37 @@ function Line:__intersectToLine(other)
     local c = other.point
     local d = other.point + other.direction
 
-    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
-        local dir_cross = self.direction:cross(other.direction)
-        if math.abs(dir_cross) < 1e-10 then
-            local point_diff = other.point - self.point
-            if math.abs(point_diff:cross(self.direction)) < 1e-10 then
-                points[#points + 1] = self.point:clone()
-                points[#points + 1] = self:getPoint(1)
-            end
-        end
-
-        if #points == 0 then
+    local dir_cross = self.direction:cross(other.direction)
+    if math.abs(dir_cross) < 1e-10 then
+        local point_diff = other.point - self.point
+        if math.abs(point_diff:cross(self.direction)) < 1e-10 then
+            points[#points + 1] = self.point:clone()
+            points[#points + 1] = self:getPoint(1)
+            return true, points
+        else
             return false, nil
         end
-        return true, points
     end
 
+    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
     local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
     local x = a.x + t * (b.x - a.x)
     local y = a.y + t * (b.y - a.y)
     points[#points + 1] = Vector2.create(x, y)
 
     return true, points
+end
+
+---检查是否与另一条直线相交
+---@param other foundation.shape.Line
+---@return boolean
+function Line:__hasIntersectionWithLine(other)
+    local dir_cross = self.direction:cross(other.direction)
+    if math.abs(dir_cross) < 1e-10 then
+        local point_diff = other.point - self.point
+        return math.abs(point_diff:cross(self.direction)) < 1e-10
+    end
+    return true
 end
 
 ---检查与射线的相交
@@ -223,6 +286,25 @@ function Line:__intersectToRay(other)
     return true, points
 end
 
+---检查是否与射线相交
+---@param other foundation.shape.Ray
+---@return boolean
+function Line:__hasIntersectionWithRay(other)
+    local a = self.point
+    local b = self.point + self.direction
+    local c = other.point
+    local d = other.point + other.direction
+
+    local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    if math.abs(denom) < 1e-10 then
+        return false
+    end
+
+    local u = ((c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)) / denom
+
+    return u >= 0
+end
+
 ---检查与圆的相交
 ---@param other foundation.shape.Circle
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -253,6 +335,54 @@ function Line:__intersectToCircle(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与圆相交
+---@param other foundation.shape.Circle
+---@return boolean
+function Line:__hasIntersectionWithCircle(other)
+    local dir = self.direction
+    local len = dir:length()
+    if len == 0 then
+        return false
+    end
+    dir = dir / len
+    local L = self.point - other.center
+    local a = dir:dot(dir)
+    local b = 2 * L:dot(dir)
+    local c = L:dot(L) - other.radius * other.radius
+    local discriminant = b * b - 4 * a * c
+    return discriminant >= 0
+end
+
+---计算点到直线的距离
+---@param point foundation.math.Vector2 点
+---@return number 距离
+function Line:distanceToPoint(point)
+    local point_vec = point - self.point
+    local proj_length = point_vec:dot(self.direction)
+    local proj_point = self.point + self.direction * proj_length
+    return (point - proj_point):length()
+end
+
+---检查点是否在直线上
+---@param point foundation.math.Vector2 点
+---@param tolerance number 误差容忍度，默认为1e-10
+---@return boolean
+function Line:containsPoint(point, tolerance)
+    tolerance = tolerance or 1e-10
+    local point_vec = point - self.point
+    local cross = point_vec:cross(self.direction)
+    return math.abs(cross) < tolerance
+end
+
+---获取点在直线上的投影
+---@param point foundation.math.Vector2 点
+---@return foundation.math.Vector2 投影点
+function Line:projectPoint(point)
+    local point_vec = point - self.point
+    local proj_length = point_vec:dot(self.direction)
+    return self.point + self.direction * proj_length
 end
 
 ffi.metatype("foundation_shape_Line", Line)

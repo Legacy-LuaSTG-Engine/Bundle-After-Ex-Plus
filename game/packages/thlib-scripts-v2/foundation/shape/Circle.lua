@@ -115,6 +115,24 @@ function Circle:intersects(other)
     return false, nil
 end
 
+---只检查是否与其他形状相交，不计算交点
+---@param other any
+---@return boolean
+function Circle:hasIntersection(other)
+    if other.__type == "foundation.shape.Segment" then
+        return self:__hasIntersectionWithSegment(other)
+    elseif other.__type == "foundation.shape.Triangle" then
+        return self:__hasIntersectionWithTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__hasIntersectionWithLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__hasIntersectionWithRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__hasIntersectionWithCircle(other)
+    end
+    return false
+end
+
 ---检查与线段的相交
 ---@param other foundation.shape.Segment
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -157,6 +175,14 @@ function Circle:__intersectToSegment(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与线段相交
+---@param other foundation.shape.Segment
+---@return boolean
+function Circle:__hasIntersectionWithSegment(other)
+    local closest = other:closestPoint(self.center)
+    return (closest - self.center):length() <= self.radius
 end
 
 ---检查与三角形的相交
@@ -205,6 +231,30 @@ function Circle:__intersectToTriangle(other)
     return true, unique_points
 end
 
+---检查是否与三角形相交
+---@param other foundation.shape.Triangle
+---@return boolean
+function Circle:__hasIntersectionWithTriangle(other)
+    local edges = {
+        Segment.create(other.point1, other.point2),
+        Segment.create(other.point2, other.point3),
+        Segment.create(other.point3, other.point1)
+    }
+    for i = 1, #edges do
+        if self:__hasIntersectionWithSegment(edges[i]) then
+            return true
+        end
+    end
+
+    if other:contains(self.center) then
+        return true
+    end
+
+    return self:contains(other.point1) or
+            self:contains(other.point2) or
+            self:contains(other.point3)
+end
+
 ---检查与直线的相交
 ---@param other foundation.shape.Line
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -235,6 +285,24 @@ function Circle:__intersectToLine(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与直线相交
+---@param other foundation.shape.Line
+---@return boolean
+function Circle:__hasIntersectionWithLine(other)
+    local dir = other.direction
+    local len = dir:length()
+    if len == 0 then
+        return false
+    end
+    dir = dir / len
+    local L = other.point - self.center
+    local a = dir:dot(dir)
+    local b = 2 * L:dot(dir)
+    local c = L:dot(L) - self.radius * self.radius
+    local discriminant = b * b - 4 * a * c
+    return discriminant >= 0
 end
 
 ---检查与射线的相交
@@ -271,6 +339,33 @@ function Circle:__intersectToRay(other)
     return true, points
 end
 
+---检查是否与射线相交
+---@param other foundation.shape.Ray
+---@return boolean
+function Circle:__hasIntersectionWithRay(other)
+    local dir = other.direction
+    local len = dir:length()
+    if len == 0 then
+        return false
+    end
+    dir = dir / len
+    local L = other.point - self.center
+    local a = dir:dot(dir)
+    local b = 2 * L:dot(dir)
+    local c = L:dot(L) - self.radius * self.radius
+    local discriminant = b * b - 4 * a * c
+
+    if discriminant < 0 then
+        return false
+    end
+
+    local sqrt_d = math.sqrt(discriminant)
+    local t1 = (-b - sqrt_d) / (2 * a)
+    local t2 = (-b + sqrt_d) / (2 * a)
+
+    return t1 >= 0 or t2 >= 0
+end
+
 ---检查与另一个圆的相交
 ---@param other foundation.shape.Circle
 ---@return boolean, foundation.math.Vector2[] | nil
@@ -292,6 +387,53 @@ function Circle:__intersectToCircle(other)
         return false, nil
     end
     return true, points
+end
+
+---检查是否与另一个圆相交
+---@param other foundation.shape.Circle
+---@return boolean
+function Circle:__hasIntersectionWithCircle(other)
+    local d = (self.center - other.center):length()
+    return d <= self.radius + other.radius and d >= math.abs(self.radius - other.radius)
+end
+
+---计算点到圆的最近点
+---@param point foundation.math.Vector2 要检查的点
+---@return foundation.math.Vector2 圆上最近的点
+function Circle:closestPoint(point)
+    local dir = point - self.center
+    local dist = dir:length()
+    if dist == 0 then
+        return Vector2.create(self.center.x + self.radius, self.center.y)
+    end
+    local normalized_dir = dir / dist
+    return self.center + normalized_dir * self.radius
+end
+
+---计算点到圆的距离
+---@param point foundation.math.Vector2 要检查的点
+---@return number 点到圆的距离
+function Circle:distanceToPoint(point)
+    local dist = (point - self.center):length()
+    return math.abs(dist - self.radius)
+end
+
+---将点投影到圆上
+---@param point foundation.math.Vector2 要投影的点
+---@return foundation.math.Vector2 投影点
+function Circle:projectPoint(point)
+    return self:closestPoint(point)
+end
+
+---检查点是否在圆上
+---@param point foundation.math.Vector2 要检查的点
+---@param tolerance number|nil 容差，默认为1e-10
+---@return boolean 点是否在圆上
+---@overload fun(self:foundation.shape.Circle, point:foundation.math.Vector2): boolean
+function Circle:containsPoint(point, tolerance)
+    tolerance = tolerance or 1e-10
+    local dist = (point - self.center):length()
+    return math.abs(dist - self.radius) <= tolerance
 end
 
 ffi.metatype("foundation_shape_Circle", Circle)

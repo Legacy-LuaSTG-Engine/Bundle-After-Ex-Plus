@@ -490,6 +490,228 @@ function Triangle:__intersectToCircle(other)
     return true, unique_points
 end
 
+---仅检查三角形是否与其他形状相交，不返回相交点
+---@param other any 其他的形状
+---@return boolean
+function Triangle:hasIntersection(other)
+    if other.__type == "foundation.shape.Segment" then
+        return self:__hasIntersectionWithSegment(other)
+    elseif other.__type == "foundation.shape.Triangle" then
+        return self:__hasIntersectionWithTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__hasIntersectionWithLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__hasIntersectionWithRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__hasIntersectionWithCircle(other)
+    end
+    return false
+end
+
+---仅检查三角形是否与线段相交
+---@param other foundation.shape.Segment 要检查的线段
+---@return boolean
+function Triangle:__hasIntersectionWithSegment(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    for i = 1, #edges do
+        if edges[i]:hasIntersection(other) then
+            return true
+        end
+    end
+
+    if self:contains(other.point1) or self:contains(other.point2) then
+        return true
+    end
+
+    return false
+end
+
+---仅检查三角形是否与另一个三角形相交
+---@param other foundation.shape.Triangle 要检查的三角形
+---@return boolean
+function Triangle:__hasIntersectionWithTriangle(other)
+    local edges1 = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    local edges2 = {
+        Segment.create(other.point1, other.point2),
+        Segment.create(other.point2, other.point3),
+        Segment.create(other.point3, other.point1)
+    }
+
+    for i = 1, #edges1 do
+        for j = 1, #edges2 do
+            if edges1[i]:hasIntersection(edges2[j]) then
+                return true
+            end
+        end
+    end
+
+    if self:contains(other.point1) or self:contains(other.point2) or self:contains(other.point3) or
+            other:contains(self.point1) or other:contains(self.point2) or other:contains(self.point3) then
+        return true
+    end
+
+    return false
+end
+
+---仅检查三角形是否与直线相交
+---@param other foundation.shape.Line 要检查的直线
+---@return boolean
+function Triangle:__hasIntersectionWithLine(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    for i = 1, #edges do
+        if edges[i]:hasIntersection(other) then
+            return true
+        end
+    end
+
+    return false
+end
+
+---仅检查三角形是否与射线相交
+---@param other foundation.shape.Ray 要检查的射线
+---@return boolean
+function Triangle:__hasIntersectionWithRay(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    for i = 1, #edges do
+        if edges[i]:hasIntersection(other) then
+            return true
+        end
+    end
+
+    if self:contains(other.point) then
+        return true
+    end
+
+    return false
+end
+
+---仅检查三角形是否与圆相交
+---@param other foundation.shape.Circle 要检查的圆
+---@return boolean
+function Triangle:__hasIntersectionWithCircle(other)
+    if self:contains(other.center) then
+        return true
+    end
+
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    for i = 1, #edges do
+        local distance = edges[i]:distanceToPoint(other.center)
+        if distance <= other.radius then
+            return true
+        end
+    end
+
+    return false
+end
+
+---计算点到三角形的最近点
+---@param point foundation.math.Vector2 要检查的点
+---@return foundation.math.Vector2 三角形上最近的点
+function Triangle:closestPoint(point)
+    if self:contains(point) then
+        return point:clone()
+    end
+
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    local minDistance = math.huge
+    local closestPoint
+
+    for i = 1, #edges do
+        local edgeClosest = edges[i]:closestPoint(point)
+        local distance = (point - edgeClosest):length()
+
+        if distance < minDistance then
+            minDistance = distance
+            closestPoint = edgeClosest
+        end
+    end
+
+    return closestPoint
+end
+
+---计算点到三角形的距离
+---@param point foundation.math.Vector2 要检查的点
+---@return number 点到三角形的距离
+function Triangle:distanceToPoint(point)
+    if self:contains(point) then
+        return 0
+    end
+
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+
+    local minDistance = math.huge
+
+    for i = 1, #edges do
+        local distance = edges[i]:distanceToPoint(point)
+        if distance < minDistance then
+            minDistance = distance
+        end
+    end
+
+    return minDistance
+end
+
+---将点投影到三角形平面上（2D中与closest相同）
+---@param point foundation.math.Vector2 要投影的点
+---@return foundation.math.Vector2 投影点
+function Triangle:projectPoint(point)
+    return self:closestPoint(point)
+end
+
+---检查点是否在三角形上
+---@param point foundation.math.Vector2 要检查的点
+---@param tolerance number|nil 容差，默认为1e-10
+---@return boolean 点是否在三角形上
+---@overload fun(self:foundation.shape.Triangle, point:foundation.math.Vector2): boolean
+function Triangle:containsPoint(point, tolerance)
+    tolerance = tolerance or 1e-10
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+    for i = 1, #edges do
+        if edges[i]:containsPoint(point, tolerance) then
+            return true
+        end
+    end
+    return false
+end
+
 ffi.metatype("foundation_shape_Triangle", Triangle)
 
 return Triangle
