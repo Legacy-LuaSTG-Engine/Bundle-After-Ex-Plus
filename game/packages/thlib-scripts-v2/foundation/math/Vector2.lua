@@ -16,6 +16,13 @@ typedef struct {
 ---@field y number Y坐标分量
 local Vector2 = {}
 Vector2.__index = Vector2
+Vector2.__type = "foundation.math.Vector2"
+
+---创建一个零向量
+---@return foundation.math.Vector2 零向量
+function Vector2.zero()
+    return Vector2.create(0, 0)
+end
 
 ---创建一个新的二维向量
 ---@param x number|nil X坐标分量，默认为0
@@ -132,6 +139,12 @@ end
 
 Vector2.length = Vector2.__len
 
+---获取向量的副本
+---@return foundation.math.Vector2 向量的副本
+function Vector2:clone()
+    return Vector2.create(self.x, self.y)
+end
+
 ---获取向量的角度（弧度）
 ---@return number 向量的角度，单位为弧度
 function Vector2:angle()
@@ -174,7 +187,7 @@ end
 function Vector2:normalized()
     local len = self:length()
     if len == 0 then
-        return Vector2.create(0, 0)
+        return Vector2.zero()
     end
     return Vector2.create(self.x / len, self.y / len)
 end
@@ -224,7 +237,7 @@ do
     Vector2.LuaSTG = Vector2.length
     Vector2.Angle = Vector2.degreeAngle
 
-    ---归一化向量（LuaSTG 兼容版）
+    ---归一化向量（LuaSTG Evo 兼容）
     ---@return foundation.math.Vector2 归一化后的向量副本
     function Vector2:Normalize()
         self:normalize()

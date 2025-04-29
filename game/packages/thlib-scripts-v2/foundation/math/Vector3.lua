@@ -18,6 +18,13 @@ typedef struct {
 ---@field z number Z坐标分量
 local Vector3 = {}
 Vector3.__index = Vector3
+Vector3.__type = "foundation.math.Vector3"
+
+---创建一个零向量
+---@return foundation.math.Vector3 零向量
+function Vector3.zero()
+    return Vector3.create(0, 0, 0)
+end
 
 ---创建一个新的三维向量
 ---@param x number|nil X坐标分量，默认为0
@@ -115,6 +122,12 @@ function Vector3.__len(v)
 end
 Vector3.length = Vector3.__len
 
+---获取向量的副本
+---@return foundation.math.Vector3 向量的副本
+function Vector3:clone()
+    return Vector3.create(self.x, self.y, self.z)
+end
+
 ---计算两个向量的点积
 ---@param other foundation.math.Vector3 另一个向量
 ---@return number 两个向量的点积
@@ -139,7 +152,7 @@ end
 function Vector3:normalized()
     local len = self:length()
     if len == 0 then
-        return Vector3.create(0, 0, 0)
+        return Vector3.zero()
     end
     return Vector3.create(self.x / len, self.y / len, self.z / len)
 end

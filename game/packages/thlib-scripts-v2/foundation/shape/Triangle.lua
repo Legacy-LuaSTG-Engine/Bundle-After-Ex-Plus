@@ -10,16 +10,17 @@ local Segment = require("foundation.shape.Segment")
 
 ffi.cdef [[
 typedef struct {
-    foundation_math_Vector2 v1, v2, v3;
+    foundation_math_Vector2 point1, point2, point3;
 } foundation_shape_Triangle;
 ]]
 
 ---@class foundation.shape.Triangle
----@field v1 foundation.math.Vector2 三角形的第一个顶点
----@field v2 foundation.math.Vector2 三角形的第二个顶点
----@field v3 foundation.math.Vector2 三角形的第三个顶点
+---@field point1 foundation.math.Vector2 三角形的第一个顶点
+---@field point2 foundation.math.Vector2 三角形的第二个顶点
+---@field point3 foundation.math.Vector2 三角形的第三个顶点
 local Triangle = {}
 Triangle.__index = Triangle
+Triangle.__type = "foundation.shape.Triangle"
 
 ---创建一个新的三角形
 ---@param v1 foundation.math.Vector2 三角形的第一个顶点
@@ -36,28 +37,28 @@ end
 ---@param b foundation.shape.Triangle 第二个三角形
 ---@return boolean 如果两个三角形的所有顶点都相等则返回true，否则返回false
 function Triangle.__eq(a, b)
-    return a.v1 == b.v1 and a.v2 == b.v2 and a.v3 == b.v3
+    return a.point1 == b.point1 and a.point2 == b.point2 and a.point3 == b.point3
 end
 
 ---三角形转字符串表示
 ---@param t foundation.shape.Triangle 要转换的三角形
 ---@return string 三角形的字符串表示
 function Triangle.__tostring(t)
-    return string.format("Triangle(%s, %s, %s)", tostring(t.v1), tostring(t.v2), tostring(t.v3))
+    return string.format("Triangle(%s, %s, %s)", tostring(t.point1), tostring(t.point2), tostring(t.point3))
 end
 
 ---计算三角形的面积
 ---@return number 三角形的面积
 function Triangle:area()
-    local v2v1 = self.v2 - self.v1
-    local v3v1 = self.v3 - self.v1
+    local v2v1 = self.point2 - self.point1
+    local v3v1 = self.point3 - self.point1
     return 0.5 * math.abs(v2v1:cross(v3v1))
 end
 
 ---计算三角形的重心
 ---@return foundation.math.Vector2 三角形的重心
 function Triangle:centroid()
-    return (self.v1 + self.v2 + self.v3) / 3
+    return (self.point1 + self.point2 + self.point3) / 3
 end
 
 ---计算三角形的外接圆半径
@@ -65,7 +66,7 @@ end
 function Triangle:circumradius()
     local center = self:circumcenter()
     if center then
-        return (center - self.v1):length()
+        return (center - self.point1):length()
     end
     return 0
 end
@@ -73,18 +74,18 @@ end
 ---计算三角形的内切圆半径
 ---@return number 三角形的内切圆半径
 function Triangle:inradius()
-    local a = (self.v2 - self.v3):length()
-    local b = (self.v1 - self.v3):length()
-    local c = (self.v1 - self.v2):length()
+    local a = (self.point2 - self.point3):length()
+    local b = (self.point1 - self.point3):length()
+    local c = (self.point1 - self.point2):length()
     return self:area() / ((a + b + c) / 2)
 end
 
 ---计算三角形的外心
 ---@return foundation.math.Vector2 | nil 三角形的外心
 function Triangle:circumcenter()
-    local x1, y1 = self.v1.x, self.v1.y
-    local x2, y2 = self.v2.x, self.v2.y
-    local x3, y3 = self.v3.x, self.v3.y
+    local x1, y1 = self.point1.x, self.point1.y
+    local x2, y2 = self.point2.x, self.point2.y
+    local x3, y3 = self.point3.x, self.point3.y
 
     local D = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
     if math.abs(D) < 1e-10 then
@@ -103,11 +104,11 @@ end
 ---计算三角形的内心
 ---@return foundation.math.Vector2 三角形的内心
 function Triangle:incenter()
-    local a = (self.v2 - self.v3):length()
-    local b = (self.v1 - self.v3):length()
-    local c = (self.v1 - self.v2):length()
+    local a = (self.point2 - self.point3):length()
+    local b = (self.point1 - self.point3):length()
+    local c = (self.point1 - self.point2):length()
 
-    local p = (a * self.v1 + b * self.v2 + c * self.v3) / (a + b + c)
+    local p = (a * self.point1 + b * self.point2 + c * self.point3) / (a + b + c)
     return p
 end
 
@@ -121,12 +122,12 @@ function Triangle:move(v)
     else
         moveX, moveY = v.x, v.y
     end
-    self.v1.x = self.v1.x + moveX
-    self.v1.y = self.v1.y + moveY
-    self.v2.x = self.v2.x + moveX
-    self.v2.y = self.v2.y + moveY
-    self.v3.x = self.v3.x + moveX
-    self.v3.y = self.v3.y + moveY
+    self.point1.x = self.point1.x + moveX
+    self.point1.y = self.point1.y + moveY
+    self.point2.x = self.point2.x + moveX
+    self.point2.y = self.point2.y + moveY
+    self.point3.x = self.point3.x + moveX
+    self.point3.y = self.point3.y + moveY
     return self
 end
 
@@ -141,9 +142,9 @@ function Triangle:moved(v)
         moveX, moveY = v.x, v.y
     end
     return Triangle.create(
-            Vector2.create(self.v1.x + moveX, self.v1.y + moveY),
-            Vector2.create(self.v2.x + moveX, self.v2.y + moveY),
-            Vector2.create(self.v3.x + moveX, self.v3.y + moveY)
+            Vector2.create(self.point1.x + moveX, self.point1.y + moveY),
+            Vector2.create(self.point2.x + moveX, self.point2.y + moveY),
+            Vector2.create(self.point3.x + moveX, self.point3.y + moveY)
     )
 end
 
@@ -156,15 +157,15 @@ function Triangle:rotate(rad, center)
     center = center or self:centroid()
     local cosAngle = math.cos(rad)
     local sinAngle = math.sin(rad)
-    local v1 = self.v1 - center
-    local v2 = self.v2 - center
-    local v3 = self.v3 - center
-    self.v1.x = v1.x * cosAngle - v1.y * sinAngle + center.x
-    self.v1.y = v1.x * sinAngle + v1.y * cosAngle + center.y
-    self.v2.x = v2.x * cosAngle - v2.y * sinAngle + center.x
-    self.v2.y = v2.x * sinAngle + v2.y * cosAngle + center.y
-    self.v3.x = v3.x * cosAngle - v3.y * sinAngle + center.x
-    self.v3.y = v3.x * sinAngle + v3.y * cosAngle + center.y
+    local v1 = self.point1 - center
+    local v2 = self.point2 - center
+    local v3 = self.point3 - center
+    self.point1.x = v1.x * cosAngle - v1.y * sinAngle + center.x
+    self.point1.y = v1.x * sinAngle + v1.y * cosAngle + center.y
+    self.point2.x = v2.x * cosAngle - v2.y * sinAngle + center.x
+    self.point2.y = v2.x * sinAngle + v2.y * cosAngle + center.y
+    self.point3.x = v3.x * cosAngle - v3.y * sinAngle + center.x
+    self.point3.y = v3.x * sinAngle + v3.y * cosAngle + center.y
     return self
 end
 
@@ -187,9 +188,9 @@ function Triangle:rotated(rad, center)
     center = center or self:centroid()
     local cosAngle = math.cos(rad)
     local sinAngle = math.sin(rad)
-    local v1 = self.v1 - center
-    local v2 = self.v2 - center
-    local v3 = self.v3 - center
+    local v1 = self.point1 - center
+    local v2 = self.point2 - center
+    local v3 = self.point3 - center
     return Triangle.create(
             Vector2.create(v1.x * cosAngle - v1.y * sinAngle + center.x, v1.x * sinAngle + v1.y * cosAngle + center.y),
             Vector2.create(v2.x * cosAngle - v2.y * sinAngle + center.x, v2.x * sinAngle + v2.y * cosAngle + center.y),
@@ -220,12 +221,12 @@ function Triangle:scale(scale, center)
         scaleX, scaleY = scale.x, scale.y
     end
     center = center or self:centroid()
-    self.v1.x = (self.v1.x - center.x) * scaleX + center.x
-    self.v1.y = (self.v1.y - center.y) * scaleY + center.y
-    self.v2.x = (self.v2.x - center.x) * scaleX + center.x
-    self.v2.y = (self.v2.y - center.y) * scaleY + center.y
-    self.v3.x = (self.v3.x - center.x) * scaleX + center.x
-    self.v3.y = (self.v3.y - center.y) * scaleY + center.y
+    self.point1.x = (self.point1.x - center.x) * scaleX + center.x
+    self.point1.y = (self.point1.y - center.y) * scaleY + center.y
+    self.point2.x = (self.point2.x - center.x) * scaleX + center.x
+    self.point2.y = (self.point2.y - center.y) * scaleY + center.y
+    self.point3.x = (self.point3.x - center.x) * scaleX + center.x
+    self.point3.y = (self.point3.y - center.y) * scaleY + center.y
     return self
 end
 
@@ -243,9 +244,9 @@ function Triangle:scaled(scale, center)
     end
     center = center or self:centroid()
     return Triangle.create(
-            Vector2.create((self.v1.x - center.x) * scaleX + center.x, (self.v1.y - center.y) * scaleY + center.y),
-            Vector2.create((self.v2.x - center.x) * scaleX + center.x, (self.v2.y - center.y) * scaleY + center.y),
-            Vector2.create((self.v3.x - center.x) * scaleX + center.x, (self.v3.y - center.y) * scaleY + center.y)
+            Vector2.create((self.point1.x - center.x) * scaleX + center.x, (self.point1.y - center.y) * scaleY + center.y),
+            Vector2.create((self.point2.x - center.x) * scaleX + center.x, (self.point2.y - center.y) * scaleY + center.y),
+            Vector2.create((self.point3.x - center.x) * scaleX + center.x, (self.point3.y - center.y) * scaleY + center.y)
     )
 end
 
@@ -253,9 +254,9 @@ end
 ---@param point foundation.math.Vector2 要检查的点
 ---@return boolean 如果点在三角形内（包括边界）返回true，否则返回false
 function Triangle:contains(point)
-    local v3v1 = self.v3 - self.v1
-    local v2v1 = self.v2 - self.v1
-    local pv1 = point - self.v1
+    local v3v1 = self.point3 - self.point1
+    local v2v1 = self.point2 - self.point1
+    local pv1 = point - self.point1
 
     local dot00 = v3v1:dot(v3v1)
     local dot01 = v3v1:dot(v2v1)
@@ -274,10 +275,16 @@ end
 ---@param other any 其他的形状
 ---@return boolean, foundation.math.Vector2|nil
 function Triangle:intersects(other)
-    if ffi.istype("foundation_shape_Segment", other) then
+    if other.__type == "foundation.shape.Segment" then
         return self:__intersectToSegment(other)
-    elseif ffi.istype("foundation_shape_Triangle", other) then
+    elseif other.__type == "foundation.shape.Triangle" then
         return self:__intersectToTriangle(other)
+    elseif other.__type == "foundation.shape.Line" then
+        return self:__intersectToLine(other)
+    elseif other.__type == "foundation.shape.Ray" then
+        return self:__intersectToRay(other)
+    elseif other.__type == "foundation.shape.Circle" then
+        return self:__intersectToCircle(other)
     end
     return false, nil
 end
@@ -287,9 +294,9 @@ end
 ---@return boolean, foundation.math.Vector2|nil
 function Triangle:__intersectToSegment(other)
     local edges = {
-        Segment.create(self.v1, self.v2),
-        Segment.create(self.v2, self.v3),
-        Segment.create(self.v3, self.v1)
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
         local edge = edges[i]
@@ -298,44 +305,120 @@ function Triangle:__intersectToSegment(other)
             return true, intersectPoint
         end
     end
-
-    if self:contains(other.v1) then
-        return true, Vector2.create(other.v1.x, other.v1.y)
+    if self:contains(other.point1) then
+        return true, other.point1:clone()
     end
-    if self:contains(other.v2) then
-        return true, Vector2.create(other.v2.x, other.v2.y)
+    if self:contains(other.point2) then
+        return true, other.point2:clone()
     end
-
     return false, nil
 end
 
 ---检查三角形是否与另一个三角形相交
 ---@param other foundation.shape.Triangle 要检查的三角形
 ---@return boolean, foundation.math.Vector2|nil
-function Segment:__intersectToTriangle(other)
+function Triangle:__intersectToTriangle(other)
     local edges = {
-        Segment.create(other.v1, other.v2),
-        Segment.create(other.v2, other.v3),
-        Segment.create(other.v3, other.v1)
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
     }
     for i = 1, #edges do
         local edge = edges[i]
-        local isIntersect, intersectPoint = self:intersects(edge)
+        local isIntersect, intersectPoint = edge:intersects(other)
         if isIntersect then
             return true, intersectPoint
         end
     end
+    if self:contains(other.point1) then
+        return true, other.point1:clone()
+    end
+    if self:contains(other.point2) then
+        return true, other.point2:clone()
+    end
+    if self:contains(other.point3) then
+        return true, other.point3:clone()
+    end
+    return false, nil
+end
 
-    if other:contains(self.v1) then
-        return true, Vector2.create(self.v1.x, self.v1.y)
+---检查三角形是否与直线相交
+---@param other foundation.shape.Line 要检查的直线
+---@return boolean, foundation.math.Vector2|nil
+function Triangle:__intersectToLine(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+    for i = 1, #edges do
+        local edge = edges[i]
+        local isIntersect, intersectPoint = edge:intersects(other)
+        if isIntersect then
+            return true, intersectPoint
+        end
     end
-    if other:contains(self.v2) then
-        return true, Vector2.create(self.v2.x, self.v2.y)
-    end
-    if other:contains(self.v3) then
-        return true, Vector2.create(self.v3.x, self.v3.y)
-    end
+    return false, nil
+end
 
+---检查三角形是否与射线相交
+---@param other foundation.shape.Ray 要检查的射线
+---@return boolean, foundation.math.Vector2|nil
+function Triangle:__intersectToRay(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+    local closestPoint, minT = nil, math.huge
+    for i = 1, #edges do
+        local edge = edges[i]
+        local isIntersect, intersectPoint = edge:intersects(other)
+        if isIntersect then
+            local t = ((intersectPoint.x - other.point.x) * other.direction.x + (intersectPoint.y - other.point.y) * other.direction.y) / (other.direction:length() ^ 2)
+            if t < minT then
+                minT = t
+                closestPoint = intersectPoint
+            end
+        end
+    end
+    if closestPoint then
+        return true, closestPoint
+    end
+    if self:contains(other.point) then
+        return true, other.point:clone()
+    end
+    return false, nil
+end
+
+---检查三角形是否与圆相交
+---@param other foundation.shape.Circle 要检查的圆
+---@return boolean, foundation.math.Vector2|nil
+function Triangle:__intersectToCircle(other)
+    local edges = {
+        Segment.create(self.point1, self.point2),
+        Segment.create(self.point2, self.point3),
+        Segment.create(self.point3, self.point1)
+    }
+    for i = 1, #edges do
+        local edge = edges[i]
+        local isIntersect, intersectPoint = edge:intersects(other)
+        if isIntersect then
+            return true, intersectPoint
+        end
+    end
+    if other:contains(self.point1) then
+        return true, self.point1:clone()
+    end
+    if other:contains(self.point2) then
+        return true, self.point2:clone()
+    end
+    if other:contains(self.point3) then
+        return true, self.point3:clone()
+    end
+    if self:contains(other.center) then
+        return true, other.center:clone()
+    end
     return false, nil
 end
 

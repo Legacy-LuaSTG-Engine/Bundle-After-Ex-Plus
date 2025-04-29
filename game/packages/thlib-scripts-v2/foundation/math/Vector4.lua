@@ -20,6 +20,13 @@ typedef struct {
 ---@field w number W坐标分量
 local Vector4 = {}
 Vector4.__index = Vector4
+Vector4.__type = "foundation.math.Vector4"
+
+---创建一个零向量
+---@return foundation.math.Vector4 零向量
+function Vector4.zero()
+    return Vector4.create(0, 0, 0, 0)
+end
 
 ---创建一个新的四维向量
 ---@param x number|nil X坐标分量，默认为0
@@ -118,6 +125,12 @@ function Vector4.__len(v)
 end
 Vector4.length = Vector4.__len
 
+---获取向量的副本
+---@return foundation.math.Vector4 向量的副本
+function Vector4:clone()
+    return Vector4.create(self.x, self.y, self.z, self.w)
+end
+
 ---计算两个向量的点积
 ---@param other foundation.math.Vector4 另一个向量
 ---@return number 两个向量的点积
@@ -143,7 +156,7 @@ end
 function Vector4:normalized()
     local len = self:length()
     if len == 0 then
-        return Vector4.create(0, 0, 0, 0)
+        return Vector4.zero()
     end
     return Vector4.create(self.x / len, self.y / len, self.z / len, self.w / len)
 end
