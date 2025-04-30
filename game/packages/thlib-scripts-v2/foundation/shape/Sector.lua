@@ -70,9 +70,9 @@ end
 ---@return boolean
 function Sector.__eq(a, b)
     return a.center == b.center and
-            math.abs(a.radius - b.radius) < 1e-10 and
+            math.abs(a.radius - b.radius) <= 1e-10 and
             a.direction == b.direction and
-            math.abs(a.range - b.range) < 1e-10
+            math.abs(a.range - b.range) <= 1e-10
 end
 
 ---扇形的字符串表示
@@ -115,7 +115,7 @@ function Sector:contains(point)
         return Circle.create(self.center, self.radius):contains(point)
     end
     local vec = point - self.center
-    if vec:length() > self.radius then
+    if vec:length() > self.radius + 1e-10 then
         return false
     end
     local dir = vec:normalized()
@@ -303,7 +303,7 @@ function Sector:containsPoint(point, tolerance)
     if math.abs(distance - self.radius) > tolerance then
         return false
     end
-    if distance < tolerance then
+    if distance <= tolerance then
         return true
     end
 

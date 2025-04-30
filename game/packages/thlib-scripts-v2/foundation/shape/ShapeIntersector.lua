@@ -14,7 +14,7 @@ local ShapeIntersector = {}
 ---@param point foundation.math.Vector2 点
 ---@return boolean
 function ShapeIntersector.circleContainsPoint(circle, point)
-    return (point - circle.center):length() <= circle.radius
+    return (point - circle.center):length() <= circle.radius + 1e-10
 end
 
 ---检查点是否在矩形内（包括边界）
@@ -28,7 +28,7 @@ function ShapeIntersector.rectangleContainsPoint(rectangle, point)
     local x = p.x * dir.x + p.y * dir.y
     local y = p.x * perp.x + p.y * perp.y
     local hw, hh = rectangle.width / 2, rectangle.height / 2
-    return math.abs(x) <= hw and math.abs(y) <= hh
+    return math.abs(x) <= hw + 1e-10 and math.abs(y) <= hh + 1e-10
 end
 
 ---检查点是否在扇形内（包括边界）
@@ -388,7 +388,7 @@ function ShapeIntersector.segmentToSegment(segment1, segment2)
     local d = segment2.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         -- 平行或共线情况
         return false, nil
     end
@@ -402,7 +402,7 @@ function ShapeIntersector.segmentToSegment(segment1, segment2)
         points[#points + 1] = Vector2.create(x, y)
     end
 
-    if #points == 0 then
+    if #points <= 1e-10 then
         return false, nil
     end
     return true, points
@@ -419,7 +419,7 @@ function ShapeIntersector.segmentHasIntersectionWithSegment(segment1, segment2)
     local d = segment2.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         -- 平行或共线情况
         return false
     end
@@ -442,8 +442,8 @@ function ShapeIntersector.lineToSegment(line, segment)
     local d = segment.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
-        return false, points
+    if math.abs(denom) <= 1e-10 then
+        return false, nil
     end
 
     local t = ((c.x - a.x) * (d.y - c.y) - (c.y - a.y) * (d.x - c.x)) / denom
@@ -472,7 +472,7 @@ function ShapeIntersector.lineHasIntersectionWithSegment(line, segment)
     local d = segment.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         return false
     end
 
@@ -493,7 +493,7 @@ function ShapeIntersector.rayToSegment(ray, segment)
     local d = segment.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         return false, nil
     end
 
@@ -506,7 +506,7 @@ function ShapeIntersector.rayToSegment(ray, segment)
         points[#points + 1] = Vector2.create(x, y)
     end
 
-    if #points == 0 then
+    if #points <= 1e-10 then
         return false, nil
     end
     return true, points
@@ -523,7 +523,7 @@ function ShapeIntersector.rayHasIntersectionWithSegment(ray, segment)
     local d = segment.point2
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         return false
     end
 
@@ -542,7 +542,7 @@ function ShapeIntersector.circleToSegment(circle, segment)
     local dir = segment.point2 - segment.point1
     local len = dir:length()
 
-    if len < 1e-10 then
+    if len <= 1e-10 then
         if ShapeIntersector.circleContainsPoint(circle, segment.point1) then
             return true, { segment.point1:clone() }
         end
@@ -553,7 +553,7 @@ function ShapeIntersector.circleToSegment(circle, segment)
 
     local closest = segment:closestPoint(circle.center)
     local dist = (closest - circle.center):length()
-    if dist > circle.radius then
+    if dist > circle.radius + 1e-10 then
         return false, nil
     end
 
@@ -575,7 +575,7 @@ function ShapeIntersector.circleToSegment(circle, segment)
         end
     end
 
-    if #points == 0 then
+    if #points <= 1e-10 then
         return false, nil
     end
     return true, points
@@ -587,7 +587,7 @@ end
 ---@return boolean
 function ShapeIntersector.circleHasIntersectionWithSegment(circle, segment)
     local closest = segment:closestPoint(circle.center)
-    return (closest - circle.center):length() <= circle.radius
+    return (closest - circle.center):length() <= circle.radius + 1e-10
 end
 
 ---检查直线与直线的相交
@@ -602,9 +602,9 @@ function ShapeIntersector.lineToLine(line1, line2)
     local d = line2.point + line2.direction
 
     local dir_cross = line1.direction:cross(line2.direction)
-    if math.abs(dir_cross) < 1e-10 then
+    if math.abs(dir_cross) <= 1e-10 then
         local point_diff = line2.point - line1.point
-        if math.abs(point_diff:cross(line1.direction)) < 1e-10 then
+        if math.abs(point_diff:cross(line1.direction)) <= 1e-10 then
             points[#points + 1] = line1.point:clone()
             points[#points + 1] = line1:getPoint(1)
             return true, points
@@ -628,9 +628,9 @@ end
 ---@return boolean
 function ShapeIntersector.lineHasIntersectionWithLine(line1, line2)
     local dir_cross = line1.direction:cross(line2.direction)
-    if math.abs(dir_cross) < 1e-10 then
+    if math.abs(dir_cross) <= 1e-10 then
         local point_diff = line2.point - line1.point
-        return math.abs(point_diff:cross(line1.direction)) < 1e-10
+        return math.abs(point_diff:cross(line1.direction)) <= 1e-10
     end
     return true
 end
@@ -647,7 +647,7 @@ function ShapeIntersector.lineToRay(line, ray)
     local d = ray.point + ray.direction
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         return false, nil
     end
 
@@ -677,7 +677,7 @@ function ShapeIntersector.lineHasIntersectionWithRay(line, ray)
     local d = ray.point + ray.direction
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         return false
     end
 
@@ -694,7 +694,7 @@ function ShapeIntersector.lineToCircle(line, circle)
     local points = {}
     local dir = line.direction
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return false, nil
     end
     dir = dir / len
@@ -726,7 +726,7 @@ end
 function ShapeIntersector.lineHasIntersectionWithCircle(line, circle)
     local dir = line.direction
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return false
     end
     dir = dir / len
@@ -792,9 +792,9 @@ function ShapeIntersector.rayHasIntersectionWithRay(ray1, ray2)
     local d = ray2.point + ray2.direction
 
     local denom = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
-    if math.abs(denom) < 1e-10 then
+    if math.abs(denom) <= 1e-10 then
         local dir_cross = ray1.direction:cross(ray2.direction)
-        if math.abs(dir_cross) < 1e-10 then
+        if math.abs(dir_cross) <= 1e-10 then
             local point_diff = ray2.point - ray1.point
             local t = point_diff:dot(ray1.direction)
             return t >= 0
@@ -816,7 +816,7 @@ function ShapeIntersector.rayToCircle(ray, circle)
     local points = {}
     local dir = ray.direction
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return false, nil
     end
     dir = dir / len
@@ -850,7 +850,7 @@ end
 function ShapeIntersector.rayHasIntersectionWithCircle(ray, circle)
     local dir = ray.direction
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return false
     end
     dir = dir / len
@@ -860,7 +860,7 @@ function ShapeIntersector.rayHasIntersectionWithCircle(ray, circle)
     local c = L:dot(L) - circle.radius * circle.radius
     local discriminant = b * b - 4 * a * c
 
-    if discriminant < 0 then
+    if discriminant <= 1e-10 then
         return false
     end
 
@@ -889,7 +889,7 @@ function ShapeIntersector.circleToCircle(circle1, circle2)
         end
     end
 
-    if #points == 0 then
+    if #points <= 1e-10 then
         return false, nil
     end
     return true, points

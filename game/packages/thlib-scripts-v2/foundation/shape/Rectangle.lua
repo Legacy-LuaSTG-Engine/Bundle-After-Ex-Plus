@@ -36,7 +36,7 @@ Rectangle.__type = "foundation.shape.Rectangle"
 ---@return foundation.shape.Rectangle
 function Rectangle.create(center, width, height, direction)
     local dist = direction and direction:length() or 0
-    if dist == 0 then
+    if dist <= 1e-10 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
         ---@diagnostic disable-next-line: need-check-nil
@@ -77,8 +77,8 @@ end
 ---@return boolean
 function Rectangle.__eq(a, b)
     return a.center == b.center and
-            math.abs(a.width - b.width) < 1e-10 and
-            math.abs(a.height - b.height) < 1e-10 and
+            math.abs(a.width - b.width) <= 1e-10 and
+            math.abs(a.height - b.height) <= 1e-10 and
             a.direction == b.direction
 end
 

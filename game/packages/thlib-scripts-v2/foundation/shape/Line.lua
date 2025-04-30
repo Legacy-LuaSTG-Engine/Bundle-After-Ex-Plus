@@ -28,7 +28,7 @@ Line.__type = "foundation.shape.Line"
 ---@return foundation.shape.Line
 function Line.create(point, direction)
     local dist = direction and direction:length() or 0
-    if dist == 0 then
+    if dist <= 1e-10 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
         ---@diagnostic disable-next-line: need-check-nil
@@ -78,7 +78,7 @@ function Line.__eq(a, b)
         return false
     end
     local point_diff = b.point - a.point
-    return math.abs(point_diff:cross(a.direction)) < 1e-10
+    return math.abs(point_diff:cross(a.direction)) <= 1e-10
 end
 
 ---直线的字符串表示
@@ -225,7 +225,7 @@ function Line:containsPoint(point, tolerance)
     tolerance = tolerance or 1e-10
     local point_vec = point - self.point
     local cross = point_vec:cross(self.direction)
-    return math.abs(cross) < tolerance
+    return math.abs(cross) <= tolerance
 end
 
 ---获取点在直线上的投影

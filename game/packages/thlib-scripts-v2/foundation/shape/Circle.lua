@@ -36,7 +36,7 @@ end
 ---@param b foundation.shape.Circle
 ---@return boolean
 function Circle.__eq(a, b)
-    return a.center == b.center and math.abs(a.radius - b.radius) < 1e-10
+    return a.center == b.center and math.abs(a.radius - b.radius) <= 1e-10
 end
 
 ---圆的字符串表示
@@ -122,7 +122,7 @@ end
 function Circle:closestPoint(point)
     local dir = point - self.center
     local dist = dir:length()
-    if dist == 0 then
+    if dist <= 1e-10 then
         return Vector2.create(self.center.x + self.radius, self.center.y)
     end
     local normalized_dir = dir / dist

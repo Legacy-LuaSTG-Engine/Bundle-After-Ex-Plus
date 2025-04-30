@@ -76,7 +76,7 @@ end
 function Segment:normal()
     local dir = self.point2 - self.point1
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return Vector2.zero()
     end
     return Vector2.create(-dir.y / len, dir.x / len)
@@ -253,7 +253,7 @@ end
 function Segment:closestPoint(point)
     local dir = self.point2 - self.point1
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return self.point1:clone()
     end
 
@@ -277,7 +277,7 @@ end
 function Segment:projectPoint(point)
     local dir = self.point2 - self.point1
     local len = dir:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return self.point1:clone()
     end
 
@@ -299,8 +299,8 @@ function Segment:containsPoint(point, tolerance)
 
     local dir = self.point2 - self.point1
     local len = dir:length()
-    if len == 0 then
-        return point.x == self.point1.x and point.y == self.point1.y
+    if len <= 1e-10 then
+        return point == self.point1
     end
 
     local t = ((point.x - self.point1.x) * dir.x + (point.y - self.point1.y) * dir.y) / (len * len)

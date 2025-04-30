@@ -90,7 +90,7 @@ function Triangle:circumcenter()
     local x3, y3 = self.point3.x, self.point3.y
 
     local D = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)
-    if math.abs(D) < 1e-10 then
+    if math.abs(D) <= 1e-10 then
         return nil
     end
 

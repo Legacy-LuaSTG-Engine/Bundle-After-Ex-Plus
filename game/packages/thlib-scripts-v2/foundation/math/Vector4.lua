@@ -110,10 +110,10 @@ end
 ---@param b foundation.math.Vector4 第二个操作数
 ---@return boolean 两个向量是否相等
 function Vector4.__eq(a, b)
-    return math.abs(a.x - b.x) < 1e-10 and
-            math.abs(a.y - b.y) < 1e-10 and
-            math.abs(a.z - b.z) < 1e-10 and
-            math.abs(a.w - b.w) < 1e-10
+    return math.abs(a.x - b.x) <= 1e-10 and
+            math.abs(a.y - b.y) <= 1e-10 and
+            math.abs(a.z - b.z) <= 1e-10 and
+            math.abs(a.w - b.w) <= 1e-10
 end
 
 ---向量字符串表示
@@ -162,11 +162,13 @@ end
 ---@return foundation.math.Vector4 归一化后的向量（自身引用）
 function Vector4:normalize()
     local len = self:length()
-    if len > 0 then
+    if len > 1e-10 then
         self.x = self.x / len
         self.y = self.y / len
         self.z = self.z / len
         self.w = self.w / len
+    else
+        self.x, self.y, self.z, self.w = 0, 0, 0, 0
     end
     return self
 end
@@ -175,7 +177,7 @@ end
 ---@return foundation.math.Vector4 归一化后的向量副本
 function Vector4:normalized()
     local len = self:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return Vector4.zero()
     end
     return Vector4.create(self.x / len, self.y / len, self.z / len, self.w / len)
@@ -184,7 +186,7 @@ end
 ---获取向量的齐次坐标（将w分量归一化为1）
 ---@return foundation.math.Vector4 归一化后的齐次坐标向量
 function Vector4:homogeneous()
-    if math.abs(self.w) < 1e-10 then
+    if math.abs(self.w) <= 1e-10 then
         return self:clone()
     end
     return Vector4.create(self.x / self.w, self.y / self.w, self.z / self.w, 1)
@@ -194,7 +196,7 @@ end
 ---@return foundation.math.Vector3 投影后的三维向量
 function Vector4:projectTo3D()
     Vector3 = Vector3 or require("foundation.math.Vector3")
-    if math.abs(self.w) < 1e-10 then
+    if math.abs(self.w) <= 1e-10 then
         return Vector3.create(self.x, self.y, self.z)
     end
     return Vector3.create(self.x / self.w, self.y / self.w, self.z / self.w)

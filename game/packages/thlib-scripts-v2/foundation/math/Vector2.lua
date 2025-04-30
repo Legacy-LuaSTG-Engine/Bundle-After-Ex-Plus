@@ -126,7 +126,7 @@ end
 ---@param b foundation.math.Vector2 第二个操作数
 ---@return boolean 两个向量是否相等
 function Vector2.__eq(a, b)
-    return math.abs(a.x - b.x) < 1e-10 and math.abs(a.y - b.y) < 1e-10
+    return math.abs(a.x - b.x) <= 1e-10 and math.abs(a.y - b.y) <= 1e-10
 end
 
 ---向量字符串表示
@@ -181,9 +181,12 @@ end
 ---@return foundation.math.Vector2 归一化后的向量（自身引用）
 function Vector2:normalize()
     local len = self:length()
-    if len > 0 then
+    if len > 1e-10 then
         self.x = self.x / len
         self.y = self.y / len
+    else
+        self.x = 0
+        self.y = 0
     end
     return self
 end
@@ -192,7 +195,7 @@ end
 ---@return foundation.math.Vector2 归一化后的向量副本
 function Vector2:normalized()
     local len = self:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return Vector2.zero()
     end
     return Vector2.create(self.x / len, self.y / len)

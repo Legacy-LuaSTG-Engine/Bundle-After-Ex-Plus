@@ -189,10 +189,12 @@ end
 ---@return foundation.math.Vector3 归一化后的向量（自身引用）
 function Vector3:normalize()
     local len = self:length()
-    if len > 0 then
+    if len > 1e-10 then
         self.x = self.x / len
         self.y = self.y / len
         self.z = self.z / len
+    else
+        self.x, self.y, self.z = 0, 0, 0
     end
     return self
 end
@@ -201,7 +203,7 @@ end
 ---@return foundation.math.Vector3 归一化后的向量副本
 function Vector3:normalized()
     local len = self:length()
-    if len == 0 then
+    if len <= 1e-10 then
         return Vector3.zero()
     end
     return Vector3.create(self.x / len, self.y / len, self.z / len)

@@ -28,7 +28,7 @@ Ray.__type = "foundation.shape.Ray"
 ---@return foundation.shape.Ray
 function Ray.create(point, direction)
     local dist = direction and direction:length() or 0
-    if dist == 0 then
+    if dist <= 1e-10 then
         direction = Vector2.create(1, 0)
     elseif dist ~= 1 then
         ---@diagnostic disable-next-line: need-check-nil
@@ -200,7 +200,7 @@ function Ray:distanceToPoint(point)
     local point_vec = point - self.point
     local proj_length = point_vec:dot(self.direction)
 
-    if proj_length < 0 then
+    if proj_length <= 1e-10 then
         return (point - self.point):length()
     else
         local proj_point = self.point + self.direction * proj_length
@@ -217,12 +217,12 @@ function Ray:containsPoint(point, tolerance)
     local point_vec = point - self.point
 
     local proj_length = point_vec:dot(self.direction)
-    if proj_length < 0 then
+    if proj_length <= 1e-10 then
         return false
     end
 
     local cross = point_vec:cross(self.direction)
-    return math.abs(cross) < tolerance
+    return math.abs(cross) <= tolerance
 end
 
 ---获取点在射线上的投影
@@ -232,7 +232,7 @@ function Ray:projectPoint(point)
     local point_vec = point - self.point
     local proj_length = point_vec:dot(self.direction)
 
-    if proj_length < 0 then
+    if proj_length <= 1e-10 then
         return self.point:clone()
     else
         return self.point + self.direction * proj_length
