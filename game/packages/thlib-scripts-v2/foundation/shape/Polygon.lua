@@ -139,7 +139,6 @@ end
 function Polygon:getCenter()
     local sumX, sumY = 0, 0
 
-    print("size", self.size)
     for i = 0, self.size - 1 do
         sumX = sumX + self.points[i].x
         sumY = sumY + self.points[i].y
@@ -428,6 +427,28 @@ end
 ---@return foundation.math.Vector2 投影点
 function Polygon:projectPoint(point)
     return self:closestPoint(point)
+end
+
+---检查点是否在多边形上
+---@param point foundation.math.Vector2 要检查的点
+---@param tolerance number|nil 容差，默认为1e-10
+---@return boolean 点是否在多边形上
+---@overload fun(self: foundation.shape.Polygon, point: foundation.math.Vector2): boolean
+function Polygon:containsPoint(point, tolerance)
+    tolerance = tolerance or 1e-10
+    local dist = self:distanceToPoint(point)
+    if dist > tolerance then
+        return false
+    end
+
+    for i = 0, self.size - 1 do
+        local edge = Segment.create(self.points[i], self.points[(i + 1) % self.size])
+        if edge:containsPoint(point, tolerance) then
+            return true
+        end
+    end
+
+    return false
 end
 
 --region 三角剖分的辅助函数

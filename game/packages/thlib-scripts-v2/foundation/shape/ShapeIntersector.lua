@@ -95,6 +95,7 @@ function ShapeIntersector.polygonContainsPoint(polygon, point)
         return false
     end
 
+    Segment = Segment or require("foundation.shape.Segment")
     for i = 0, polygon.size - 1 do
         local j = (i + 1) % polygon.size
         local segment = Segment.create(polygon.points[i], polygon.points[j])
