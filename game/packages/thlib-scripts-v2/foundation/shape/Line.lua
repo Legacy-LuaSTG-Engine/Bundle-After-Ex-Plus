@@ -207,6 +207,20 @@ function Line:hasIntersection(other)
     return ShapeIntersector.hasIntersection(self, other)
 end
 
+---计算点到直线的最近点
+---@param point foundation.math.Vector2 点
+---@return foundation.math.Vector2 最近点
+function Line:closestPoint(point)
+    local point_vec = point - self.point
+    local proj_length = point_vec:dot(self.direction)
+
+    if proj_length <= 1e-10 then
+        return self.point:clone()
+    else
+        return self.point + self.direction * proj_length
+    end
+end
+
 ---计算点到直线的距离
 ---@param point foundation.math.Vector2 点
 ---@return number 距离
