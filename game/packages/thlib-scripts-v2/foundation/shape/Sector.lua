@@ -107,6 +107,17 @@ function Sector:area()
     return 0.5 * self.radius * self.radius * self:getAngle()
 end
 
+---计算扇形的周长
+---@return number 扇形的周长（弧长+两条半径）
+function Sector:getPerimeter()
+    if math.abs(self.range) >= 1 then
+        return 2 * math.pi * self.radius
+    end
+
+    local arcLength = self.radius * self:getAngle()
+    return arcLength + 2 * self.radius
+end
+
 ---检查点是否在扇形内（包括边界）
 ---@param point foundation.math.Vector2
 ---@return boolean

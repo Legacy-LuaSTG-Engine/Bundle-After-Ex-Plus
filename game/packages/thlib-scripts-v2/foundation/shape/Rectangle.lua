@@ -243,6 +243,12 @@ function Rectangle:area()
     return self.width * self.height
 end
 
+---计算矩形的周长
+---@return number 矩形的周长
+function Rectangle:getPerimeter()
+    return 2 * (self.width + self.height)
+end
+
 ---计算点到矩形的最近点
 ---@param point foundation.math.Vector2
 ---@return foundation.math.Vector2

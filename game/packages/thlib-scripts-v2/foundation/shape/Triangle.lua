@@ -290,6 +290,15 @@ function Triangle:getEdges()
     }
 end
 
+---计算三角形的周长
+---@return number 三角形的周长
+function Triangle:getPerimeter()
+    local a = (self.point2 - self.point3):length()
+    local b = (self.point1 - self.point3):length()
+    local c = (self.point1 - self.point2):length()
+    return a + b + c
+end
+
 ---计算点到三角形的最近点
 ---@param point foundation.math.Vector2 要检查的点
 ---@return foundation.math.Vector2 三角形上最近的点

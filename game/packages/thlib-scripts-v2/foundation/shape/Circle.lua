@@ -116,6 +116,12 @@ function Circle:area()
     return math.pi * self.radius * self.radius
 end
 
+---计算圆的周长
+---@return number 圆的周长
+function Circle:getPerimeter()
+    return 2 * math.pi * self.radius
+end
+
 ---计算点到圆的最近点
 ---@param point foundation.math.Vector2 要检查的点
 ---@return foundation.math.Vector2 圆上最近的点
