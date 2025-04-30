@@ -111,21 +111,7 @@ end
 ---@param point foundation.math.Vector2
 ---@return boolean
 function Sector:contains(point)
-    if math.abs(self.range) >= 1 then
-        return Circle.create(self.center, self.radius):contains(point)
-    end
-    local vec = point - self.center
-    if vec:length() > self.radius + 1e-10 then
-        return false
-    end
-    local dir = vec:normalized()
-    local angle = math.acos(self.direction:dot(dir))
-    local maxAngle = math.abs(self.range) * math.pi
-    local cross = self.direction.x * dir.y - self.direction.y * dir.x
-    if self.range < 0 then
-        cross = -cross
-    end
-    return angle <= maxAngle and cross >= 0
+    return ShapeIntersector.sectorContainsPoint(self, point)
 end
 
 ---移动扇形（修改当前扇形）
@@ -226,13 +212,12 @@ end
 ---@return foundation.math.Vector2
 function Sector:closestPoint(point)
     if math.abs(self.range) >= 1 then
-        return Circle.create(self.center, self.radius):closestPoint(point)
+        return Circle.closestPoint(self, point)
     end
     if self:contains(point) then
         return point:clone()
     end
-    local circle = Circle.create(self.center, self.radius)
-    local circle_closest = circle:closestPoint(point)
+    local circle_closest = Circle.closestPoint(self, point)
     if self:contains(circle_closest) then
         return circle_closest
     end
