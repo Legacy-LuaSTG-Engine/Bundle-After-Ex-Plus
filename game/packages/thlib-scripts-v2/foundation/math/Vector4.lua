@@ -42,6 +42,19 @@ function Vector4.create(x, y, z, w)
     return ffi.new("foundation_math_Vector4", x or 0, y or 0, z or 0, w or 0)
 end
 
+---通过特定结构的对象创建一个新的四维向量
+---@param tbl table|foundation.math.Vector4 表或向量
+---@return foundation.math.Vector4 新创建的向量
+function Vector4.createFromTable(tbl)
+    if tbl.x and tbl.y and tbl.z and tbl.w then
+        return Vector4.create(tbl.x, tbl.y, tbl.z, tbl.w)
+    end
+    if tbl[1] and tbl[2] and tbl[3] and tbl[4] then
+        return Vector4.create(tbl[1], tbl[2], tbl[3], tbl[4])
+    end
+    error("Invalid table format for Vector4 creation")
+end
+
 ---向量加法运算符重载
 ---@param a foundation.math.Vector4|number 第一个操作数
 ---@param b foundation.math.Vector4|number 第二个操作数

@@ -36,6 +36,19 @@ function Vector2.create(x, y)
     return ffi.new("foundation_math_Vector2", x or 0, y or 0)
 end
 
+---通过特定结构的对象创建一个新的二维向量
+---@param tbl table|foundation.math.Vector2 表或向量
+---@return foundation.math.Vector2 新创建的向量
+function Vector2.createFromTable(tbl)
+    if tbl.x and tbl.y then
+        return Vector2.create(tbl.x, tbl.y)
+    end
+    if tbl[1] and tbl[2] then
+        return Vector2.create(tbl[1], tbl[2])
+    end
+    error("Invalid table format for Vector2 creation")
+end
+
 ---通过给定的弧度和长度创建一个新的二维向量
 ---@param rad number 弧度
 ---@param length number 向量长度

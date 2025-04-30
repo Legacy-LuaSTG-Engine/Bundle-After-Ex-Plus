@@ -39,6 +39,19 @@ function Vector3.create(x, y, z)
     return ffi.new("foundation_math_Vector3", x or 0, y or 0, z or 0)
 end
 
+---通过特定结构的对象创建一个新的三维向量
+---@param tbl table|foundation.math.Vector3 表或向量
+---@return foundation.math.Vector3 新创建的向量
+function Vector3.createFromTable(tbl)
+    if tbl.x and tbl.y and tbl.z then
+        return Vector3.create(tbl.x, tbl.y, tbl.z)
+    end
+    if tbl[1] and tbl[2] and tbl[3] then
+        return Vector3.create(tbl[1], tbl[2], tbl[3])
+    end
+    error("Invalid table format for Vector2 creation")
+end
+
 ---向量加法运算符重载
 ---@param a foundation.math.Vector3|number 第一个操作数
 ---@param b foundation.math.Vector3|number 第二个操作数
