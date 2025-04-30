@@ -152,8 +152,10 @@ function Line:rotate(rad, center)
     local cosRad = math.cos(rad)
     local sinRad = math.sin(rad)
     local v = self.direction
-    self.direction.x = v.x * cosRad - v.y * sinRad
-    self.direction.y = v.x * sinRad + v.y * cosRad
+    local x = v.x * cosRad - v.y * sinRad
+    local y = v.x * sinRad + v.y * cosRad
+    self.direction.x = x
+    self.direction.y = y
     return self
 end
 
@@ -211,14 +213,7 @@ end
 ---@param point foundation.math.Vector2 点
 ---@return foundation.math.Vector2 最近点
 function Line:closestPoint(point)
-    local point_vec = point - self.point
-    local proj_length = point_vec:dot(self.direction)
-
-    if proj_length <= 1e-10 then
-        return self.point:clone()
-    else
-        return self.point + self.direction * proj_length
-    end
+    return self:projectPoint(point)
 end
 
 ---计算点到直线的距离
@@ -246,9 +241,10 @@ end
 ---@param point foundation.math.Vector2 点
 ---@return foundation.math.Vector2 投影点
 function Line:projectPoint(point)
+    local dir = self.direction
     local point_vec = point - self.point
-    local proj_length = point_vec:dot(self.direction)
-    return self.point + self.direction * proj_length
+    local proj_length = point_vec:dot(dir)
+    return self.point + dir * proj_length
 end
 
 ffi.metatype("foundation_shape_Line", Line)

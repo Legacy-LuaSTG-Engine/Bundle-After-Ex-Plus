@@ -138,8 +138,10 @@ function Ray:rotate(rad, center)
     local cosRad = math.cos(rad)
     local sinRad = math.sin(rad)
     local v = self.direction
-    self.direction.x = v.x * cosRad - v.y * sinRad
-    self.direction.y = v.x * sinRad + v.y * cosRad
+    local x = v.x * cosRad - v.y * sinRad
+    local y = v.x * sinRad + v.y * cosRad
+    self.direction.x = x
+    self.direction.y = y
     return self
 end
 
@@ -197,13 +199,14 @@ end
 ---@param point foundation.math.Vector2 点
 ---@return foundation.math.Vector2 最近点
 function Ray:closestPoint(point)
+    local dir = self.direction:normalized()
     local point_vec = point - self.point
-    local proj_length = point_vec:dot(self.direction)
+    local proj_length = point_vec:dot(dir)
 
-    if proj_length <= 1e-10 then
+    if proj_length <= 0 then
         return self.point:clone()
     else
-        return self.point + self.direction * proj_length
+        return self.point + dir * proj_length
     end
 end
 
@@ -239,18 +242,13 @@ function Ray:containsPoint(point, tolerance)
     return math.abs(cross) <= tolerance
 end
 
----获取点在射线上的投影
+---获取点在射线所在直线上的投影
 ---@param point foundation.math.Vector2 点
 ---@return foundation.math.Vector2 投影点
 function Ray:projectPoint(point)
-    local point_vec = point - self.point
-    local proj_length = point_vec:dot(self.direction)
-
-    if proj_length <= 1e-10 then
-        return self.point:clone()
-    else
-        return self.point + self.direction * proj_length
-    end
+    local dir = self.direction
+    local t = ((point.x - self.point.x) * dir.x + (point.y - self.point.y) * dir.y)
+    return Vector2.create(self.point.x + t * dir.x, self.point.y + t * dir.y)
 end
 
 ffi.metatype("foundation_shape_Ray", Ray)
