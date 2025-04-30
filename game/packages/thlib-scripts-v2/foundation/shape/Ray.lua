@@ -196,7 +196,7 @@ end
 ---计算点到射线的最近点
 ---@param point foundation.math.Vector2 点
 ---@return foundation.math.Vector2 最近点
-function Ray:nearestPoint(point)
+function Ray:closestPoint(point)
     local point_vec = point - self.point
     local proj_length = point_vec:dot(self.direction)
 
