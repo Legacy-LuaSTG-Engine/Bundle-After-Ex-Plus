@@ -3,6 +3,9 @@ local ffi = require("ffi")
 local type = type
 local string = string
 local math = math
+local require = require
+
+local Vector3, Vector4
 
 ffi.cdef [[
 typedef struct {
@@ -239,7 +242,7 @@ end
 ---@param z number|nil Z坐标分量，默认为0
 ---@return foundation.math.Vector3 转换后的Vector3
 function Vector2:toVector3(z)
-    local Vector3 = require("foundation.math.Vector3")
+    Vector3 = Vector3 or require("foundation.math.Vector3")
     return Vector3.create(self.x, self.y, z or 0)
 end
 
@@ -248,7 +251,7 @@ end
 ---@param w number|nil W坐标分量，默认为0
 ---@return foundation.math.Vector4 转换后的Vector4
 function Vector2:toVector4(z, w)
-    local Vector4 = require("foundation.math.Vector4")
+    Vector4 = Vector4 or require("foundation.math.Vector4")
     return Vector4.create(self.x, self.y, z or 0, w or 0)
 end
 

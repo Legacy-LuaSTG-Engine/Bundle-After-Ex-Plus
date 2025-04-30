@@ -2,6 +2,9 @@ local Vector2 = require("foundation.math.Vector2")
 local math = math
 local tostring = tostring
 local ipairs = ipairs
+local require = require
+
+local Segment
 
 ---@class foundation.shape.ShapeIntersector
 local ShapeIntersector = {}
@@ -33,22 +36,27 @@ end
 ---@param point foundation.math.Vector2 点
 ---@return boolean
 function ShapeIntersector.sectorContainsPoint(sector, point)
-    if math.abs(sector.range) >= 1 then
-        return (point - sector.center):length() <= sector.radius
-    end
-    local v = point - sector.center
-    local dist = v:length()
-    if dist > sector.radius or dist < 1e-10 then
+    local inCircle = ShapeIntersector.circleContainsPoint(sector, point)
+    if not inCircle then
         return false
     end
-    local dir = v / dist
-    local angle = math.acos(sector.direction:dot(dir))
-    local maxAngle = math.abs(sector.range) * math.pi
-    local cross = sector.direction.x * dir.y - sector.direction.y * dir.x
-    if sector.range < 0 then
-        cross = -cross
+    if math.abs(sector.range) >= 1 then
+        return true
     end
-    return angle <= maxAngle and cross >= 0
+
+    local range = sector.range * math.pi * 2
+    local angle_begin
+    if range > 0 then
+        angle_begin = sector.direction:angle()
+    else
+        range = -range
+        angle_begin = sector.direction:angle() - range
+    end
+
+    local vec = point - sector.center
+    local vec_angle = vec:angle()
+    vec_angle = vec_angle - 2 * math.pi * math.floor((vec_angle - angle_begin) / (2 * math.pi))
+    return angle_begin <= vec_angle and vec_angle <= angle_begin + range
 end
 
 ---检查点是否在三角形内
@@ -531,37 +539,39 @@ end
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.circleToSegment(circle, segment)
     local points = {}
-    local closest = segment:closestPoint(circle.center)
+    local dir = segment.point2 - segment.point1
+    local len = dir:length()
 
-    if (closest - circle.center):length() <= circle.radius then
-        local dir = segment.point2 - segment.point1
-        local len = dir:length()
-        if len == 0 then
-            if (segment.point1 - circle.center):length() <= circle.radius then
-                points[#points + 1] = segment.point1:clone()
-            end
-
-            if #points == 0 then
-                return false, nil
-            end
-            return true, points
+    if len < 1e-10 then
+        if ShapeIntersector.circleContainsPoint(circle, segment.point1) then
+            return true, { segment.point1:clone() }
         end
-        dir = dir / len
-        local L = segment.point1 - circle.center
-        local a = dir:dot(dir)
-        local b = 2 * L:dot(dir)
-        local c = L:dot(L) - circle.radius * circle.radius
-        local discriminant = b * b - 4 * a * c
-        if discriminant >= 0 then
-            local sqrt_d = math.sqrt(discriminant)
-            local t1 = (-b - sqrt_d) / (2 * a)
-            local t2 = (-b + sqrt_d) / (2 * a)
-            if t1 >= 0 and t1 <= len then
-                points[#points + 1] = segment.point1 + dir * t1
-            end
-            if t2 >= 0 and t2 <= len and math.abs(t2 - t1) > 1e-10 then
-                points[#points + 1] = segment.point1 + dir * t2
-            end
+        return false, nil
+    end
+
+    dir = dir / len
+
+    local closest = segment:closestPoint(circle.center)
+    local dist = (closest - circle.center):length()
+    if dist > circle.radius then
+        return false, nil
+    end
+
+    local vector_to_start = segment.point1 - circle.center
+    local b = 2 * vector_to_start:dot(dir)
+    local c = vector_to_start:dot(vector_to_start) - circle.radius * circle.radius
+    local discriminant = b * b - 4 * c
+
+    if discriminant >= -1e-10 then
+        local sqrt_d = math.sqrt(math.max(discriminant, 0))
+        local t1 = (-b - sqrt_d) / 2
+        local t2 = (-b + sqrt_d) / 2
+
+        if t1 >= 0 and t1 <= len then
+            points[#points + 1] = segment.point1 + dir * t1
+        end
+        if t2 >= 0 and t2 <= len and discriminant > 1e-10 then
+            points[#points + 1] = segment.point1 + dir * t2
         end
     end
 
@@ -1204,15 +1214,17 @@ end
 ---@param segment foundation.shape.Segment 线段
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.sectorToSegment(sector, segment)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.circleToSegment(sector:toCircle(), segment)
+        return ShapeIntersector.circleToSegment(sector, segment)
     end
-    local success, circle_points = ShapeIntersector.circleToSegment(sector:toCircle(), segment)
+    local success, circle_points = ShapeIntersector.circleToSegment(sector, segment)
     if success then
+        local n = 0
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
+                n = n + 1
                 points[#points + 1] = p
             end
         end
@@ -1255,15 +1267,15 @@ end
 ---@param segment foundation.shape.Segment 线段
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithSegment(sector, segment)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.circleHasIntersectionWithSegment(sector:toCircle(), segment)
+        return ShapeIntersector.circleHasIntersectionWithSegment(sector, segment)
     end
     if ShapeIntersector.sectorContainsPoint(sector, segment.point1) or
             ShapeIntersector.sectorContainsPoint(sector, segment.point2) then
         return true
     end
-    local success, circle_points = ShapeIntersector.circleToSegment(sector:toCircle(), segment)
+    local success, circle_points = ShapeIntersector.circleToSegment(sector, segment)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1289,12 +1301,12 @@ end
 ---@param line foundation.shape.Line 直线
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.sectorToLine(sector, line)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.lineToCircle(line, sector:toCircle())
+        return ShapeIntersector.lineToCircle(line, sector)
     end
-    local success, circle_points = ShapeIntersector.lineToCircle(line, sector:toCircle())
+    local success, circle_points = ShapeIntersector.lineToCircle(line, sector)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1334,11 +1346,11 @@ end
 ---@param line foundation.shape.Line 直线
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithLine(sector, line)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.lineHasIntersectionWithCircle(line, sector:toCircle())
+        return ShapeIntersector.lineHasIntersectionWithCircle(line, sector)
     end
-    local success, circle_points = ShapeIntersector.lineToCircle(line, sector:toCircle())
+    local success, circle_points = ShapeIntersector.lineToCircle(line, sector)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1364,12 +1376,12 @@ end
 ---@param ray foundation.shape.Ray 射线
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.sectorToRay(sector, ray)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.rayToCircle(ray, sector:toCircle())
+        return ShapeIntersector.rayToCircle(ray, sector)
     end
-    local success, circle_points = ShapeIntersector.rayToCircle(ray, sector:toCircle())
+    local success, circle_points = ShapeIntersector.rayToCircle(ray, sector)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1412,14 +1424,14 @@ end
 ---@param ray foundation.shape.Ray 射线
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithRay(sector, ray)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.rayHasIntersectionWithCircle(ray, sector:toCircle())
+        return ShapeIntersector.rayHasIntersectionWithCircle(ray, sector)
     end
     if ShapeIntersector.sectorContainsPoint(sector, ray.point) then
         return true
     end
-    local success, circle_points = ShapeIntersector.rayToCircle(ray, sector:toCircle())
+    local success, circle_points = ShapeIntersector.rayToCircle(ray, sector)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1447,7 +1459,7 @@ end
 function ShapeIntersector.sectorToTriangle(sector, triangle)
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.triangleToCircle(triangle, sector:toCircle())
+        return ShapeIntersector.triangleToCircle(triangle, sector)
     end
     local edges = triangle:getEdges()
     for _, edge in ipairs(edges) do
@@ -1484,7 +1496,7 @@ end
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithTriangle(sector, triangle)
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.triangleHasIntersectionWithCircle(triangle, sector:toCircle())
+        return ShapeIntersector.triangleHasIntersectionWithCircle(triangle, sector)
     end
     local edges = triangle:getEdges()
     for _, edge in ipairs(edges) do
@@ -1512,12 +1524,12 @@ end
 ---@param circle foundation.shape.Circle 圆
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.sectorToCircle(sector, circle)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.circleToCircle(sector:toCircle(), circle)
+        return ShapeIntersector.circleToCircle(sector, circle)
     end
-    local success, circle_points = ShapeIntersector.circleToCircle(sector:toCircle(), circle)
+    local success, circle_points = ShapeIntersector.circleToCircle(sector, circle)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1560,14 +1572,14 @@ end
 ---@param circle foundation.shape.Circle 圆
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithCircle(sector, circle)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.circleHasIntersectionWithCircle(sector:toCircle(), circle)
+        return ShapeIntersector.circleHasIntersectionWithCircle(sector, circle)
     end
     if ShapeIntersector.sectorContainsPoint(sector, circle.center) then
         return true
     end
-    local success, circle_points = ShapeIntersector.circleToCircle(sector:toCircle(), circle)
+    local success, circle_points = ShapeIntersector.circleToCircle(sector, circle)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector, p) then
@@ -1595,7 +1607,7 @@ end
 function ShapeIntersector.sectorToRectangle(sector, rectangle)
     local points = {}
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.rectangleToCircle(rectangle, sector:toCircle())
+        return ShapeIntersector.rectangleToCircle(rectangle, sector)
     end
     local edges = rectangle:getEdges()
     for _, edge in ipairs(edges) do
@@ -1632,7 +1644,7 @@ end
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithRectangle(sector, rectangle)
     if math.abs(sector.range) >= 1 then
-        return ShapeIntersector.rectangleHasIntersectionWithCircle(rectangle, sector:toCircle())
+        return ShapeIntersector.rectangleHasIntersectionWithCircle(rectangle, sector)
     end
     local edges = rectangle:getEdges()
     for _, edge in ipairs(edges) do
@@ -1660,12 +1672,12 @@ end
 ---@param sector2 foundation.shape.Sector 第二个扇形
 ---@return boolean, foundation.math.Vector2[] | nil
 function ShapeIntersector.sectorToSector(sector1, sector2)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     local points = {}
     if math.abs(sector1.range) >= 1 and math.abs(sector2.range) >= 1 then
-        return ShapeIntersector.circleToCircle(sector1:toCircle(), sector2:toCircle())
+        return ShapeIntersector.circleToCircle(sector1, sector2)
     end
-    local success, circle_points = ShapeIntersector.circleToCircle(sector1:toCircle(), sector2:toCircle())
+    local success, circle_points = ShapeIntersector.circleToCircle(sector1, sector2)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector1, p) and ShapeIntersector.sectorContainsPoint(sector2, p) then
@@ -1733,15 +1745,15 @@ end
 ---@param sector2 foundation.shape.Sector 第二个扇形
 ---@return boolean
 function ShapeIntersector.sectorHasIntersectionWithSector(sector1, sector2)
-    local Segment = require("foundation.shape.Segment")
+    Segment = Segment or require("foundation.shape.Segment")
     if math.abs(sector1.range) >= 1 and math.abs(sector2.range) >= 1 then
-        return ShapeIntersector.circleHasIntersectionWithCircle(sector1:toCircle(), sector2:toCircle())
+        return ShapeIntersector.circleHasIntersectionWithCircle(sector1, sector2)
     end
     if ShapeIntersector.sectorContainsPoint(sector1, sector2.center) or
             ShapeIntersector.sectorContainsPoint(sector2, sector1.center) then
         return true
     end
-    local success, circle_points = ShapeIntersector.circleToCircle(sector1:toCircle(), sector2:toCircle())
+    local success, circle_points = ShapeIntersector.circleToCircle(sector1, sector2)
     if success then
         for _, p in ipairs(circle_points) do
             if ShapeIntersector.sectorContainsPoint(sector1, p) and ShapeIntersector.sectorContainsPoint(sector2, p) then

@@ -3,6 +3,9 @@ local ffi = require("ffi")
 local type = type
 local string = string
 local math = math
+local require = require
+
+local Vector2, Vector3
 
 ffi.cdef [[
 typedef struct {
@@ -137,14 +140,14 @@ end
 ---将Vector4转换为Vector2
 ---@return foundation.math.Vector2 转换后的Vector2
 function Vector4:toVector2()
-    local Vector2 = require("foundation.math.Vector2")
+    Vector2 = Vector2 or require("foundation.math.Vector2")
     return Vector2.create(self.x, self.y)
 end
 
 ---将Vector4转换为Vector3
 ---@return foundation.math.Vector3 转换后的Vector3
 function Vector4:toVector3()
-    local Vector3 = require("foundation.math.Vector3")
+    Vector3 = Vector3 or require("foundation.math.Vector3")
     return Vector3.create(self.x, self.y, self.z)
 end
 
@@ -190,7 +193,7 @@ end
 ---获取向量的投影坐标（将w分量归一化为1后返回一个Vector3）
 ---@return foundation.math.Vector3 投影后的三维向量
 function Vector4:projectTo3D()
-    local Vector3 = require("foundation.math.Vector3")
+    Vector3 = Vector3 or require("foundation.math.Vector3")
     if math.abs(self.w) < 1e-10 then
         return Vector3.create(self.x, self.y, self.z)
     end

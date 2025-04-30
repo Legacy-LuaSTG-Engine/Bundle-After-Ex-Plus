@@ -281,34 +281,43 @@ end
 ---@return boolean
 function Sector:containsPoint(point, tolerance)
     tolerance = tolerance or 1e-10
+
+    local vec = point - self.center
+    local range = self.range * 2 * math.pi
     if math.abs(self.range) >= 1 then
-        return Circle.create(self.center, self.radius):containsPoint(point, tolerance)
+        local dist = (point - self.center):length()
+        return math.abs(dist - self.radius) <= tolerance
     end
-    local circle = Circle.create(self.center, self.radius)
-    if not circle:containsPoint(point, tolerance) then
+
+    local segment1 = Segment.create(self.center, self.center + self.direction * self.radius)
+    if segment1:containsPoint(point, tolerance) then
+        return true
+    end
+
+    local segment2 = Segment.create(self.center, self.center + self.direction:rotated(range) * self.radius)
+    if segment2:containsPoint(point, tolerance) then
+        return true
+    end
+
+    local distance = vec:length()
+    if math.abs(distance - self.radius) > tolerance then
         return false
     end
-    local vec = point - self.center
-    local dir = vec:normalized()
-    local centerAngle = math.atan2(self.direction.y, self.direction.x) % (2 * math.pi)
-    local pointAngle = math.atan2(dir.y, dir.x) % (2 * math.pi)
-    local maxAngle = math.abs(self.range) * math.pi
-    local startAngle = centerAngle
-    local endAngle = (centerAngle + self.range * 2 * math.pi) % (2 * math.pi)
-    if startAngle < 0 then
-        startAngle = startAngle + 2 * math.pi
+    if distance < tolerance then
+        return true
     end
-    if endAngle < 0 then
-        endAngle = endAngle + 2 * math.pi
+
+    local angle_begin
+    if range > 0 then
+        angle_begin = self.direction:angle()
+    else
+        range = -range
+        angle_begin = self.direction:angle() - range
     end
-    if pointAngle < 0 then
-        pointAngle = pointAngle + 2 * math.pi
-    end
-    local angleDiff = math.abs(pointAngle - centerAngle)
-    if angleDiff > math.pi then
-        angleDiff = 2 * math.pi - angleDiff
-    end
-    return angleDiff <= maxAngle + tolerance
+
+    local vec_angle = vec:angle()
+    vec_angle = vec_angle - 2 * math.pi * math.floor((vec_angle - angle_begin) / (2 * math.pi))
+    return angle_begin <= vec_angle and vec_angle <= angle_begin + range
 end
 
 ffi.metatype("foundation_shape_Sector", Sector)
