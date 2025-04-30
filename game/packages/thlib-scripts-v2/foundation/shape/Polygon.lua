@@ -44,7 +44,6 @@ function Polygon.create(points)
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return ffi.gc(ffi.new("foundation_shape_Polygon", size, points_array), function()
         points_array = nil
-        print("released polygon")
     end)
 end
 
