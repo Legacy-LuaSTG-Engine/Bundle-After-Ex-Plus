@@ -14,7 +14,7 @@ local ShapeIntersector = require("foundation.shape.ShapeIntersector")
 
 ffi.cdef [[
 typedef struct {
-    size_t size;
+    int size;
     foundation_math_Vector2* points;
 } foundation_shape_Polygon;
 ]]
@@ -139,6 +139,7 @@ end
 function Polygon:getCenter()
     local sumX, sumY = 0, 0
 
+    print("size", self.size)
     for i = 0, self.size - 1 do
         sumX = sumX + self.points[i].x
         sumY = sumY + self.points[i].y
