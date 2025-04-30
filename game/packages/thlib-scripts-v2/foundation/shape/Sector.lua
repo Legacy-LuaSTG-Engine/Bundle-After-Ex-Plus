@@ -15,16 +15,16 @@ ffi.cdef [[
 typedef struct {
     foundation_math_Vector2 center;
     double radius;
-    foundation_math_Vector2 startDirection;
-    foundation_math_Vector2 endDirection;
+    foundation_math_Vector2 direction;
+    double range;
 } foundation_shape_Sector;
 ]]
 
 ---@class foundation.shape.Sector
 ---@field center foundation.math.Vector2 扇形的中心点
 ---@field radius number 扇形的半径
----@field startDirection foundation.math.Vector2 起始方向（归一化向量）
----@field endDirection foundation.math.Vector2 终止方向（归一化向量）
+---@field direction foundation.math.Vector2 方向（归一化向量）
+---@field range number 扇形范围（-1到1，1或-1为整圆，0.5或-0.5为半圆）
 local Sector = {}
 Sector.__index = Sector
 Sector.__type = "foundation.shape.Sector"
@@ -32,38 +32,36 @@ Sector.__type = "foundation.shape.Sector"
 ---创建一个新的扇形
 ---@param center foundation.math.Vector2 中心点
 ---@param radius number 半径
----@param startDirection foundation.math.Vector2 起始方向（将归一化）
----@param endDirection foundation.math.Vector2 终止方向（将归一化）
+---@param direction foundation.math.Vector2 方向（将归一化）
+---@param range number 范围（-1到1）
 ---@return foundation.shape.Sector
-function Sector.create(center, radius, startDirection, endDirection)
-    local startDir = startDirection:normalized()
-    local endDir = endDirection:normalized()
+function Sector.create(center, radius, direction, range)
+    local dir = direction:normalized()
+    range = math.max(-1, math.min(1, range)) -- 限制范围在-1到1
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Sector", center, radius, startDir, endDir)
+    return ffi.new("foundation_shape_Sector", center, radius, dir, range)
 end
 
 ---使用弧度创建扇形
 ---@param center foundation.math.Vector2 中心点
 ---@param radius number 半径
----@param startRad number 起始弧度
----@param endRad number 终止弧度
+---@param rad number 方向弧度
+---@param range number 范围（-1到1）
 ---@return foundation.shape.Sector
-function Sector.createFromRad(center, radius, startRad, endRad)
-    local startDir = Vector2.createFromRad(startRad)
-    local endDir = Vector2.createFromRad(endRad)
-    return Sector.create(center, radius, startDir, endDir)
+function Sector.createFromRad(center, radius, rad, range)
+    local dir = Vector2.createFromRad(rad)
+    return Sector.create(center, radius, dir, range)
 end
 
 ---使用角度创建扇形
 ---@param center foundation.math.Vector2 中心点
 ---@param radius number 半径
----@param startAngle number 起始角度
----@param endAngle number 终止角度
+---@param angle number 方向角度
+---@param range number 范围（-1到1）
 ---@return foundation.shape.Sector
-function Sector.createFromAngle(center, radius, startAngle, endAngle)
-    local startRad = math.rad(startAngle)
-    local endRad = math.rad(endAngle)
-    return Sector.createFromRad(center, radius, startRad, endRad)
+function Sector.createFromAngle(center, radius, angle, range)
+    local rad = math.rad(angle)
+    return Sector.createFromRad(center, radius, rad, range)
 end
 
 ---扇形相等比较
@@ -73,29 +71,34 @@ end
 function Sector.__eq(a, b)
     return a.center == b.center and
             math.abs(a.radius - b.radius) < 1e-10 and
-            a.startDirection == b.startDirection and
-            a.endDirection == b.endDirection
+            a.direction == b.direction and
+            math.abs(a.range - b.range) < 1e-10
 end
 
 ---扇形的字符串表示
 ---@param self foundation.shape.Sector
 ---@return string
 function Sector.__tostring(self)
-    return string.format("Sector(center=%s, radius=%f, startDirection=%s, endDirection=%s)",
-            tostring(self.center), self.radius, tostring(self.startDirection), tostring(self.endDirection))
+    return string.format("Sector(center=%s, radius=%f, direction=%s, range=%f)",
+            tostring(self.center), self.radius, tostring(self.direction), self.range)
+end
+
+---转为圆形
+---@return foundation.shape.Circle
+function Sector:toCircle()
+    return Circle.create(self.center, self.radius)
 end
 
 ---计算扇形角度（弧度）
 ---@return number
 function Sector:getAngle()
-    local dot = self.startDirection:dot(self.endDirection)
-    dot = math.max(-1, math.min(1, dot)) -- 防止浮点误差
-    local angle = math.acos(dot)
-    local cross = self.startDirection.x * self.endDirection.y - self.startDirection.y * self.endDirection.x
-    if cross < 0 then
-        angle = 2 * math.pi - angle
-    end
-    return angle
+    return math.abs(self.range) * 2 * math.pi
+end
+
+---计算扇形角度（角度）
+---@return number
+function Sector:getDegreeAngle()
+    return math.deg(self:getAngle())
 end
 
 ---计算扇形的面积
@@ -108,7 +111,21 @@ end
 ---@param point foundation.math.Vector2
 ---@return boolean
 function Sector:contains(point)
-    return ShapeIntersector.sectorContainsPoint(self, point)
+    if math.abs(self.range) >= 1 then
+        return Circle.create(self.center, self.radius):contains(point)
+    end
+    local vec = point - self.center
+    if vec:length() > self.radius then
+        return false
+    end
+    local dir = vec:normalized()
+    local angle = math.acos(self.direction:dot(dir))
+    local maxAngle = math.abs(self.range) * math.pi
+    local cross = self.direction.x * dir.y - self.direction.y * dir.x
+    if self.range < 0 then
+        cross = -cross
+    end
+    return angle <= maxAngle and cross >= 0
 end
 
 ---移动扇形（修改当前扇形）
@@ -138,7 +155,7 @@ function Sector:moved(v)
     end
     return Sector.create(
             Vector2.create(self.center.x + moveX, self.center.y + moveY),
-            self.radius, self.startDirection, self.endDirection
+            self.radius, self.direction, self.range
     )
 end
 
@@ -146,8 +163,7 @@ end
 ---@param rad number 旋转弧度
 ---@return foundation.shape.Sector
 function Sector:rotate(rad)
-    self.startDirection:rotate(rad)
-    self.endDirection:rotate(rad)
+    self.direction:rotate(rad)
     return self
 end
 
@@ -164,8 +180,8 @@ end
 function Sector:rotated(rad)
     return Sector.create(
             self.center, self.radius,
-            self.startDirection:rotated(rad),
-            self.endDirection:rotated(rad)
+            self.direction:rotated(rad),
+            self.range
     )
 end
 
@@ -188,7 +204,7 @@ end
 ---@param scale number
 ---@return foundation.shape.Sector
 function Sector:scaled(scale)
-    return Sector.create(self.center, self.radius * scale, self.startDirection, self.endDirection)
+    return Sector.create(self.center, self.radius * scale, self.direction, self.range)
 end
 
 ---检查与其他形状的相交
@@ -209,6 +225,9 @@ end
 ---@param point foundation.math.Vector2
 ---@return foundation.math.Vector2
 function Sector:closestPoint(point)
+    if math.abs(self.range) >= 1 then
+        return Circle.create(self.center, self.radius):closestPoint(point)
+    end
     if self:contains(point) then
         return point:clone()
     end
@@ -217,8 +236,10 @@ function Sector:closestPoint(point)
     if self:contains(circle_closest) then
         return circle_closest
     end
-    local start_point = self.center + self.startDirection * self.radius
-    local end_point = self.center + self.endDirection * self.radius
+    local startDir = self.direction
+    local endDir = self.direction:rotated(self.range * 2 * math.pi)
+    local start_point = self.center + startDir * self.radius
+    local end_point = self.center + endDir * self.radius
     local start_segment = Segment.create(self.center, start_point)
     local end_segment = Segment.create(self.center, end_point)
     local candidates = {
@@ -260,15 +281,20 @@ end
 ---@return boolean
 function Sector:containsPoint(point, tolerance)
     tolerance = tolerance or 1e-10
+    if math.abs(self.range) >= 1 then
+        return Circle.create(self.center, self.radius):containsPoint(point, tolerance)
+    end
     local circle = Circle.create(self.center, self.radius)
     if not circle:containsPoint(point, tolerance) then
         return false
     end
     local vec = point - self.center
     local dir = vec:normalized()
-    local startAngle = math.atan2(self.startDirection.y, self.startDirection.x) % (2 * math.pi)
-    local endAngle = math.atan2(self.endDirection.y, self.endDirection.x) % (2 * math.pi)
+    local centerAngle = math.atan2(self.direction.y, self.direction.x) % (2 * math.pi)
     local pointAngle = math.atan2(dir.y, dir.x) % (2 * math.pi)
+    local maxAngle = math.abs(self.range) * math.pi
+    local startAngle = centerAngle
+    local endAngle = (centerAngle + self.range * 2 * math.pi) % (2 * math.pi)
     if startAngle < 0 then
         startAngle = startAngle + 2 * math.pi
     end
@@ -278,12 +304,11 @@ function Sector:containsPoint(point, tolerance)
     if pointAngle < 0 then
         pointAngle = pointAngle + 2 * math.pi
     end
-    if startAngle <= endAngle then
-        return math.abs(pointAngle - startAngle) < tolerance or math.abs(pointAngle - endAngle) < tolerance
-    else
-        return math.abs(pointAngle - startAngle) < tolerance or math.abs(pointAngle - endAngle) < tolerance or
-                (pointAngle >= startAngle or pointAngle <= endAngle)
+    local angleDiff = math.abs(pointAngle - centerAngle)
+    if angleDiff > math.pi then
+        angleDiff = 2 * math.pi - angleDiff
     end
+    return angleDiff <= maxAngle + tolerance
 end
 
 ffi.metatype("foundation_shape_Sector", Sector)
