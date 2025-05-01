@@ -168,6 +168,10 @@ end
 local player = {}
 function player:pos()
     local mouseX, mouseY = Mouse.GetPosition()
+    if mouseX ~= mouseX or mouseY ~= mouseY then
+        -- why LuaSTG got NaN?
+        return Vector2.create(0, 0)
+    end
     mouseX = mouseX / window.view_width * window.width
     mouseY = mouseY / window.view_height * window.height
     return Vector2.create(mouseX, mouseY)
