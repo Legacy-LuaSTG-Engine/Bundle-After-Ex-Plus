@@ -7,6 +7,7 @@ local math = math
 local tostring = tostring
 local string = string
 local error = error
+local rawset = rawset
 local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
@@ -62,8 +63,9 @@ function Polygon.__newindex(self, key, value)
         local size, points_array = buildNewVector2Array(value)
         self.__data.size = size
         self.__data.points = points_array
-    elseif key == "__data" then
-        error("cannot modify __data directly")
+        self.__data_point_ref = points_array
+    else
+        rawset(self, key, value)
     end
 end
 
@@ -80,7 +82,7 @@ function Polygon.create(points)
     local polygon = ffi.new("foundation_shape_Polygon", size, points_array)
     local result = {
         __data = polygon,
-        __point_ref = points_array,
+        __data_point_ref = points_array,
     }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return setmetatable(result, Polygon)

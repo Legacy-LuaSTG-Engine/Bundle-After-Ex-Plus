@@ -4,6 +4,8 @@ local math = math
 local type = type
 local tostring = tostring
 local string = string
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local ShapeIntersector = require("foundation.shape.ShapeIntersector")
@@ -19,16 +21,44 @@ typedef struct {
 ---@field center foundation.math.Vector2 圆心位置
 ---@field radius number 圆的半径
 local Circle = {}
-Circle.__index = Circle
 Circle.__type = "foundation.shape.Circle"
+
+---@param self foundation.shape.Circle
+---@param key any
+---@return any
+function Circle.__index(self, key)
+    if key == "center" then
+        return self.__data.center
+    elseif key == "radius" then
+        return self.__data.radius
+    end
+    return Circle[key]
+end
+
+---@param self foundation.shape.Circle
+---@param key any
+---@param value any
+function Circle.__newindex(self, key, value)
+    if key == "center" then
+        self.__data.center = value
+    elseif key == "radius" then
+        self.__data.radius = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一个新的圆
 ---@param center foundation.math.Vector2 圆心位置
 ---@param radius number 半径
 ---@return foundation.shape.Circle
 function Circle.create(center, radius)
+    local circle = ffi.new("foundation_shape_Circle", center, radius)
+    local result = {
+        __data = circle,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Circle", center, radius)
+    return setmetatable(result, Circle)
 end
 
 ---圆相等比较

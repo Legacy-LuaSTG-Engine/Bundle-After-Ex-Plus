@@ -5,6 +5,8 @@ local ipairs = ipairs
 local tostring = tostring
 local string = string
 local math = math
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local Segment = require("foundation.shape.Segment")
@@ -25,8 +27,40 @@ typedef struct {
 ---@field height number 矩形的高度
 ---@field direction foundation.math.Vector2 矩形的宽度轴方向（归一化向量）
 local Rectangle = {}
-Rectangle.__index = Rectangle
 Rectangle.__type = "foundation.shape.Rectangle"
+
+---@param self foundation.shape.Rectangle
+---@param key any
+---@return any
+function Rectangle.__index(self, key)
+    if key == "center" then
+        return self.__data.center
+    elseif key == "width" then
+        return self.__data.width
+    elseif key == "height" then
+        return self.__data.height
+    elseif key == "direction" then
+        return self.__data.direction
+    end
+    return Rectangle[key]
+end
+
+---@param self foundation.shape.Rectangle
+---@param key string
+---@param value any
+function Rectangle.__newindex(self, key, value)
+    if key == "center" then
+        self.__data.center = value
+    elseif key == "width" then
+        self.__data.width = value
+    elseif key == "height" then
+        self.__data.height = value
+    elseif key == "direction" then
+        self.__data.direction = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一个新的矩形
 ---@param center foundation.math.Vector2 中心点
@@ -45,8 +79,12 @@ function Rectangle.create(center, width, height, direction)
         ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
+    local rectangle = ffi.new("foundation_shape_Rectangle", center, width, height, direction)
+    local result = {
+        __data = rectangle
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Rectangle", center, width, height, direction)
+    return setmetatable(result, Rectangle)
 end
 
 ---使用给定的弧度创建矩形

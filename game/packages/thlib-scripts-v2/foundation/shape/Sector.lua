@@ -5,6 +5,8 @@ local type = type
 local ipairs = ipairs
 local tostring = tostring
 local string = string
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local Segment = require("foundation.shape.Segment")
@@ -26,8 +28,40 @@ typedef struct {
 ---@field direction foundation.math.Vector2 方向（归一化向量）
 ---@field range number 扇形范围（-1到1，1或-1为整圆，0.5或-0.5为半圆）
 local Sector = {}
-Sector.__index = Sector
 Sector.__type = "foundation.shape.Sector"
+
+---@param self foundation.shape.Sector
+---@param key any
+---@return any
+function Sector.__index(self, key)
+    if key == "center" then
+        return self.__data.center
+    elseif key == "radius" then
+        return self.__data.radius
+    elseif key == "direction" then
+        return self.__data.direction
+    elseif key == "range" then
+        return self.__data.range
+    end
+    return Sector[key]
+end
+
+---@param self foundation.shape.Sector
+---@param key any
+---@param value any
+function Sector.__newindex(self, key, value)
+    if key == "center" then
+        self.__data.center = value
+    elseif key == "radius" then
+        self.__data.radius = value
+    elseif key == "direction" then
+        self.__data.direction = value
+    elseif key == "range" then
+        self.__data.range = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一个新的扇形
 ---@param center foundation.math.Vector2 中心点
@@ -38,8 +72,12 @@ Sector.__type = "foundation.shape.Sector"
 function Sector.create(center, radius, direction, range)
     local dir = direction:normalized()
     range = math.max(-1, math.min(1, range)) -- 限制范围在-1到1
+    local sector = ffi.new("foundation_shape_Sector", center, radius, dir, range)
+    local result = {
+        __data = sector,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Sector", center, radius, dir, range)
+    return setmetatable(result, Sector)
 end
 
 ---使用弧度创建扇形

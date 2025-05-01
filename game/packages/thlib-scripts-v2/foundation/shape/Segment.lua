@@ -4,6 +4,8 @@ local type = type
 local tostring = tostring
 local string = string
 local math = math
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local ShapeIntersector = require("foundation.shape.ShapeIntersector")
@@ -18,16 +20,44 @@ typedef struct {
 ---@field point1 foundation.math.Vector2
 ---@field point2 foundation.math.Vector2
 local Segment = {}
-Segment.__index = Segment
 Segment.__type = "foundation.shape.Segment"
+
+---@param self foundation.shape.Segment
+---@param key any
+---@return any
+function Segment.__index(self, key)
+    if key == "point1" then
+        return self.__data.point1
+    elseif key == "point2" then
+        return self.__data.point2
+    end
+    return Segment[key]
+end
+
+---@param self foundation.shape.Segment
+---@param key any
+---@param value any
+function Segment.__newindex(self, key, value)
+    if key == "point1" then
+        self.__data.point1 = value
+    elseif key == "point2" then
+        self.__data.point2 = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一个线段
 ---@param point1 foundation.math.Vector2 线段的起点
 ---@param point2 foundation.math.Vector2 线段的终点
 ---@return foundation.shape.Segment
 function Segment.create(point1, point2)
+    local segment = ffi.new("foundation_shape_Segment", point1, point2)
+    local result = {
+        __data = segment,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Segment", point1, point2)
+    return setmetatable(result, Segment)
 end
 
 ---根据给定点和弧度与长度创建线段

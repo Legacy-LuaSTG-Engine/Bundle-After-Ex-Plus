@@ -5,6 +5,8 @@ local ipairs = ipairs
 local tostring = tostring
 local string = string
 local math = math
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local Segment = require("foundation.shape.Segment")
@@ -21,8 +23,36 @@ typedef struct {
 ---@field point2 foundation.math.Vector2 三角形的第二个顶点
 ---@field point3 foundation.math.Vector2 三角形的第三个顶点
 local Triangle = {}
-Triangle.__index = Triangle
 Triangle.__type = "foundation.shape.Triangle"
+
+---@param self foundation.shape.Triangle
+---@param key string
+---@return any
+function Triangle.__index(self, key)
+    if key == "point1" then
+        return self.__data.point1
+    elseif key == "point2" then
+        return self.__data.point2
+    elseif key == "point3" then
+        return self.__data.point3
+    end
+    return Triangle[key]
+end
+
+---@param self foundation.shape.Triangle
+---@param key string
+---@param value any
+function Triangle.__newindex(self, key, value)
+    if key == "point1" then
+        self.__data.point1 = value
+    elseif key == "point2" then
+        self.__data.point2 = value
+    elseif key == "point3" then
+        self.__data.point3 = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一个新的三角形
 ---@param v1 foundation.math.Vector2 三角形的第一个顶点
@@ -30,8 +60,12 @@ Triangle.__type = "foundation.shape.Triangle"
 ---@param v3 foundation.math.Vector2 三角形的第三个顶点
 ---@return foundation.shape.Triangle 新创建的三角形
 function Triangle.create(v1, v2, v3)
+    local triangle = ffi.new("foundation_shape_Triangle", v1, v2, v3)
+    local result = {
+        __data = triangle,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Triangle", v1, v2, v3)
+    return setmetatable(result, Triangle)
 end
 
 ---三角形相等比较

@@ -4,6 +4,8 @@ local type = type
 local math = math
 local tostring = tostring
 local string = string
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local ShapeIntersector = require("foundation.shape.ShapeIntersector")
@@ -19,8 +21,32 @@ typedef struct {
 ---@field point foundation.math.Vector2 射线的起始点
 ---@field direction foundation.math.Vector2 射线的方向向量
 local Ray = {}
-Ray.__index = Ray
 Ray.__type = "foundation.shape.Ray"
+
+---@param self foundation.shape.Ray
+---@param key any
+---@return any
+function Ray.__index(self, key)
+    if key == "point" then
+        return self.__data.point
+    elseif key == "direction" then
+        return self.__data.direction
+    end
+    return Ray[key]
+end
+
+---@param self foundation.shape.Ray
+---@param key any
+---@param value any
+function Ray.__newindex(self, key, value)
+    if key == "point" then
+        self.__data.point = value
+    elseif key == "direction" then
+        self.__data.direction = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一条新的射线，由起始点和方向向量确定
 ---@param point foundation.math.Vector2 起始点
@@ -37,8 +63,13 @@ function Ray.create(point, direction)
         ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
+    
+    local ray = ffi.new("foundation_shape_Ray", point, direction)
+    local result = {
+        __data = ray,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Ray", point, direction)
+    return setmetatable(result, Ray)
 end
 
 ---根据起始点、弧度创建射线

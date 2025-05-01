@@ -4,6 +4,8 @@ local type = type
 local math = math
 local tostring = tostring
 local string = string
+local rawset = rawset
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local ShapeIntersector = require("foundation.shape.ShapeIntersector")
@@ -19,8 +21,32 @@ typedef struct {
 ---@field point foundation.math.Vector2 直线上的一点
 ---@field direction foundation.math.Vector2 直线的方向向量
 local Line = {}
-Line.__index = Line
 Line.__type = "foundation.shape.Line"
+
+---@param self foundation.shape.Line
+---@param key any
+---@return any
+function Line.__index(self, key)
+    if key == "point" then
+        return self.__data.point
+    elseif key == "direction" then
+        return self.__data.direction
+    end
+    return Line[key]
+end
+
+---@param self foundation.shape.Line
+---@param key any
+---@param value any
+function Line.__newindex(self, key, value)
+    if key == "point" then
+        self.__data.point = value
+    elseif key == "direction" then
+        self.__data.direction = value
+    else
+        rawset(self, key, value)
+    end
+end
 
 ---创建一条新的直线，由一个点和方向向量确定
 ---@param point foundation.math.Vector2 直线上的点
@@ -37,8 +63,13 @@ function Line.create(point, direction)
         ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
+    
+    local line = ffi.new("foundation_shape_Line", point, direction)
+    local result = {
+        __data = line,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.new("foundation_shape_Line", point, direction)
+    return setmetatable(result, Line)
 end
 
 ---根据两个点创建一条直线
