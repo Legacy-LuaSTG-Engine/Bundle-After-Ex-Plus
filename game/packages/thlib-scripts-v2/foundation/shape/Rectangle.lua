@@ -249,10 +249,16 @@ function Rectangle:getPerimeter()
     return 2 * (self.width + self.height)
 end
 
+---计算矩形的中心
+---@return foundation.math.Vector2 矩形的中心
+function Rectangle:getCenter()
+    return self.center:clone()
+end
+
 ---计算矩形的内心
 ---@return foundation.math.Vector2 矩形的内心
 function Rectangle:incenter()
-    return self.center
+    return self.center:clone()
 end
 
 ---计算矩形的内切圆半径
@@ -265,7 +271,7 @@ end
 ---计算矩形的外心
 ---@return foundation.math.Vector2 矩形的外心
 function Rectangle:circumcenter()
-    return self.center
+    return self.center:clone()
 end
 
 ---计算矩形的外接圆半径

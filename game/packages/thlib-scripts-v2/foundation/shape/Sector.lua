@@ -118,6 +118,25 @@ function Sector:getPerimeter()
     return arcLength + 2 * self.radius
 end
 
+---计算扇形的中心点
+---@return foundation.math.Vector2
+function Sector:getCenter()
+    return self.center:clone()
+end
+
+---获取扇形的重心
+---@return foundation.math.Vector2
+function Sector:centroid()
+    local angle = self:getAngle()
+    if math.abs(angle) >= 1 then
+        return self.center:clone()
+    end
+
+    local x = self.center.x + (self.radius / 3) * math.cos(self.direction:angle() + angle / 2)
+    local y = self.center.y + (self.radius / 3) * math.sin(self.direction:angle() + angle / 2)
+    return Vector2.create(x, y)
+end
+
 ---检查点是否在扇形内（包括边界）
 ---@param point foundation.math.Vector2
 ---@return boolean

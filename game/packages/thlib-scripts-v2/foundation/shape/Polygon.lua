@@ -175,9 +175,9 @@ function Polygon:getVertices()
     return vertices
 end
 
----获取多边形的中心点
+---获取多边形的重心
 ---@return foundation.math.Vector2
-function Polygon:getCenter()
+function Polygon:centroid()
     local sumX, sumY = 0, 0
 
     for i = 0, self.size - 1 do
@@ -186,6 +186,31 @@ function Polygon:getCenter()
     end
 
     return Vector2.create(sumX / self.size, sumY / self.size)
+end
+
+---计算多边形的中心
+---@return foundation.math.Vector2
+function Polygon:getCenter()
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+
+    for i = 0, self.size - 1 do
+        local point = self.points[i]
+        if point.x < minX then
+            minX = point.x
+        end
+        if point.y < minY then
+            minY = point.y
+        end
+        if point.x > maxX then
+            maxX = point.x
+        end
+        if point.y > maxY then
+            maxY = point.y
+        end
+    end
+
+    return Vector2.create((minX + maxX) / 2, (minY + maxY) / 2)
 end
 
 ---计算多边形的面积
@@ -301,7 +326,7 @@ end
 ---@return foundation.shape.Polygon 旋转后的多边形（自身引用）
 ---@overload fun(self:foundation.shape.Polygon, rad:number): foundation.shape.Polygon 将多边形绕中心点旋转指定弧度
 function Polygon:rotate(rad, center)
-    center = center or self:getCenter()
+    center = center or self:centroid()
     local cosRad = math.cos(rad)
     local sinRad = math.sin(rad)
 
@@ -331,7 +356,7 @@ end
 ---@return foundation.shape.Polygon 旋转后的多边形副本
 ---@overload fun(self:foundation.shape.Polygon, rad:number): foundation.shape.Polygon 将多边形绕中心点旋转指定弧度
 function Polygon:rotated(rad, center)
-    center = center or self:getCenter()
+    center = center or self:centroid()
     local cosRad = math.cos(rad)
     local sinRad = math.sin(rad)
 
@@ -370,7 +395,7 @@ function Polygon:scale(scale, center)
     else
         scaleX, scaleY = scale.x, scale.y
     end
-    center = center or self:getCenter()
+    center = center or self:centroid()
 
     for i = 0, self.size - 1 do
         self.points[i].x = (self.points[i].x - center.x) * scaleX + center.x
@@ -392,7 +417,7 @@ function Polygon:scaled(scale, center)
     else
         scaleX, scaleY = scale.x, scale.y
     end
-    center = center or self:getCenter()
+    center = center or self:centroid()
 
     local newPoints = {}
     for i = 0, self.size - 1 do

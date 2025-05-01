@@ -150,6 +150,18 @@ function Circle:getPerimeter()
     return 2 * math.pi * self.radius
 end
 
+---计算圆的中心
+---@return foundation.math.Vector2 圆心位置
+function Circle:getCenter()
+    return self.center:clone()
+end
+
+---计算圆的重心
+---@return foundation.math.Vector2 圆心位置
+function Circle:centroid()
+    return self.center:clone()
+end
+
 ---计算点到圆的最近点
 ---@param point foundation.math.Vector2 要检查的点
 ---@param boundary boolean 是否限制在边界内，默认为false

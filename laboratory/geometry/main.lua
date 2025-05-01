@@ -399,9 +399,9 @@ function object:renderPolygon(polygon, player_pos)
         renderPoint(vertex, 4)
     end
     setColor(127, 255, 0, 0)
-    renderPoint(polygon:getCenter(), 4)
+    renderPoint(polygon:centroid(), 4)
     setColor(127, 255, 63, 63)
-    renderLine(polygon:getCenter(), vertices[1], 2)
+    renderLine(polygon:centroid(), vertices[1], 2)
 end
 
 ---@param circle foundation.shape.Circle
