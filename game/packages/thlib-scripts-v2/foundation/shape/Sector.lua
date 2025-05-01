@@ -470,6 +470,12 @@ function Sector:containsPoint(point, tolerance)
     return angle_begin <= vec_angle and vec_angle <= angle_begin + range
 end
 
+---复制扇形
+---@return foundation.shape.Sector
+function Sector:clone()
+    return Sector.create(self.center:clone(), self.radius, self.direction:clone(), self.range)
+end
+
 ffi.metatype("foundation_shape_Sector", Sector)
 
 return Sector

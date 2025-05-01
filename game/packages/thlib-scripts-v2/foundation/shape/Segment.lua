@@ -353,6 +353,12 @@ function Segment:containsPoint(point, tolerance)
     return t >= 0 and t <= 1
 end
 
+---复制线段
+---@return foundation.shape.Segment 线段的副本
+function Segment:clone()
+    return Segment.create(self.point1:clone(), self.point2:clone())
+end
+
 ffi.metatype("foundation_shape_Segment", Segment)
 
 return Segment

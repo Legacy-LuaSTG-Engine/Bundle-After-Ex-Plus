@@ -312,6 +312,12 @@ function Ray:projectPoint(point)
     return Vector2.create(self.point.x + t * dir.x, self.point.y + t * dir.y)
 end
 
+---复制射线
+---@return foundation.shape.Ray 射线副本
+function Ray:clone()
+    return Ray.create(self.point:clone(), self.direction:clone())
+end
+
 ffi.metatype("foundation_shape_Ray", Ray)
 
 return Ray

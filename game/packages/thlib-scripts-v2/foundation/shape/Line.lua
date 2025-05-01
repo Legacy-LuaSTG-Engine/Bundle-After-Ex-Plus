@@ -295,6 +295,12 @@ function Line:projectPoint(point)
     return self.point + dir * proj_length
 end
 
+---复制当前直线
+---@return foundation.shape.Line 复制的直线
+function Line:clone()
+    return Line.create(self.point:clone(), self.direction:clone())
+end
+
 ffi.metatype("foundation_shape_Line", Line)
 
 return Line

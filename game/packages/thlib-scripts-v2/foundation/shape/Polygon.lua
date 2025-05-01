@@ -713,6 +713,16 @@ function Polygon:triangulate()
     return triangles
 end
 
+---复制当前多边形
+---@return foundation.shape.Polygon 复制后的多边形
+function Polygon:clone()
+    local newPoints = {}
+    for i = 0, self.size - 1 do
+        newPoints[i + 1] = self.points[i]:clone()
+    end
+    return Polygon.create(newPoints)
+end
+
 ffi.metatype("foundation_shape_Polygon", Polygon)
 
 return Polygon

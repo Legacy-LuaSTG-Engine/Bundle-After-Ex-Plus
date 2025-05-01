@@ -243,6 +243,12 @@ function Circle:containsPoint(point, tolerance)
     return math.abs(dist - self.radius) <= tolerance
 end
 
+---复制圆
+---@return foundation.shape.Circle 圆的副本
+function Circle:clone()
+    return Circle.create(self.center:clone(), self.radius)
+end
+
 ffi.metatype("foundation_shape_Circle", Circle)
 
 return Circle

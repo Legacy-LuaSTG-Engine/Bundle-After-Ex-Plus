@@ -429,6 +429,12 @@ function Triangle:containsPoint(point, tolerance)
     return false
 end
 
+---复制三角形
+---@return foundation.shape.Triangle 三角形的副本
+function Triangle:clone()
+    return Triangle.create(self.point1:clone(), self.point2:clone(), self.point3:clone())
+end
+
 ffi.metatype("foundation_shape_Triangle", Triangle)
 
 return Triangle

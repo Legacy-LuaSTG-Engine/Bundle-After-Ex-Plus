@@ -396,6 +396,12 @@ function Rectangle:containsPoint(point, tolerance)
     return false
 end
 
+---复制矩形
+---@return foundation.shape.Rectangle
+function Rectangle:clone()
+    return Rectangle.create(self.center:clone(), self.width, self.height, self.direction:clone())
+end
+
 ffi.metatype("foundation_shape_Rectangle", Rectangle)
 
 return Rectangle
