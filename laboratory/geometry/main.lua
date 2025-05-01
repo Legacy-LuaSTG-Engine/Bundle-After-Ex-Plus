@@ -211,6 +211,9 @@ function object:draw()
     local player_pos = player:pos()
     self:renderPlayerPoint(player_pos)
     for _, obj in self:enum() do
+        self:renderBoundingBox(obj)
+    end
+    for _, obj in self:enum() do
         if obj.__type == "foundation.shape.Line" then
             self:renderLine(obj, player_pos)
         elseif obj.__type == "foundation.shape.Ray" then
@@ -261,6 +264,19 @@ function object:renderProjectPoint(obj, player_pos)
     renderLine(player_pos, projectPoint, 2)
     setColor(192, 200, 127, 255)
     renderPoint(projectPoint, 4)
+end
+
+---@param obj {__type:string, getBoundingBoxSize:function, getCenter:function}
+function object:renderBoundingBox(obj)
+    local center = obj:getCenter()
+    local w, h = obj:getBoundingBoxSize()
+    local v1 = Vector2.create(center.x - w / 2, center.y - h / 2)
+    local v2 = Vector2.create(center.x + w / 2, center.y + h / 2)
+    setColor(192, 127, 0, 127)
+    renderLine(v1, Vector2.create(v1.x, v2.y), 2)
+    renderLine(v1, Vector2.create(v2.x, v1.y), 2)
+    renderLine(v2, Vector2.create(v1.x, v2.y), 2)
+    renderLine(v2, Vector2.create(v2.x, v1.y), 2)
 end
 
 ---@param line foundation.shape.Line
@@ -603,8 +619,34 @@ function Scene5:draw()
 end
 
 local Scene6 = {}
-Scene6.name = "Polygon and Sector and Circle"
+Scene6.name = "Sector"
 function Scene6:create()
+    self.timer = -1
+    object:insert(
+            Sector.create(Vector2.create(0, 0), 100, Vector2.createFromAngle(45), 0.25)
+                  :move(Vector2.create(window.width / 2, window.height / 2))
+    )
+end
+function Scene6:destroy()
+    object:clear()
+end
+function Scene6:update()
+    self.timer = self.timer + 1
+    for i, obj in object:enum() do
+        obj:degreeRotate(-1 + 2 * (i % 2))
+        if obj.__type == "foundation.shape.Sector" then
+            obj.range = 0.75 * math.sin(self.timer / 100)
+        end
+    end
+    object:updateCollisionCheck()
+end
+function Scene6:draw()
+    object:draw()
+end
+
+local Scene7 = {}
+Scene7.name = "Polygon and Sector and Circle"
+function Scene7:create()
     self.timer = -1
     object:insert(
             Polygon.create({
@@ -628,23 +670,23 @@ function Scene6:create()
                   :move(Vector2.create(window.width / 3 * 2, window.height / 2))
     )
 end
-function Scene6:destroy()
+function Scene7:destroy()
     object:clear()
 end
-function Scene6:update()
+function Scene7:update()
     self.timer = self.timer + 1
     for i, obj in object:enum() do
         obj:degreeRotate(-1 + 2 * (i % 2))
     end
     object:updateCollisionCheck()
 end
-function Scene6:draw()
+function Scene7:draw()
     object:draw()
 end
 
-local Scene7 = {}
-Scene7.name = "Crazy"
-function Scene7:create()
+local Scene8 = {}
+Scene8.name = "Crazy"
+function Scene8:create()
     self.timer = -1
     local rand = lstg.Rand()
     rand:Seed(os.time())
@@ -695,17 +737,17 @@ function Scene7:create()
                   :move(Vector2.create(window.width * rand:Float(0.25, 0.75), window.height * rand:Float(0.25, 0.75)))
     )
 end
-function Scene7:destroy()
+function Scene8:destroy()
     object:clear()
 end
-function Scene7:update()
+function Scene8:update()
     self.timer = self.timer + 1
     for i, obj in object:enum() do
         obj:degreeRotate(-1 + 2 * (i % 2))
     end
     object:updateCollisionCheck()
 end
-function Scene7:draw()
+function Scene8:draw()
     object:draw()
 end
 --endregion
@@ -727,6 +769,7 @@ local scenes = {
     Scene5,
     Scene6,
     Scene7,
+    Scene8,
 }
 local current_scene_index = 1
 local current_scene = makeInstance(scenes[current_scene_index])

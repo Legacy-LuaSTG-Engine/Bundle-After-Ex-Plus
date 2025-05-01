@@ -156,6 +156,12 @@ function Circle:getCenter()
     return self.center:clone()
 end
 
+---计算圆的包围盒宽高
+---@return number, number
+function Circle:getBoundingBoxSize()
+    return self.radius * 2, self.radius * 2
+end
+
 ---计算圆的重心
 ---@return foundation.math.Vector2 圆心位置
 function Circle:centroid()

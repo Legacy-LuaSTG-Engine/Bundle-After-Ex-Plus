@@ -73,6 +73,16 @@ function Triangle:getCenter()
     return Vector2.create((minX + maxX) / 2, (minY + maxY) / 2)
 end
 
+---计算三角形的包围盒宽高
+---@return number, number
+function Triangle:getBoundingBoxSize()
+    local minX = math.min(self.point1.x, self.point2.x, self.point3.x)
+    local maxX = math.max(self.point1.x, self.point2.x, self.point3.x)
+    local minY = math.min(self.point1.y, self.point2.y, self.point3.y)
+    local maxY = math.max(self.point1.y, self.point2.y, self.point3.y)
+    return maxX - minX, maxY - minY
+end
+
 ---计算三角形的外接圆半径
 ---@return number 三角形的外接圆半径
 function Triangle:circumradius()

@@ -81,6 +81,36 @@ function Ray:getPoint(length)
     return self.point + self.direction * length
 end
 
+---计算射线的中心
+---@return foundation.math.Vector2
+function Ray:getCenter()
+    if math.abs(self.direction.x) < 1e-10 then
+        return Vector2.create(0, math.huge)
+    elseif math.abs(self.direction.y) < 1e-10 then
+        return Vector2.create(math.huge, 0)
+    end
+    if self.direction.x > 0 and self.direction.y > 0 then
+        return Vector2.create(math.huge, math.huge)
+    elseif self.direction.x > 0 and self.direction.y < 0 then
+        return Vector2.create(math.huge, -math.huge)
+    elseif self.direction.x < 0 and self.direction.y > 0 then
+        return Vector2.create(-math.huge, math.huge)
+    else
+        return Vector2.create(-math.huge, -math.huge)
+    end
+end
+
+---计算射线的包围盒宽高
+---@return number, number
+function Ray:getBoundingBoxSize()
+    if math.abs(self.direction.x) < 1e-10 then
+        return 0, math.huge
+    elseif math.abs(self.direction.y) < 1e-10 then
+        return math.huge, 0
+    end
+    return math.huge, math.huge
+end
+
 ---获取射线的角度（弧度）
 ---@return number 射线的角度，单位为弧度
 function Ray:angle()

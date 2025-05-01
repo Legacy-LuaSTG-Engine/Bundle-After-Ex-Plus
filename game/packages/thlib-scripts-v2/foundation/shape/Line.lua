@@ -95,6 +95,23 @@ function Line:getPoint(length)
     return self.point + self.direction * length
 end
 
+---计算直线的中心
+---@return foundation.math.Vector2
+function Line:getCenter()
+    return self.point
+end
+
+---计算直线的包围盒宽高
+---@return number, number
+function Line:getBoundingBoxSize()
+    if math.abs(self.direction.x) < 1e-10 then
+        return 0, math.huge
+    elseif math.abs(self.direction.y) < 1e-10 then
+        return math.huge, 0
+    end
+    return math.huge, math.huge
+end
+
 ---获取直线的角度（弧度）
 ---@return number 直线的角度，单位为弧度
 function Line:angle()

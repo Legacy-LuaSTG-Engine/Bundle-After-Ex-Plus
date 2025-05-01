@@ -121,20 +121,113 @@ end
 ---计算扇形的中心点
 ---@return foundation.math.Vector2
 function Sector:getCenter()
-    return self.center:clone()
+    if math.abs(self.range) >= 1 then
+        return self.center:clone()
+    end
+
+    local points = { self.center:clone() }
+    local start_dir = self.direction
+    local end_dir = self.direction:rotated(self.range * 2 * math.pi)
+    local start_point = self.center + start_dir * self.radius
+    local end_point = self.center + end_dir * self.radius
+    points[#points + 1] = start_point
+    points[#points + 1] = end_point
+
+    local start_angle = self.direction:angle()
+    local end_angle = start_angle + self.range * 2 * math.pi
+    local min_angle = math.min(start_angle, end_angle)
+    local max_angle = math.max(start_angle, end_angle)
+
+    local critical_points = {
+        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) }, -- x_max
+        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) }, -- x_min
+        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) }, -- y_max
+        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) } -- y_min
+    }
+
+    for _, cp in ipairs(critical_points) do
+        local angle = cp.angle
+        angle = angle - 2 * math.pi * math.floor((angle - min_angle) / (2 * math.pi))
+        if min_angle <= angle and angle <= max_angle then
+            points[#points + 1] = cp.point
+        end
+    end
+
+    local x_min, x_max = points[1].x, points[1].x
+    local y_min, y_max = points[1].y, points[1].y
+    for _, p in ipairs(points) do
+        x_min = math.min(x_min, p.x)
+        x_max = math.max(x_max, p.x)
+        y_min = math.min(y_min, p.y)
+        y_max = math.max(y_max, p.y)
+    end
+
+    return Vector2.create((x_min + x_max) / 2, (y_min + y_max) / 2)
+end
+
+---计算扇形的包围盒宽高
+---@return number, number
+function Sector:getBoundingBoxSize()
+    if math.abs(self.range) >= 1 then
+        return 2 * self.radius, 2 * self.radius
+    end
+
+    local points = { self.center:clone() }
+    local start_dir = self.direction
+    local end_dir = self.direction:rotated(self.range * 2 * math.pi)
+    local start_point = self.center + start_dir * self.radius
+    local end_point = self.center + end_dir * self.radius
+    points[#points + 1] = start_point
+    points[#points + 1] = end_point
+
+    local start_angle = self.direction:angle()
+    local end_angle = start_angle + self.range * 2 * math.pi
+    local min_angle = math.min(start_angle, end_angle)
+    local max_angle = math.max(start_angle, end_angle)
+
+    local critical_points = {
+        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) }, -- x_max
+        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) }, -- x_min
+        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) }, -- y_max
+        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) } -- y_min
+    }
+
+    for _, cp in ipairs(critical_points) do
+        local angle = cp.angle
+        angle = angle - 2 * math.pi * math.floor((angle - min_angle) / (2 * math.pi))
+        if min_angle <= angle and angle <= max_angle then
+            points[#points + 1] = cp.point
+        end
+    end
+
+    local x_min, x_max = points[1].x, points[1].x
+    local y_min, y_max = points[1].y, points[1].y
+    for _, p in ipairs(points) do
+        x_min = math.min(x_min, p.x)
+        x_max = math.max(x_max, p.x)
+        y_min = math.min(y_min, p.y)
+        y_max = math.max(y_max, p.y)
+    end
+
+    return x_max - x_min, y_max - y_min
 end
 
 ---获取扇形的重心
 ---@return foundation.math.Vector2
 function Sector:centroid()
-    local angle = self:getAngle()
-    if math.abs(angle) >= 1 then
+    if math.abs(self.range) >= 1 then
         return self.center:clone()
     end
-
-    local x = self.center.x + (self.radius / 3) * math.cos(self.direction:angle() + angle / 2)
-    local y = self.center.y + (self.radius / 3) * math.sin(self.direction:angle() + angle / 2)
-    return Vector2.create(x, y)
+    if self.range <= 1e-10 then
+        return self.center + self.direction * (self.radius / 2)
+    end
+    local theta = self:getAngle()
+    local half_theta = theta / 2
+    local mid_angle = self.direction:angle() + self.range * math.pi
+    local factor = (2 * self.radius / 3) * (math.sin(half_theta) / half_theta)
+    local x_c = self.center.x + factor * math.cos(mid_angle)
+    local y_c = self.center.y + factor * math.sin(mid_angle)
+    return Vector2.create(x_c, y_c)
 end
 
 ---检查点是否在扇形内（包括边界）

@@ -213,6 +213,31 @@ function Polygon:getCenter()
     return Vector2.create((minX + maxX) / 2, (minY + maxY) / 2)
 end
 
+---计算多边形的包围盒宽高
+---@return number, number
+function Polygon:getBoundingBoxSize()
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+
+    for i = 0, self.size - 1 do
+        local point = self.points[i]
+        if point.x < minX then
+            minX = point.x
+        end
+        if point.y < minY then
+            minY = point.y
+        end
+        if point.x > maxX then
+            maxX = point.x
+        end
+        if point.y > maxY then
+            maxY = point.y
+        end
+    end
+
+    return maxX - minX, maxY - minY
+end
+
 ---计算多边形的面积
 ---@return number
 function Polygon:getArea()
