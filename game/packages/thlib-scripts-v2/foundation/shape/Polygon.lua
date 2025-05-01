@@ -63,7 +63,7 @@ function Polygon.__newindex(self, key, value)
         local size, points_array = buildNewVector2Array(value)
         self.__data.size = size
         self.__data.points = points_array
-        self.__data_point_ref = points_array
+        self.__data_points_ref = points_array
     else
         rawset(self, key, value)
     end
@@ -82,7 +82,7 @@ function Polygon.create(points)
     local polygon = ffi.new("foundation_shape_Polygon", size, points_array)
     local result = {
         __data = polygon,
-        __data_point_ref = points_array,
+        __data_points_ref = points_array,
     }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
     return setmetatable(result, Polygon)
