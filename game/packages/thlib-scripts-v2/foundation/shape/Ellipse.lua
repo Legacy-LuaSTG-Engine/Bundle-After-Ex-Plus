@@ -365,7 +365,6 @@ function Ellipse:closestPoint(point, boundary)
         return point:clone()
     end
 
-    -- Transform point to ellipse's local coordinate system
     local baseAngle = self.direction:angle()
     local cos_rotation = math.cos(-baseAngle)
     local sin_rotation = math.sin(-baseAngle)
@@ -376,23 +375,19 @@ function Ellipse:closestPoint(point, boundary)
     local x = cos_rotation * dx - sin_rotation * dy
     local y = sin_rotation * dx + cos_rotation * dy
 
-    -- Scale to unit circle space
     local px = x / self.rx
     local py = y / self.ry
 
     local length = math.sqrt(px * px + py * py)
     if length < 1e-10 then
-        -- Point is at center, return point on major axis
         px = self.rx
         py = 0
     else
-        -- Calculate both possible boundary points
         local px1 = px / length * self.rx
         local py1 = py / length * self.ry
         local px2 = -px / length * self.rx
         local py2 = -py / length * self.ry
 
-        -- Transform both points back to world coordinates
         local cos_world = math.cos(baseAngle)
         local sin_world = math.sin(baseAngle)
 
@@ -404,13 +399,11 @@ function Ellipse:closestPoint(point, boundary)
         local result_y2 = sin_world * px2 + cos_world * py2 + self.center.y
         local point2 = Vector2.create(result_x2, result_y2)
 
-        -- Return the point that's closer to the input point
         local dist1 = (point - point1):length()
         local dist2 = (point - point2):length()
         return dist1 <= dist2 and point1 or point2
     end
 
-    -- Transform back to world coordinates
     local cos_world = math.cos(baseAngle)
     local sin_world = math.sin(baseAngle)
     local result_x = cos_world * px - sin_world * py + self.center.x
@@ -445,19 +438,9 @@ end
 ---@overload fun(self:foundation.shape.Ellipse, point:foundation.math.Vector2): boolean
 function Ellipse:containsPoint(point, tolerance)
     tolerance = tolerance or 1e-10
-
-    local baseAngle = self.direction:angle()
-    local cos_rotation = math.cos(-baseAngle)
-    local sin_rotation = math.sin(-baseAngle)
-
-    local dx = point.x - self.center.x
-    local dy = point.y - self.center.y
-
-    local x = cos_rotation * dx - sin_rotation * dy
-    local y = sin_rotation * dx + cos_rotation * dy
-
-    local value = (x * x) / (self.rx * self.rx) + (y * y) / (self.ry * self.ry)
-    return math.abs(1 - math.abs(value)) * 10 <= tolerance -- i don't think is correct, but it works
+    local projPoint = self:closestPoint(point, true)
+    local distance = (point - projPoint):length()
+    return distance <= tolerance
 end
 
 ---创建椭圆的一个副本
