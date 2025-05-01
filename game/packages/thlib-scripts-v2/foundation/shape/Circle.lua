@@ -156,8 +156,8 @@ end
 function Circle:closestPoint(point)
     local dir = point - self.center
     local dist = dir:length()
-    if dist <= 1e-10 then
-        return Vector2.create(self.center.x + self.radius, self.center.y)
+    if dist <= self.radius then
+        return point:clone()
     end
     local normalized_dir = dir / dist
     return self.center + normalized_dir * self.radius
