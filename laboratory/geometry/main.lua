@@ -568,6 +568,12 @@ function object:renderBezierCurve(bezierCurve, player_pos)
             local p2 = vertices[i % #vertices + 1]
             renderLine(p1, p2, 2)
         end
+        setColor(127, 13, 161, 158)
+        for i = 0, bezierCurve.num_points - 2 do
+            local p1 = bezierCurve.control_points[i]
+            local p2 = bezierCurve.control_points[i + 1]
+            renderLine(p1, p2, 2)
+        end
     end
 end
 
