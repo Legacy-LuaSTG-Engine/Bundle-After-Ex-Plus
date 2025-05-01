@@ -178,12 +178,22 @@ end
 local object = {
     pool = {},
     collision_result = {},
+    render_player_point = true,
+    render_closest_point = true,
+    render_project_point = true,
+    render_bounding_box = true,
+    render_collision_result = true,
+    render_incircle = true,
+    render_circumcircle = true,
+    render_vertex = true,
+    render_direction = true,
 }
 function object:insert(obj)
     table.insert(self.pool, obj)
 end
 function object:clear()
     self.pool = {}
+    self.collision_result = {}
 end
 function object:enum()
     return ipairs(self.pool)
@@ -209,9 +219,13 @@ function object:update()
 end
 function object:draw()
     local player_pos = player:pos()
-    self:renderPlayerPoint(player_pos)
-    for _, obj in self:enum() do
-        self:renderBoundingBox(obj)
+    if self.render_player_point then
+        self:renderPlayerPoint(player_pos)
+    end
+    if self.render_bounding_box then
+        for _, obj in self:enum() do
+            self:renderBoundingBox(obj)
+        end
     end
     for _, obj in self:enum() do
         if obj.__type == "foundation.shape.Line" then
@@ -231,12 +245,15 @@ function object:draw()
         elseif obj.__type == "foundation.shape.Polygon" then
             self:renderPolygon(obj, player_pos)
         end
-        self:renderProjectPoint(obj, player_pos)
-        self:renderClosestPoint(obj, player_pos)
+        if self.render_project_point then
+            self:renderProjectPoint(obj, player_pos)
+        end
+        if self.render_closest_point then
+            self:renderClosestPoint(obj, player_pos)
+        end
     end
-    setColor(192, 0, 255, 255)
-    for _, point in ipairs(self.collision_result) do
-        renderPoint(point, 4)
+    if self.render_collision_result then
+        self:renderCollisionResult()
     end
 end
 
@@ -244,6 +261,13 @@ end
 function object:renderPlayerPoint(player_pos)
     setColor(255, 255, 255, 255)
     renderPoint(player_pos, 4)
+end
+
+function object:renderCollisionResult()
+    setColor(192, 0, 255, 255)
+    for _, point in ipairs(self.collision_result) do
+        renderPoint(point, 4)
+    end
 end
 
 ---@param obj {__type:string, closestPoint:function}
@@ -288,10 +312,14 @@ function object:renderLine(line, player_pos)
         setColor(192, 255, 255, 255)
     end
     renderLine(line:getPoint(-1000), line:getPoint(1000), 2)
-    setColor(127, 255, 0, 0)
-    renderPoint(line.point, 4)
-    setColor(127, 255, 63, 63)
-    renderLine(line.point, line:getPoint(50), 2)
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        renderPoint(line.point, 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(line.point, line:getPoint(50), 2)
+    end
 end
 
 ---@param ray foundation.shape.Ray
@@ -303,10 +331,14 @@ function object:renderRay(ray, player_pos)
         setColor(192, 255, 255, 255)
     end
     renderLine(ray.point, ray:getPoint(1000), 2)
-    setColor(127, 255, 0, 0)
-    renderPoint(ray.point, 4)
-    setColor(127, 255, 63, 63)
-    renderLine(ray.point, ray:getPoint(50), 2)
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        renderPoint(ray.point, 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(ray.point, ray:getPoint(50), 2)
+    end
 end
 
 ---@param segment foundation.shape.Segment
@@ -318,27 +350,35 @@ function object:renderSegment(segment, player_pos)
         setColor(192, 255, 255, 255)
     end
     renderLine(segment.point1, segment.point2, 2)
-    setColor(127, 127, 0, 0)
-    renderPoint(segment.point1, 4)
-    renderPoint(segment.point2, 4)
-    setColor(127, 255, 0, 0)
-    renderPoint(segment:midpoint(), 4)
-    setColor(127, 255, 63, 63)
-    renderLine(segment:midpoint(), segment.point1, 2)
+    if self.render_vertex then
+        setColor(127, 127, 0, 0)
+        renderPoint(segment.point1, 4)
+        renderPoint(segment.point2, 4)
+        setColor(127, 255, 0, 0)
+        renderPoint(segment:midpoint(), 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(segment:midpoint(), segment.point1, 2)
+    end
 end
 
 ---@param triangle foundation.shape.Triangle
 ---@param player_pos {x:number, y:number}
 function object:renderTriangle(triangle, player_pos)
     setColor(63, 127, 255, 192)
-    local incenter = triangle:incenter()
-    local inradius = triangle:inradius()
-    local circumcenter = triangle:circumcenter()
-    local circumradius = triangle:circumradius()
-    setColor(63, 127, 255, 192)
-    renderCircle(incenter, inradius - 1, inradius + 1, 64)
-    setColor(63, 127, 192, 255)
-    renderCircle(circumcenter, circumradius - 1, circumradius + 1, 64)
+    if self.render_incircle then
+        local incenter = triangle:incenter()
+        local inradius = triangle:inradius()
+        setColor(63, 127, 255, 192)
+        renderCircle(incenter, inradius - 1, inradius + 1, 64)
+    end
+    if self.render_circumcircle then
+        local circumcenter = triangle:circumcenter()
+        local circumradius = triangle:circumradius()
+        setColor(63, 127, 192, 255)
+        renderCircle(circumcenter, circumradius - 1, circumradius + 1, 64)
+    end
     if triangle:containsPoint(player_pos, 1) then
         setColor(192, 0, 0, 255)
     elseif triangle:contains(player_pos) then
@@ -349,14 +389,18 @@ function object:renderTriangle(triangle, player_pos)
     renderLine(triangle.point1, triangle.point2, 2)
     renderLine(triangle.point2, triangle.point3, 2)
     renderLine(triangle.point3, triangle.point1, 2)
-    setColor(127, 127, 0, 0)
-    renderPoint(triangle.point1, 4)
-    renderPoint(triangle.point2, 4)
-    renderPoint(triangle.point3, 4)
-    setColor(127, 255, 0, 0)
-    renderPoint(triangle:centroid(), 4)
-    setColor(127, 255, 63, 63)
-    renderLine(triangle:centroid(), triangle.point1, 2)
+    if self.render_vertex then
+        setColor(127, 127, 0, 0)
+        renderPoint(triangle.point1, 4)
+        renderPoint(triangle.point2, 4)
+        renderPoint(triangle.point3, 4)
+        setColor(127, 255, 0, 0)
+        renderPoint(triangle:centroid(), 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(triangle:centroid(), triangle.point1, 2)
+    end
 end
 
 ---@param rectangle foundation.shape.Rectangle
@@ -366,12 +410,16 @@ function object:renderRectangle(rectangle, player_pos)
     local w = rectangle.width / 2
     local h = rectangle.height / 2
     local a = rectangle.direction:degreeAngle()
-    local inradius = rectangle:inradius()
-    local circumradius = rectangle:circumradius()
-    setColor(63, 127, 255, 192)
-    renderCircle(p, inradius - 1, inradius + 1, 64)
-    setColor(63, 127, 192, 255)
-    renderCircle(p, circumradius - 1, circumradius + 1, 64)
+    if self.render_incircle then
+        local inradius = rectangle:inradius()
+        setColor(63, 127, 255, 192)
+        renderCircle(p, inradius - 1, inradius + 1, 64)
+    end
+    if self.render_circumcircle then
+        local circumradius = rectangle:circumradius()
+        setColor(63, 127, 192, 255)
+        renderCircle(p, circumradius - 1, circumradius + 1, 64)
+    end
     if rectangle:containsPoint(player_pos, 1) then
         setColor(192, 0, 0, 255)
     elseif rectangle:contains(player_pos) then
@@ -383,15 +431,19 @@ function object:renderRectangle(rectangle, player_pos)
     renderLine(p + Vector2.create(w, -h):degreeRotated(a), p + Vector2.create(w, h):degreeRotated(a), 2)
     renderLine(p + Vector2.create(w, h):degreeRotated(a), p + Vector2.create(-w, h):degreeRotated(a), 2)
     renderLine(p + Vector2.create(-w, h):degreeRotated(a), p + Vector2.create(-w, -h):degreeRotated(a), 2)
-    setColor(127, 127, 0, 0)
-    renderPoint(p + Vector2.create(-w, -h):degreeRotated(a), 4)
-    renderPoint(p + Vector2.create(w, -h):degreeRotated(a), 4)
-    renderPoint(p + Vector2.create(w, h):degreeRotated(a), 4)
-    renderPoint(p + Vector2.create(-w, h):degreeRotated(a), 4)
-    setColor(127, 255, 0, 0)
-    renderPoint(p, 4)
-    setColor(127, 255, 63, 63)
-    renderLine(p, p + Vector2.create(w, 0):degreeRotated(a), 2)
+    if self.render_vertex then
+        setColor(127, 127, 0, 0)
+        renderPoint(p + Vector2.create(-w, -h):degreeRotated(a), 4)
+        renderPoint(p + Vector2.create(w, -h):degreeRotated(a), 4)
+        renderPoint(p + Vector2.create(w, h):degreeRotated(a), 4)
+        renderPoint(p + Vector2.create(-w, h):degreeRotated(a), 4)
+        setColor(127, 255, 0, 0)
+        renderPoint(p, 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(p, p + Vector2.create(w, 0):degreeRotated(a), 2)
+    end
 end
 
 ---@param polygon foundation.shape.Polygon
@@ -410,14 +462,18 @@ function object:renderPolygon(polygon, player_pos)
         local p2 = vertices[i % #vertices + 1]
         renderLine(p1, p2, 2)
     end
-    setColor(127, 127, 0, 0)
-    for _, vertex in ipairs(vertices) do
-        renderPoint(vertex, 4)
+    if self.render_vertex then
+        setColor(127, 127, 0, 0)
+        for _, vertex in ipairs(vertices) do
+            renderPoint(vertex, 4)
+        end
+        setColor(127, 255, 0, 0)
+        renderPoint(polygon:centroid(), 4)
     end
-    setColor(127, 255, 0, 0)
-    renderPoint(polygon:centroid(), 4)
-    setColor(127, 255, 63, 63)
-    renderLine(polygon:centroid(), vertices[1], 2)
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(polygon:centroid(), vertices[1], 2)
+    end
 end
 
 ---@param circle foundation.shape.Circle
@@ -434,10 +490,14 @@ function object:renderCircle(circle, player_pos)
         setColor(192, 255, 255, 255)
     end
     renderCircle(p, r1, r2, 64)
-    setColor(127, 255, 0, 0)
-    renderPoint(p, 4)
-    setColor(127, 255, 63, 63)
-    renderLine(p, p + Vector2.create(0, r1), 2)
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        renderPoint(p, 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(p, p + Vector2.create(0, r1), 2)
+    end
 end
 
 ---@param sector foundation.shape.Sector
@@ -458,10 +518,14 @@ function object:renderSector(sector, player_pos)
     renderSector(p, r1, r2, a1, a2, 64)
     renderLine(p, p + sector.direction * r1, 2)
     renderLine(p, p + sector.direction:degreeRotated(sector.range * 360) * r1, 2)
-    setColor(127, 255, 0, 0)
-    renderPoint(p, 4)
-    setColor(127, 255, 63, 63)
-    renderLine(p, p + sector.direction * r1, 2)
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        renderPoint(p, 4)
+    end
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(p, p + sector.direction * r1, 2)
+    end
 end
 --endregion
 
@@ -773,7 +837,30 @@ local scenes = {
 }
 local current_scene_index = 1
 local current_scene = makeInstance(scenes[current_scene_index])
-local any_key_down = false
+local keyState = {}
+local keyStatePre = {}
+local registeredKey = {
+    Keyboard.Left,
+    Keyboard.Right,
+    Keyboard.D1,
+    Keyboard.D2,
+    Keyboard.D3,
+    Keyboard.D4,
+    Keyboard.D5,
+    Keyboard.D6,
+    Keyboard.D7,
+    Keyboard.D8,
+    Keyboard.D9,
+}
+local function UpdateKeyState()
+    for _, key in ipairs(registeredKey) do
+        keyStatePre[key] = keyState[key]
+        keyState[key] = Keyboard.GetKeyState(key)
+    end
+end
+local function KeyIsPressed(key)
+    return keyState[key] and not keyStatePre[key]
+end
 
 function GameInit()
     window:applyWindowSetting()
@@ -786,23 +873,44 @@ function GameExit()
 end
 
 function FrameFunc()
+    UpdateKeyState()
     local change = 0
-    if Keyboard.GetKeyState(Keyboard.Left) then
-        if not any_key_down then
-            any_key_down = true
-            if current_scene_index > 1 then
-                change = -1
-            end
+    if KeyIsPressed(Keyboard.Left) then
+        if current_scene_index > 1 then
+            change = -1
         end
-    elseif Keyboard.GetKeyState(Keyboard.Right) then
-        if not any_key_down then
-            any_key_down = true
-            if current_scene_index < #scenes then
-                change = 1
-            end
+    end
+    if KeyIsPressed(Keyboard.Right) then
+        if current_scene_index < #scenes then
+            change = 1
         end
-    elseif any_key_down then
-        any_key_down = false
+    end
+    if KeyIsPressed(Keyboard.D1) then
+        object.render_player_point = not object.render_player_point
+    end
+    if KeyIsPressed(Keyboard.D2) then
+        object.render_closest_point = not object.render_closest_point
+    end
+    if KeyIsPressed(Keyboard.D3) then
+        object.render_project_point = not object.render_project_point
+    end
+    if KeyIsPressed(Keyboard.D4) then
+        object.render_bounding_box = not object.render_bounding_box
+    end
+    if KeyIsPressed(Keyboard.D5) then
+        object.render_collision_result = not object.render_collision_result
+    end
+    if KeyIsPressed(Keyboard.D6) then
+        object.render_incircle = not object.render_incircle
+    end
+    if KeyIsPressed(Keyboard.D7) then
+        object.render_circumcircle = not object.render_circumcircle
+    end
+    if KeyIsPressed(Keyboard.D8) then
+        object.render_vertex = not object.render_vertex
+    end
+    if KeyIsPressed(Keyboard.D9) then
+        object.render_direction = not object.render_direction
     end
     if change ~= 0 then
         current_scene:destroy()
