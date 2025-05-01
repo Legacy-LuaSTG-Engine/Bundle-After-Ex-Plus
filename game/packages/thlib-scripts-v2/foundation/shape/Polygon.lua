@@ -222,6 +222,7 @@ function Polygon:isConvex()
     end
 
     local sign = 0
+    local allCollinear = true
 
     for i = 0, self.size - 1 do
         local j = (i + 1) % self.size
@@ -233,12 +234,24 @@ function Polygon:isConvex()
         local dy2 = self.points[k].y - self.points[j].y
 
         local cross = dx1 * dy2 - dy1 * dx2
+        local absCross = math.abs(cross)
+
+        if absCross > 1e-10 then
+            allCollinear = false
+        end
 
         if i == 0 then
-            sign = cross > 0 and 1 or (cross < 0 and -1 or 0)
-        elseif (cross > 0 and sign < 0) or (cross < 0 and sign > 0) then
+            if absCross > 1e-10 then
+                sign = cross > 0 and 1 or -1
+            end
+        elseif (cross > 1e-10 and sign < 0) or (cross < -1e-10 and sign > 0) or (sign == 0 and absCross > 1e-10) then
             return false
         end
+    end
+
+    -- 如果所有点共线，不是合法的凸多边形
+    if allCollinear then
+        return false
     end
 
     return true
@@ -596,14 +609,23 @@ function Polygon:triangulate()
     local isClockwise = area < 0
     local triangles = {}
     local remainingPoints = self.size
+
+    local isConvexCache = {}
+    local isEarCache = {}
+    for i = 1, #points do
+        isConvexCache[i] = isConvex(points, i, isClockwise)
+        isEarCache[i] = isConvexCache[i] and isEar(points, i, isClockwise)
+    end
+
     while remainingPoints > 3 do
         local foundEar = false
         for i = 1, #points do
-            if points[i] and isEar(points, i, isClockwise) then
+            if points[i] and isEarCache[i] then
                 local prev, next = getPrev(points, i), getNext(points, i)
                 local a, b, c = points[prev].point, points[i].point, points[next].point
                 triangles[#triangles + 1] = Triangle.create(a, b, c)
                 points[i] = nil
+
                 local newPoints = {}
                 for j = 1, #points do
                     if points[j] then
@@ -612,6 +634,17 @@ function Polygon:triangulate()
                 end
                 points = newPoints
                 remainingPoints = remainingPoints - 1
+
+                if points[prev] then
+                    isConvexCache[prev] = isConvex(points, prev, isClockwise)
+                    isEarCache[prev] = isConvexCache[prev] and isEar(points, prev, isClockwise)
+                end
+
+                if points[next] then
+                    isConvexCache[next] = isConvex(points, next, isClockwise)
+                    isEarCache[next] = isConvexCache[next] and isEar(points, next, isClockwise)
+                end
+
                 foundEar = true
                 break
             end
