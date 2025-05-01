@@ -6,6 +6,8 @@ local table = table
 local math = math
 local tostring = tostring
 local string = string
+local error = error
+local setmetatable = setmetatable
 
 local Vector2 = require("foundation.math.Vector2")
 local Segment = require("foundation.shape.Segment")
@@ -23,28 +25,65 @@ typedef struct {
 ---@field size number 多边形顶点数量
 ---@field points foundation.math.Vector2[] 多边形的顶点数组
 local Polygon = {}
-Polygon.__index = Polygon
 Polygon.__type = "foundation.shape.Polygon"
+
+---@param self foundation.shape.Polygon
+---@param key string
+---@return any
+function Polygon.__index(self, key)
+    if key == "size" then
+        return self.__data.size
+    elseif key == "points" then
+        return self.__data.points
+    end
+    return Polygon[key]
+end
+
+---@param t foundation.math.Vector2[]
+---@return number, foundation.math.Vector2[]
+local function buildNewVector2Array(t)
+    local size = #t
+    local points_array = ffi.new("foundation_math_Vector2[?]", size)
+
+    for i = 1, size do
+        points_array[i - 1] = Vector2.create(t[i].x, t[i].y)
+    end
+
+    return size, points_array
+end
+
+---@param self foundation.shape.Polygon
+---@param key any
+---@param value any
+function Polygon.__newindex(self, key, value)
+    if key == "size" then
+        error("cannot modify size directly")
+    elseif key == "points" then
+        local size, points_array = buildNewVector2Array(value)
+        self.__data.size = size
+        self.__data.points = points_array
+    elseif key == "__data" then
+        error("cannot modify __data directly")
+    end
+end
 
 ---创建一个多边形
 ---@param points foundation.math.Vector2[] 多边形的顶点数组，按顺序连线并首尾相接
 ---@return foundation.shape.Polygon
 function Polygon.create(points)
     if not points or #points < 3 then
-        error("多边形至少需要3个点")
+        error("Polygon must have at least 3 points")
     end
 
-    local size = #points
-    local points_array = ffi.new("foundation_math_Vector2[?]", size)
+    local size, points_array = buildNewVector2Array(points)
 
-    for i = 1, size do
-        points_array[i - 1] = Vector2.create(points[i].x, points[i].y)
-    end
-
+    local polygon = ffi.new("foundation_shape_Polygon", size, points_array)
+    local result = {
+        __data = polygon,
+        __point_ref = points_array,
+    }
     ---@diagnostic disable-next-line: return-type-mismatch, missing-return-value
-    return ffi.gc(ffi.new("foundation_shape_Polygon", size, points_array), function()
-        points_array = nil
-    end)
+    return setmetatable(result, Polygon)
 end
 
 ---创建一个正多边形
