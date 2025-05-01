@@ -81,6 +81,34 @@ function Circle:moved(v)
     return Circle.create(Vector2.create(self.center.x + moveX, self.center.y + moveY), self.radius)
 end
 
+---旋转圆（没有实际效果）
+---@param _ number 旋转弧度
+---@return foundation.shape.Circle 自身引用
+function Circle:rotate(_)
+    return self
+end
+
+---旋转圆（没有实际效果）
+---@param _ number 旋转角度
+---@return foundation.shape.Circle 自身引用
+function Circle:degreeRotate(_)
+    return self
+end
+
+---获取旋转后的圆副本（没有实际效果）
+---@param _ number 旋转弧度
+---@return foundation.shape.Circle
+function Circle:rotated(_)
+    return Circle.create(self.center:clone(), self.radius)
+end
+
+---获取旋转后的圆副本（没有实际效果）
+---@param _ number 旋转角度
+---@return foundation.shape.Circle
+function Circle:degreeRotated(_)
+    return Circle.create(self.center:clone(), self.radius)
+end
+
 ---缩放圆（修改当前圆）
 ---@param scale number 缩放比例
 ---@return foundation.shape.Circle 自身引用

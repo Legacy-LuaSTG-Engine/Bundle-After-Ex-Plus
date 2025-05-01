@@ -249,6 +249,31 @@ function Rectangle:getPerimeter()
     return 2 * (self.width + self.height)
 end
 
+---计算矩形的内心
+---@return foundation.math.Vector2 矩形的内心
+function Rectangle:incenter()
+    return self.center
+end
+
+---计算矩形的内切圆半径
+---@return number 矩形的内切圆半径
+function Rectangle:inradius()
+    local min = math.min(self.width, self.height) / 2
+    return min
+end
+
+---计算矩形的外心
+---@return foundation.math.Vector2 矩形的外心
+function Rectangle:circumcenter()
+    return self.center
+end
+
+---计算矩形的外接圆半径
+---@return number 矩形的外接圆半径
+function Rectangle:circumradius()
+    return math.sqrt((self.width / 2) ^ 2 + (self.height / 2) ^ 2)
+end
+
 ---计算点到矩形的最近点
 ---@param point foundation.math.Vector2
 ---@return foundation.math.Vector2
