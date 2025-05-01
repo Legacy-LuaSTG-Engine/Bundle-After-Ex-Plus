@@ -228,6 +228,7 @@ function object:draw()
         elseif obj.__type == "foundation.shape.Polygon" then
             self:renderPolygon(obj, player_pos)
         end
+        self:renderProjectPoint(obj, player_pos)
         self:renderClosestPoint(obj, player_pos)
     end
     setColor(192, 0, 255, 255)
@@ -250,6 +251,16 @@ function object:renderClosestPoint(obj, player_pos)
     renderLine(player_pos, nearestPoint, 2)
     setColor(192, 255, 200, 127)
     renderPoint(nearestPoint, 4)
+end
+
+---@param obj {__type:string, projectPoint:function}
+---@param player_pos {x:number, y:number}
+function object:renderProjectPoint(obj, player_pos)
+    local projectPoint = obj:projectPoint(player_pos)
+    setColor(127, 127, 127, 127)
+    renderLine(player_pos, projectPoint, 2)
+    setColor(192, 200, 127, 255)
+    renderPoint(projectPoint, 4)
 end
 
 ---@param line foundation.shape.Line
