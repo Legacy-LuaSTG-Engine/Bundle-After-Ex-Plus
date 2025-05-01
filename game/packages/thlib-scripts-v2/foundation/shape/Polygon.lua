@@ -560,7 +560,7 @@ function Polygon:containsPoint(point, tolerance)
 end
 
 --region 三角剖分的辅助函数
---- 获取前一个点索引
+---获取前一个点索引
 ---@param points table 点数组
 ---@param i number 当前索引
 ---@return number 前一个点的索引

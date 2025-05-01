@@ -133,7 +133,7 @@ end
 function Rectangle:getVertices()
     local hw, hh = self.width / 2, self.height / 2
     local dir = self.direction
-    local perp = Vector2.create(-dir.y, dir.x) -- 垂直向量（高度方向）
+    local perp = Vector2.create(-dir.y, dir.x)
     local vertices = {
         Vector2.create(-hw, -hh),
         Vector2.create(hw, -hh),

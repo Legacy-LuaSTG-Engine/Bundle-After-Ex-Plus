@@ -8,6 +8,7 @@ local ShapeIntersector = {}
 local ShapeIntersectorList = {
     "ContainPoint",
     "CircleIntersector",
+    "EllipseIntersector",
     "LineIntersector",
     "PolygonIntersector",
     "RectangleIntersector",
@@ -15,6 +16,7 @@ local ShapeIntersectorList = {
     "TriangleIntersector",
     "SegmentIntersector",
     "RayIntersector",
+    "BezierCurveIntersector",
 }
 for _, moduleName in ipairs(ShapeIntersectorList) do
     local module = require(string.format("foundation.shape.ShapeIntersector.%s", moduleName))
@@ -39,6 +41,29 @@ end
 
 ---@type table<string, table<string, fun(shape1: any, shape2: any): boolean, foundation.math.Vector2[] | nil>>
 local intersectionMap = {
+    ["foundation.shape.BezierCurve"] = {
+        ["foundation.shape.BezierCurve"] = ShapeIntersector.bezierCurveToBezierCurve,
+        ["foundation.shape.Polygon"] = ShapeIntersector.bezierCurveToPolygon,
+        ["foundation.shape.Segment"] = ShapeIntersector.bezierCurveToSegment,
+        ["foundation.shape.Circle"] = ShapeIntersector.bezierCurveToCircle,
+        ["foundation.shape.Rectangle"] = ShapeIntersector.bezierCurveToRectangle,
+        ["foundation.shape.Triangle"] = ShapeIntersector.bezierCurveToTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.bezierCurveToLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.bezierCurveToRay,
+        ["foundation.shape.Sector"] = ShapeIntersector.bezierCurveToSector,
+        ["foundation.shape.Ellipse"] = ShapeIntersector.bezierCurveToEllipse,
+    },
+    ["foundation.shape.Ellipse"] = {
+        ["foundation.shape.Ellipse"] = ShapeIntersector.ellipseToEllipse,
+        ["foundation.shape.Polygon"] = ShapeIntersector.ellipseToPolygon,
+        ["foundation.shape.Segment"] = ShapeIntersector.ellipseToSegment,
+        ["foundation.shape.Circle"] = ShapeIntersector.ellipseToCircle,
+        ["foundation.shape.Rectangle"] = ShapeIntersector.ellipseToRectangle,
+        ["foundation.shape.Triangle"] = ShapeIntersector.ellipseToTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.ellipseToLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.ellipseToRay,
+        ["foundation.shape.Sector"] = ShapeIntersector.ellipseToSector,
+    },
     ["foundation.shape.Polygon"] = {
         ["foundation.shape.Polygon"] = ShapeIntersector.polygonToPolygon,
         ["foundation.shape.Triangle"] = ShapeIntersector.polygonToTriangle,
@@ -95,6 +120,29 @@ local intersectionMap = {
 
 ---@type table<string, table<string, fun(shape1: any, shape2: any): boolean>>
 local hasIntersectionMap = {
+    ["foundation.shape.BezierCurve"] = {
+        ["foundation.shape.BezierCurve"] = ShapeIntersector.bezierCurveHasIntersectionWithBezierCurve,
+        ["foundation.shape.Polygon"] = ShapeIntersector.bezierCurveHasIntersectionWithPolygon,
+        ["foundation.shape.Segment"] = ShapeIntersector.bezierCurveHasIntersectionWithSegment,
+        ["foundation.shape.Circle"] = ShapeIntersector.bezierCurveHasIntersectionWithCircle,
+        ["foundation.shape.Rectangle"] = ShapeIntersector.bezierCurveHasIntersectionWithRectangle,
+        ["foundation.shape.Triangle"] = ShapeIntersector.bezierCurveHasIntersectionWithTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.bezierCurveHasIntersectionWithLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.bezierCurveHasIntersectionWithRay,
+        ["foundation.shape.Sector"] = ShapeIntersector.bezierCurveHasIntersectionWithSector,
+        ["foundation.shape.Ellipse"] = ShapeIntersector.bezierCurveHasIntersectionWithEllipse,
+    },
+    ["foundation.shape.Ellipse"] = {
+        ["foundation.shape.Ellipse"] = ShapeIntersector.ellipseHasIntersectionWithEllipse,
+        ["foundation.shape.Polygon"] = ShapeIntersector.ellipseHasIntersectionWithPolygon,
+        ["foundation.shape.Segment"] = ShapeIntersector.ellipseHasIntersectionWithSegment,
+        ["foundation.shape.Circle"] = ShapeIntersector.ellipseHasIntersectionWithCircle,
+        ["foundation.shape.Rectangle"] = ShapeIntersector.ellipseHasIntersectionWithRectangle,
+        ["foundation.shape.Triangle"] = ShapeIntersector.ellipseHasIntersectionWithTriangle,
+        ["foundation.shape.Line"] = ShapeIntersector.ellipseHasIntersectionWithLine,
+        ["foundation.shape.Ray"] = ShapeIntersector.ellipseHasIntersectionWithRay,
+        ["foundation.shape.Sector"] = ShapeIntersector.ellipseHasIntersectionWithSector,
+    },
     ["foundation.shape.Polygon"] = {
         ["foundation.shape.Polygon"] = ShapeIntersector.polygonHasIntersectionWithPolygon,
         ["foundation.shape.Triangle"] = ShapeIntersector.polygonHasIntersectionWithTriangle,

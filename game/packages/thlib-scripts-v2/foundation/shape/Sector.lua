@@ -70,9 +70,18 @@ end
 ---@param range number 范围（-1到1）
 ---@return foundation.shape.Sector
 function Sector.create(center, radius, direction, range)
-    local dir = direction:normalized()
-    range = math.max(-1, math.min(1, range)) -- 限制范围在-1到1
-    local sector = ffi.new("foundation_shape_Sector", center, radius, dir, range)
+    local dist = direction and direction:length() or 0
+    if dist <= 1e-10 then
+        direction = Vector2.create(1, 0)
+    elseif dist ~= 1 then
+        ---@diagnostic disable-next-line: need-check-nil
+        direction = direction:normalized()
+    else
+        ---@diagnostic disable-next-line: need-check-nil
+        direction = direction:clone()
+    end
+    range = math.max(-1, math.min(1, range))
+    local sector = ffi.new("foundation_shape_Sector", center, radius, direction, range)
     local result = {
         __data = sector,
     }
@@ -177,10 +186,10 @@ function Sector:getCenter()
     local max_angle = math.max(start_angle, end_angle)
 
     local critical_points = {
-        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) }, -- x_max
-        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) }, -- x_min
-        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) }, -- y_max
-        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) } -- y_min
+        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) },
+        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) },
+        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) },
+        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) }
     }
 
     for _, cp in ipairs(critical_points) do
@@ -224,10 +233,10 @@ function Sector:getBoundingBoxSize()
     local max_angle = math.max(start_angle, end_angle)
 
     local critical_points = {
-        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) }, -- x_max
-        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) }, -- x_min
-        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) }, -- y_max
-        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) } -- y_min
+        { angle = 0, point = Vector2.create(self.center.x + self.radius, self.center.y) },
+        { angle = math.pi, point = Vector2.create(self.center.x - self.radius, self.center.y) },
+        { angle = math.pi / 2, point = Vector2.create(self.center.x, self.center.y + self.radius) },
+        { angle = 3 * math.pi / 2, point = Vector2.create(self.center.x, self.center.y - self.radius) }
     }
 
     for _, cp in ipairs(critical_points) do

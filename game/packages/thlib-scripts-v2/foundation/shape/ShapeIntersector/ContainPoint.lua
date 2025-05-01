@@ -15,6 +15,25 @@ return function(ShapeIntersector)
         return (point - circle.center):length() <= circle.radius + 1e-10
     end
 
+    ---检查点是否在椭圆内（包括边界）
+    ---@param ellipse foundation.shape.Ellipse 椭圆
+    ---@param point foundation.math.Vector2 点
+    ---@return boolean
+    function ShapeIntersector.ellipseContainsPoint(ellipse, point)
+        local baseAngle = ellipse.direction:angle()
+        local cos_rotation = math.cos(-baseAngle)
+        local sin_rotation = math.sin(-baseAngle)
+
+        local dx = point.x - ellipse.center.x
+        local dy = point.y - ellipse.center.y
+
+        local x = cos_rotation * dx - sin_rotation * dy
+        local y = sin_rotation * dx + cos_rotation * dy
+
+        local value = (x * x) / (ellipse.rx * ellipse.rx) + (y * y) / (ellipse.ry * ellipse.ry)
+        return math.abs(value) <= 1 + 1e-10
+    end
+
     ---检查点是否在矩形内（包括边界）
     ---@param rectangle foundation.shape.Rectangle 矩形
     ---@param point foundation.math.Vector2 点
@@ -34,6 +53,7 @@ return function(ShapeIntersector)
     ---@param point foundation.math.Vector2 点
     ---@return boolean
     function ShapeIntersector.sectorContainsPoint(sector, point)
+---@diagnostic disable-next-line: param-type-mismatch
         local inCircle = ShapeIntersector.circleContainsPoint(sector, point)
         if not inCircle then
             return false

@@ -37,12 +37,14 @@ local Vector2 = require("foundation.math.Vector2")
 local Line = require("foundation.shape.Line")
 local Ray = require("foundation.shape.Ray")
 local Segment = require("foundation.shape.Segment")
+local BezierCurve = require("foundation.shape.BezierCurve")
 
 local Triangle = require("foundation.shape.Triangle")
 local Rectangle = require("foundation.shape.Rectangle")
 local Polygon = require("foundation.shape.Polygon")
 local Circle = require("foundation.shape.Circle")
 local Sector = require("foundation.shape.Sector")
+local Ellipse = require("foundation.shape.Ellipse")
 --endregion
 
 --region Math Method
@@ -248,6 +250,10 @@ function object:draw()
             self:renderSector(obj, player_pos)
         elseif obj.__type == "foundation.shape.Polygon" then
             self:renderPolygon(obj, player_pos)
+        elseif obj.__type == "foundation.shape.Ellipse" then
+            self:renderEllipse(obj, player_pos)
+        elseif obj.__type == "foundation.shape.BezierCurve" then
+            self:renderBezierCurve(obj, player_pos)
         end
         if self.render_project_point then
             self:renderProjectPoint(obj, player_pos)
@@ -531,6 +537,68 @@ function object:renderSector(sector, player_pos)
         renderLine(p, p + sector.direction * r1, 2)
     end
 end
+
+---@param bezierCurve foundation.shape.BezierCurve
+---@param player_pos {x:number, y:number}
+function object:renderBezierCurve(bezierCurve, player_pos)
+    if bezierCurve:containsPoint(player_pos, 1) then
+        setColor(192, 0, 0, 255)
+    else
+        setColor(192, 255, 255, 255)
+    end
+
+    local vertices = bezierCurve:discretize(30)
+    for i = 1, #vertices - 1 do
+        local p1 = vertices[i]
+        local p2 = vertices[i % #vertices + 1]
+        renderLine(p1, p2, 2)
+    end
+
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        for i = 0, bezierCurve.num_points - 1 do
+            renderPoint(bezierCurve.control_points[i], 4)
+        end
+    end
+
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        for i = 1, math.min(#vertices - 1, 5) do
+            local p1 = vertices[i]
+            local p2 = vertices[i % #vertices + 1]
+            renderLine(p1, p2, 2)
+        end
+    end
+end
+
+---@param ellipse foundation.shape.Ellipse
+---@param player_pos {x:number, y:number}
+function object:renderEllipse(ellipse, player_pos)
+    if ellipse:containsPoint(player_pos, 1) then
+        setColor(192, 0, 0, 255)
+    elseif ellipse:contains(player_pos) then
+        setColor(192, 127, 255, 0)
+    else
+        setColor(192, 255, 255, 255)
+    end
+
+    local vertices = ellipse:discretize(30)
+    for i = 1, #vertices do
+        local p1 = vertices[i]
+        local p2 = vertices[i % #vertices + 1]
+        renderLine(p1, p2, 2)
+    end
+
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        renderPoint(ellipse.center, 4)
+    end
+
+    if self.render_direction then
+        setColor(127, 255, 63, 63)
+        renderLine(ellipse.center, ellipse.center + ellipse.direction * ellipse.rx, 2)
+    end
+end
 --endregion
 
 --region Scene
@@ -753,8 +821,66 @@ function Scene7:draw()
 end
 
 local Scene8 = {}
-Scene8.name = "Crazy"
+Scene8.name = "Ellipse"
 function Scene8:create()
+    self.timer = -1
+    object:insert(
+            Rectangle.create(Vector2.create(0, 0), 200, 200)
+                     :move(Vector2.create(window.width / 2, window.height / 2))
+    )
+    object:insert(
+            Ellipse.create(Vector2.create(0, 0), 100, 50)
+                   :move(Vector2.create(window.width / 3 * 2, window.height / 2))
+    )
+end
+function Scene8:destroy()
+    object:clear()
+end
+function Scene8:update()
+    self.timer = self.timer + 1
+    for i, obj in object:enum() do
+        obj:degreeRotate(-1 + 2 * (i % 2))
+    end
+    object:updateCollisionCheck()
+end
+function Scene8:draw()
+    object:draw()
+end
+
+local Scene9 = {}
+Scene9.name = "BezierCurve"
+function Scene9:create()
+    self.timer = -1
+    object:insert(
+            BezierCurve.create({
+                Vector2.create(0, 0),
+                Vector2.create(100, 200),
+                Vector2.create(200, 100),
+                Vector2.create(300, 200),
+            })         :move(Vector2.create(window.width / 4, window.height / 3))
+    )
+    object:insert(
+            Rectangle.create(Vector2.create(0, 0), 200, 200)
+                     :move(Vector2.create(window.width / 2, window.height / 2))
+    )
+end
+function Scene9:destroy()
+    object:clear()
+end
+function Scene9:update()
+    self.timer = self.timer + 1
+    for i, obj in object:enum() do
+        obj:degreeRotate(-1 + 2 * (i % 2))
+    end
+    object:updateCollisionCheck()
+end
+function Scene9:draw()
+    object:draw()
+end
+
+local Scene10 = {}
+Scene10.name = "Crazy"
+function Scene10:create()
     self.timer = -1
     local rand = lstg.Rand()
     rand:Seed(os.time())
@@ -805,17 +931,17 @@ function Scene8:create()
                   :move(Vector2.create(window.width * rand:Float(0.25, 0.75), window.height * rand:Float(0.25, 0.75)))
     )
 end
-function Scene8:destroy()
+function Scene10:destroy()
     object:clear()
 end
-function Scene8:update()
+function Scene10:update()
     self.timer = self.timer + 1
     for i, obj in object:enum() do
         obj:degreeRotate(-1 + 2 * (i % 2))
     end
     object:updateCollisionCheck()
 end
-function Scene8:draw()
+function Scene10:draw()
     object:draw()
 end
 --endregion
@@ -838,6 +964,8 @@ local scenes = {
     Scene6,
     Scene7,
     Scene8,
+    Scene9,
+    Scene10,
 }
 local current_scene_index = 1
 local current_scene = makeInstance(scenes[current_scene_index])
