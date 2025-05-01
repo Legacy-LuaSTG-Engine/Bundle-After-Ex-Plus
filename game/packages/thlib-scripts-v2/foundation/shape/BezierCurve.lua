@@ -717,10 +717,13 @@ end
 ---检查点是否在贝塞尔曲线上
 ---@param point foundation.math.Vector2
 ---@param tolerance number|nil 容差，默认为1e-10
+---@param segments number|nil 分段数，用于近似计算
 ---@return boolean
-function BezierCurve:containsPoint(point, tolerance)
+---@overload fun(self: foundation.shape.BezierCurve, point: foundation.math.Vector2, tolerance: number): boolean
+---@overload fun(self: foundation.shape.BezierCurve, point: foundation.math.Vector2): boolean
+function BezierCurve:containsPoint(point, tolerance, segments)
     tolerance = tolerance or 1e-10
-    local projPoint = self:closestPointWithSegments(point)
+    local projPoint = self:closestPointWithSegments(point, segments)
     return (point - projPoint):length() <= tolerance
 end
 

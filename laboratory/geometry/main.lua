@@ -541,7 +541,7 @@ end
 ---@param bezierCurve foundation.shape.BezierCurve
 ---@param player_pos {x:number, y:number}
 function object:renderBezierCurve(bezierCurve, player_pos)
-    if bezierCurve:containsPoint(player_pos, 1) then
+    if bezierCurve:containsPoint(player_pos, 1, 30) then
         setColor(192, 0, 0, 255)
     else
         setColor(192, 255, 255, 255)
