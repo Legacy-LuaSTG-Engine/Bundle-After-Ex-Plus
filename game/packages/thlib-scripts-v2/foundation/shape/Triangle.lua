@@ -301,9 +301,11 @@ end
 
 ---计算点到三角形的最近点
 ---@param point foundation.math.Vector2 要检查的点
+---@param boundary boolean 是否限制在边界内，默认为false
 ---@return foundation.math.Vector2 三角形上最近的点
-function Triangle:closestPoint(point)
-    if self:contains(point) then
+---@overload fun(self: foundation.shape.Triangle, point: foundation.math.Vector2): foundation.math.Vector2
+function Triangle:closestPoint(point, boundary)
+    if not boundary and self:contains(point) then
         return point:clone()
     end
 
@@ -354,7 +356,7 @@ end
 ---@param point foundation.math.Vector2 要投影的点
 ---@return foundation.math.Vector2 投影点
 function Triangle:projectPoint(point)
-    return self:closestPoint(point)
+    return self:closestPoint(point, true)
 end
 
 ---检查点是否在三角形上

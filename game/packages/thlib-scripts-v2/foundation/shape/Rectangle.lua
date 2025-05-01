@@ -276,9 +276,11 @@ end
 
 ---计算点到矩形的最近点
 ---@param point foundation.math.Vector2
+---@param boundary boolean 是否限制在边界内，默认为false
 ---@return foundation.math.Vector2
-function Rectangle:closestPoint(point)
-    if self:contains(point) then
+---@overload fun(self: foundation.shape.Rectangle, point: foundation.math.Vector2): foundation.math.Vector2
+function Rectangle:closestPoint(point, boundary)
+    if not boundary and self:contains(point) then
         return point:clone()
     end
     local edges = self:getEdges()
@@ -317,7 +319,7 @@ end
 ---@param point foundation.math.Vector2
 ---@return foundation.math.Vector2
 function Rectangle:projectPoint(point)
-    return self:closestPoint(point)
+    return self:closestPoint(point, true)
 end
 
 ---检查点是否在矩形边界上

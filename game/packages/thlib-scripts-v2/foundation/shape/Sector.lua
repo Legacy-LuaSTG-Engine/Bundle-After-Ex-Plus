@@ -220,16 +220,19 @@ end
 
 ---计算点到扇形的最近点
 ---@param point foundation.math.Vector2
+---@param boundary boolean 是否限制在边界内，默认为false
 ---@return foundation.math.Vector2
-function Sector:closestPoint(point)
+---@overload fun(self: foundation.shape.Sector, point: foundation.math.Vector2): foundation.math.Vector2
+function Sector:closestPoint(point, boundary)
     if math.abs(self.range) >= 1 then
-        return Circle.closestPoint(self, point)
+        return Circle.closestPoint(self, point, boundary)
     end
-    if self:contains(point) then
+    if not boundary and self:contains(point) then
         return point:clone()
     end
-    local circle_closest = Circle.closestPoint(self, point)
-    if self:contains(circle_closest) then
+    local circle_closest = Circle.closestPoint(self, point, boundary)
+    local contains = self:contains(circle_closest)
+    if not boundary and contains then
         return circle_closest
     end
     local startDir = self.direction
@@ -239,8 +242,9 @@ function Sector:closestPoint(point)
     local start_segment = Segment.create(self.center, start_point)
     local end_segment = Segment.create(self.center, end_point)
     local candidates = {
-        start_segment:closestPoint(point),
-        end_segment:closestPoint(point)
+        start_segment:closestPoint(point, boundary),
+        end_segment:closestPoint(point, boundary),
+        boundary and contains and circle_closest or nil,
     }
     local min_distance = math.huge
     local closest_point = candidates[1]
@@ -268,7 +272,7 @@ end
 ---@param point foundation.math.Vector2
 ---@return foundation.math.Vector2
 function Sector:projectPoint(point)
-    return self:closestPoint(point)
+    return self:closestPoint(point, true)
 end
 
 ---检查点是否在扇形边界上

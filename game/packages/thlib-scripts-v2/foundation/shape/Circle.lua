@@ -152,11 +152,17 @@ end
 
 ---计算点到圆的最近点
 ---@param point foundation.math.Vector2 要检查的点
+---@param boundary boolean 是否限制在边界内，默认为false
 ---@return foundation.math.Vector2 圆上最近的点
-function Circle:closestPoint(point)
+---@overload fun(self:foundation.shape.Circle, point:foundation.math.Vector2): foundation.math.Vector2
+function Circle:closestPoint(point, boundary)
     local dir = point - self.center
     local dist = dir:length()
-    if dist <= self.radius then
+    if boundary then
+        if dist <= 1e-10 then
+            return Vector2.create(self.center.x + self.radius, self.center.y)
+        end
+    elseif dist <= self.radius then
         return point:clone()
     end
     local normalized_dir = dir / dist
@@ -175,7 +181,7 @@ end
 ---@param point foundation.math.Vector2 要投影的点
 ---@return foundation.math.Vector2 投影点
 function Circle:projectPoint(point)
-    return self:closestPoint(point)
+    return self:closestPoint(point, true)
 end
 
 ---检查点是否在圆上
