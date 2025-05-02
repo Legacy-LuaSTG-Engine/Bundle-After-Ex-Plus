@@ -4,6 +4,8 @@ local type = type
 local tostring = tostring
 local string = string
 local math = math
+local table = table
+local error = error
 local rawset = rawset
 local setmetatable = setmetatable
 
@@ -170,7 +172,8 @@ function Ellipse:getEdges(segments)
     local segs = {}
 
     for i = 1, segments do
-        segs[i] = Segment.create(points[i], points[i + 1])
+        local nextIndex = (i % segments) + 1
+        segs[i] = Segment.create(points[i], points[nextIndex])
     end
 
     return segs
@@ -447,6 +450,71 @@ end
 ---@return foundation.shape.Ellipse
 function Ellipse:clone()
     return Ellipse.create(self.center:clone(), self.rx, self.ry, self.direction:clone())
+end
+
+---获取按弧长等分的点集和线段集
+---@param num_points number 期望的点数（包含起点）
+---@param tolerance number|nil 弧长误差容差，默认为1e-6
+---@return foundation.math.Vector2[]
+function Ellipse:getEqualArcLengthPoints(num_points, tolerance)
+    num_points = num_points or 30
+    tolerance = tolerance or 1e-6
+    if num_points < 2 then
+        error("Number of points must be at least 2")
+    end
+
+    local total_length = self:getPerimeter()
+    local target_segment_length = total_length / num_points
+    local points = { self:getPointAtAngle(0) }
+    local current_length = 0
+    local angle = 0
+    local step = 2 * math.pi / 100
+    local last_point = points[1]
+    local last_angle = 0
+
+    while #points < num_points and angle < 2 * math.pi do
+        angle = math.min(angle + step, 2 * math.pi)
+        local point = self:getPointAtAngle(angle)
+        local segment_length = (point - last_point):length()
+        current_length = current_length + segment_length
+
+        if current_length >= target_segment_length - tolerance or angle >= 2 * math.pi then
+            table.insert(points, point)
+            last_point = point
+            last_angle = angle
+            current_length = 0
+
+            local remaining_points = num_points - #points
+            if remaining_points > 0 then
+                local remaining_angle = 2 * math.pi - angle
+                step = remaining_angle / (remaining_points * 2)
+            end
+        else
+            last_point = point
+            last_angle = angle
+        end
+    end
+
+    if math.abs(angle - 2 * math.pi) > tolerance and #points == num_points then
+        points[#points] = self:getPointAtAngle(2 * math.pi)
+    end
+
+    return points
+end
+
+---获取按弧长等分的线段集
+---@param num_segments number 期望的线段数（包含起点和终点）
+---@param tolerance number|nil 弧长误差容差，默认为1e-6
+---@return foundation.shape.Segment[]
+function Ellipse:getEqualArcLengthSegments(num_segments, tolerance)
+    local points = self:getEqualArcLengthPoints(num_segments + 1, tolerance)
+    local segments = {}
+
+    for i = 1, #points - 1 do
+        segments[i] = Segment.create(points[i], points[i + 1])
+    end
+
+    return segments
 end
 
 ffi.metatype("foundation_shape_Ellipse", Ellipse)

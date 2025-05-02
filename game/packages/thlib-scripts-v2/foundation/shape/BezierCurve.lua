@@ -737,6 +737,71 @@ function BezierCurve:clone()
     return BezierCurve.create(new_points)
 end
 
+---获取按弧长等分的点集
+---@param num_points number 期望的点数（包含起点和终点）
+---@param tolerance number|nil 弧长误差容差，默认为1e-6
+---@return foundation.math.Vector2[]
+function BezierCurve:getEqualArcLengthPoints(num_points, tolerance)
+    num_points = num_points or 10
+    tolerance = tolerance or 1e-6
+    if num_points < 2 then
+        error("Number of points must be at least 2")
+    end
+
+    local total_length = self:length(100)
+    local target_segment_length = total_length / (num_points - 1)
+    local points = { self:getPoint(0) }
+    local current_length = 0
+    local t = 0
+    local step = 0.01
+    local last_point = points[1]
+    local last_t = 0
+
+    while #points < num_points and t <= 1 do
+        t = math.min(t + step, 1)
+        local point = self:getPoint(t)
+        local segment_length = (point - last_point):length()
+        current_length = current_length + segment_length
+
+        if current_length >= target_segment_length - tolerance or t >= 1 then
+            table.insert(points, point)
+            last_point = point
+            last_t = t
+            current_length = 0
+
+            local remaining_points = num_points - #points
+            if remaining_points > 0 then
+                local remaining_t = 1 - t
+                step = remaining_t / (remaining_points * 2)
+            end
+        else
+            last_point = point
+            last_t = t
+        end
+    end
+
+    if math.abs(t - 1) > tolerance and #points == num_points then
+        points[#points] = self:getPoint(1)
+    end
+
+    return points
+end
+
+---获取按弧长等分的线段集
+---@param num_segments number 期望的线段数（包含起点和终点）
+---@param tolerance number|nil 弧长误差容差，默认为1e-6
+---@return foundation.shape.Segment[]
+function BezierCurve:getEqualArcLengthSegments(num_segments, tolerance)
+    local points = self:getEqualArcLengthPoints(num_segments + 1, tolerance)
+    local segments = {}
+
+    for i = 1, #points - 1 do
+        segments[i] = Segment.create(points[i], points[i + 1])
+    end
+
+    return segments
+end
+
 ffi.metatype("foundation_shape_BezierCurve", BezierCurve)
 
 return BezierCurve
