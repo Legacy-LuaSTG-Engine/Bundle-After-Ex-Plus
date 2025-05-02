@@ -699,9 +699,11 @@ return function(ShapeIntersector)
         local points = {}
 
         if math.abs(sector.range) >= 1 then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return ShapeIntersector.ellipseToCircle(ellipse, sector)
         end
 
+        ---@diagnostic disable-next-line: param-type-mismatch
         local success, circle_points = ShapeIntersector.ellipseToCircle(ellipse, sector)
         if success then
             for _, p in ipairs(circle_points) do
@@ -757,6 +759,7 @@ return function(ShapeIntersector)
         Segment = Segment or require("foundation.shape.Segment")
 
         if math.abs(sector.range) >= 1 then
+            ---@diagnostic disable-next-line: param-type-mismatch
             return ShapeIntersector.ellipseHasIntersectionWithCircle(ellipse, sector)
         end
 
