@@ -131,6 +131,37 @@ function Ray:getCenter()
     end
 end
 
+---获取射线的AABB包围盒
+---@return number, number, number, number
+function Ray:AABB()
+    if math.abs(self.direction.x) < 1e-10 then
+        -- 垂直线
+        if self.direction.y > 0 then
+            return self.point.x, self.point.x, self.point.y, math.huge
+        else
+            return self.point.x, self.point.x, -math.huge, self.point.y
+        end
+    elseif math.abs(self.direction.y) < 1e-10 then
+        -- 水平线
+        if self.direction.x > 0 then
+            return self.point.x, math.huge, self.point.y, self.point.y
+        else
+            return -math.huge, self.point.x, self.point.y, self.point.y
+        end
+    else
+        -- 斜线
+        if self.direction.x > 0 and self.direction.y > 0 then
+            return self.point.x, math.huge, self.point.y, math.huge
+        elseif self.direction.x > 0 and self.direction.y < 0 then
+            return self.point.x, math.huge, -math.huge, self.point.y
+        elseif self.direction.x < 0 and self.direction.y > 0 then
+            return -math.huge, self.point.x, self.point.y, math.huge
+        else
+            return -math.huge, self.point.x, -math.huge, self.point.y
+        end
+    end
+end
+
 ---计算射线的包围盒宽高
 ---@return number, number
 function Ray:getBoundingBoxSize()

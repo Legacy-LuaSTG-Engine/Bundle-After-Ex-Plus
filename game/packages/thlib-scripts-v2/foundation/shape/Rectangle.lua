@@ -293,18 +293,26 @@ function Rectangle:getCenter()
     return self.center:clone()
 end
 
+---获取矩形的AABB包围盒
+---@return number, number, number, number
+function Rectangle:AABB()
+    local vertices = self:getVertices()
+    local minX, maxX = vertices[1].x, vertices[1].x
+    local minY, maxY = vertices[1].y, vertices[1].y
+    for i = 2, 4 do
+        local v = vertices[i]
+        minX = math.min(minX, v.x)
+        maxX = math.max(maxX, v.x)
+        minY = math.min(minY, v.y)
+        maxY = math.max(maxY, v.y)
+    end
+    return minX, maxX, minY, maxY
+end
+
 ---计算矩形的包围盒宽高
 ---@return number, number
 function Rectangle:getBoundingBoxSize()
-    local vertices = self:getVertices()
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
-    for _, vertex in ipairs(vertices) do
-        minX = math.min(minX, vertex.x)
-        minY = math.min(minY, vertex.y)
-        maxX = math.max(maxX, vertex.x)
-        maxY = math.max(maxY, vertex.y)
-    end
+    local minX, maxX, minY, maxY = self:AABB()
     return maxX - minX, maxY - minY
 end
 

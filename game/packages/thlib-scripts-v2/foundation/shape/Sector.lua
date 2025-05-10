@@ -212,11 +212,14 @@ function Sector:getCenter()
     return Vector2.create((x_min + x_max) / 2, (y_min + y_max) / 2)
 end
 
----计算扇形的包围盒宽高
----@return number, number
-function Sector:getBoundingBoxSize()
+---获取扇形的AABB包围盒
+---@return number, number, number, number
+function Sector:AABB()
     if math.abs(self.range) >= 1 then
-        return 2 * self.radius, 2 * self.radius
+        -- 如果是整圆，直接返回圆的包围盒
+        local cx, cy = self.center.x, self.center.y
+        local r = self.radius
+        return cx - r, cx + r, cy - r, cy + r
     end
 
     local points = { self.center:clone() }
@@ -247,16 +250,24 @@ function Sector:getBoundingBoxSize()
         end
     end
 
-    local x_min, x_max = points[1].x, points[1].x
-    local y_min, y_max = points[1].y, points[1].y
-    for _, p in ipairs(points) do
-        x_min = math.min(x_min, p.x)
-        x_max = math.max(x_max, p.x)
-        y_min = math.min(y_min, p.y)
-        y_max = math.max(y_max, p.y)
+    local minX, minY = math.huge, math.huge
+    local maxX, maxY = -math.huge, -math.huge
+
+    for _, point in ipairs(points) do
+        minX = math.min(minX, point.x)
+        minY = math.min(minY, point.y)
+        maxX = math.max(maxX, point.x)
+        maxY = math.max(maxY, point.y)
     end
 
-    return x_max - x_min, y_max - y_min
+    return minX, maxX, minY, maxY
+end
+
+---计算扇形的包围盒宽高
+---@return number, number
+function Sector:getBoundingBoxSize()
+    local minX, maxX, minY, maxY = self:AABB()
+    return maxX - minX, maxY - minY
 end
 
 ---获取扇形的重心

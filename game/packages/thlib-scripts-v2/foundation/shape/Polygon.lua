@@ -177,66 +177,63 @@ function Polygon:getVertices()
     return vertices
 end
 
----获取多边形的重心
----@return foundation.math.Vector2
-function Polygon:centroid()
-    local sumX, sumY = 0, 0
-
-    for i = 0, self.size - 1 do
-        sumX = sumX + self.points[i].x
-        sumY = sumY + self.points[i].y
-    end
-
-    return Vector2.create(sumX / self.size, sumY / self.size)
-end
-
----计算多边形的中心
----@return foundation.math.Vector2
-function Polygon:getCenter()
+---获取多边形的AABB包围盒
+---@return number, number, number, number
+function Polygon:AABB()
     local minX, minY = math.huge, math.huge
     local maxX, maxY = -math.huge, -math.huge
 
     for i = 0, self.size - 1 do
         local point = self.points[i]
-        if point.x < minX then
-            minX = point.x
-        end
-        if point.y < minY then
-            minY = point.y
-        end
-        if point.x > maxX then
-            maxX = point.x
-        end
-        if point.y > maxY then
-            maxY = point.y
-        end
+        minX = math.min(minX, point.x)
+        minY = math.min(minY, point.y)
+        maxX = math.max(maxX, point.x)
+        maxY = math.max(maxY, point.y)
     end
 
+    return minX, maxX, minY, maxY
+end
+
+---计算多边形的重心
+---@return foundation.math.Vector2
+function Polygon:centroid()
+    local totalArea = 0
+    local centroidX = 0
+    local centroidY = 0
+
+    local p0 = self.points[0]
+    for i = 1, self.size - 2 do
+        local p1 = self.points[i]
+        local p2 = self.points[i + 1]
+
+        local area = math.abs((p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y)) / 2
+        totalArea = totalArea + area
+
+        local cx = (p0.x + p1.x + p2.x) / 3
+        local cy = (p0.y + p1.y + p2.y) / 3
+
+        centroidX = centroidX + cx * area
+        centroidY = centroidY + cy * area
+    end
+
+    if totalArea == 0 then
+        return self:getCenter()
+    end
+
+    return Vector2.create(centroidX / totalArea, centroidY / totalArea)
+end
+
+---计算多边形的中心
+---@return foundation.math.Vector2
+function Polygon:getCenter()
+    local minX, maxX, minY, maxY = self:AABB()
     return Vector2.create((minX + maxX) / 2, (minY + maxY) / 2)
 end
 
 ---计算多边形的包围盒宽高
 ---@return number, number
 function Polygon:getBoundingBoxSize()
-    local minX, minY = math.huge, math.huge
-    local maxX, maxY = -math.huge, -math.huge
-
-    for i = 0, self.size - 1 do
-        local point = self.points[i]
-        if point.x < minX then
-            minX = point.x
-        end
-        if point.y < minY then
-            minY = point.y
-        end
-        if point.x > maxX then
-            maxX = point.x
-        end
-        if point.y > maxY then
-            maxY = point.y
-        end
-    end
-
+    local minX, maxX, minY, maxY = self:AABB()
     return maxX - minX, maxY - minY
 end
 

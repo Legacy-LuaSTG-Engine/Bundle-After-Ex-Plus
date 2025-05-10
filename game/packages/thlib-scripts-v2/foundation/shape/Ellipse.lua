@@ -336,9 +336,9 @@ function Ellipse:getCenter()
     return self.center:clone()
 end
 
----计算椭圆的包围盒宽高
----@return number, number
-function Ellipse:getBoundingBoxSize()
+---获取椭圆的AABB包围盒
+---@return number, number, number, number
+function Ellipse:AABB()
     local baseAngle = self.direction:angle()
     local cos_angle = math.cos(baseAngle)
     local sin_angle = math.sin(baseAngle)
@@ -346,10 +346,17 @@ function Ellipse:getBoundingBoxSize()
     local x_axis = Vector2.create(self.rx * cos_angle, self.rx * sin_angle)
     local y_axis = Vector2.create(-self.ry * sin_angle, self.ry * cos_angle)
 
-    local width = 2 * math.sqrt(x_axis.x * x_axis.x + y_axis.x * y_axis.x)
-    local height = 2 * math.sqrt(x_axis.y * x_axis.y + y_axis.y * y_axis.y)
+    local half_width = math.sqrt(x_axis.x * x_axis.x + y_axis.x * y_axis.x)
+    local half_height = math.sqrt(x_axis.y * x_axis.y + y_axis.y * y_axis.y)
 
-    return width, height
+    return self.center.x - half_width, self.center.x + half_width, self.center.y - half_height, self.center.y + half_height
+end
+
+---计算椭圆的包围盒宽高
+---@return number, number
+function Ellipse:getBoundingBoxSize()
+    local minX, maxX, minY, maxY = self:AABB()
+    return maxX - minX, maxY - minY
 end
 
 ---计算椭圆的重心

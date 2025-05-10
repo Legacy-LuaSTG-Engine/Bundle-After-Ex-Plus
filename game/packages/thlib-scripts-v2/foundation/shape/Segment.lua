@@ -136,13 +136,20 @@ function Segment:getCenter()
     return self:midpoint()
 end
 
----计算线段的包围盒宽高
----@return number, number 线段的宽度和高度
-function Segment:getBoundingBoxSize()
+---获取线段的AABB包围盒
+---@return number, number, number, number
+function Segment:AABB()
     local minX = math.min(self.point1.x, self.point2.x)
     local maxX = math.max(self.point1.x, self.point2.x)
     local minY = math.min(self.point1.y, self.point2.y)
     local maxY = math.max(self.point1.y, self.point2.y)
+    return minX, maxX, minY, maxY
+end
+
+---计算线段的包围盒宽高
+---@return number, number 线段的宽度和高度
+function Segment:getBoundingBoxSize()
+    local minX, maxX, minY, maxY = self:AABB()
     return maxX - minX, maxY - minY
 end
 

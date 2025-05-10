@@ -186,6 +186,14 @@ function Circle:getCenter()
     return self.center:clone()
 end
 
+---获取圆的AABB包围盒
+---@return number, number, number, number
+function Circle:AABB()
+    local cx, cy = self.center.x, self.center.y
+    local r = self.radius
+    return cx - r, cx + r, cy - r, cy + r
+end
+
 ---计算圆的包围盒宽高
 ---@return number, number
 function Circle:getBoundingBoxSize()

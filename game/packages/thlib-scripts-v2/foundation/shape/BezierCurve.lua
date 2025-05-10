@@ -343,107 +343,41 @@ function BezierCurve:getCenter()
     return Vector2.create((minX + maxX) / 2, (minY + maxY) / 2)
 end
 
----计算贝塞尔曲线的包围盒宽高
----@return number, number
-function BezierCurve:getBoundingBoxSize()
+---获取贝塞尔曲线的AABB包围盒
+---@return number, number, number, number
+function BezierCurve:AABB()
     local minX, minY = math.huge, math.huge
     local maxX, maxY = -math.huge, -math.huge
 
-    local function updateBounds(point)
+    -- 首先检查所有控制点
+    for i = 0, self.num_points - 1 do
+        local point = self.control_points[i]
         minX = math.min(minX, point.x)
         minY = math.min(minY, point.y)
         maxX = math.max(maxX, point.x)
         maxY = math.max(maxY, point.y)
     end
 
-    updateBounds(self.control_points[0])
-    updateBounds(self.control_points[self.num_points - 1])
-
-    local n = self.order
-    if n > 1 then
-        local deriv_points = {}
-        for i = 0, n - 1 do
-            deriv_points[i + 1] = (self.control_points[i + 1] - self.control_points[i]) * n
-        end
-
-        local t_values = { 0, 1 }
-        if n == 2 then
-            local p0, p1, p2 = self.control_points[0], self.control_points[1], self.control_points[2]
-            local dx1 = p1.x - p0.x
-            local dx2 = p2.x - p1.x
-            local dy1 = p1.y - p0.y
-            local dy2 = p2.y - p1.y
-
-            if dx1 ~= dx2 then
-                local tx = dx1 / (dx1 - dx2)
-                if tx > 0 and tx < 1 then
-                    table.insert(t_values, tx)
-                end
-            end
-
-            if dy1 ~= dy2 then
-                local ty = dy1 / (dy1 - dy2)
-                if ty > 0 and ty < 1 then
-                    table.insert(t_values, ty)
-                end
-            end
-        elseif n == 3 then
-            local q0 = deriv_points[1]
-            local q1 = deriv_points[2]
-            local q2 = deriv_points[3]
-
-            local a_x = q0.x - 2 * q1.x + q2.x
-            local b_x = 2 * (q1.x - q0.x)
-            local c_x = q0.x
-            if a_x ~= 0 then
-                local discriminant_x = b_x * b_x - 4 * a_x * c_x
-                if discriminant_x >= 0 then
-                    local sqrt_d = math.sqrt(discriminant_x)
-                    local t1 = (-b_x + sqrt_d) / (2 * a_x)
-                    local t2 = (-b_x - sqrt_d) / (2 * a_x)
-                    if t1 > 0 and t1 < 1 then
-                        table.insert(t_values, t1)
-                    end
-                    if t2 > 0 and t2 < 1 then
-                        table.insert(t_values, t2)
-                    end
-                end
-            elseif b_x ~= 0 then
-                local t = -c_x / b_x
-                if t > 0 and t < 1 then
-                    table.insert(t_values, t)
-                end
-            end
-
-            local a_y = q0.y - 2 * q1.y + q2.y
-            local b_y = 2 * (q1.y - q0.y)
-            local c_y = q0.y
-            if a_y ~= 0 then
-                local discriminant_y = b_y * b_y - 4 * a_y * c_y
-                if discriminant_y >= 0 then
-                    local sqrt_d = math.sqrt(discriminant_y)
-                    local t1 = (-b_y + sqrt_d) / (2 * a_y)
-                    local t2 = (-b_y - sqrt_d) / (2 * a_y)
-                    if t1 > 0 and t1 < 1 then
-                        table.insert(t_values, t1)
-                    end
-                    if t2 > 0 and t2 < 1 then
-                        table.insert(t_values, t2)
-                    end
-                end
-            elseif b_y ~= 0 then
-                local t = -c_y / b_y
-                if t > 0 and t < 1 then
-                    table.insert(t_values, t)
-                end
-            end
-        end
-
-        for _, t in ipairs(t_values) do
-            updateBounds(self:getPoint(t))
+    -- 对于高阶贝塞尔曲线，还需要检查曲线上的极值点
+    if self.order > 1 then
+        local segments = self.order * 10 -- 使用更多的分段来获得更精确的包围盒
+        for i = 0, segments do
+            local t = i / segments
+            local point = self:getPoint(t)
+            minX = math.min(minX, point.x)
+            minY = math.min(minY, point.y)
+            maxX = math.max(maxX, point.x)
+            maxY = math.max(maxY, point.y)
         end
     end
 
+    return minX, maxX, minY, maxY
+end
+
+---计算贝塞尔曲线的包围盒宽高
+---@return number, number
+function BezierCurve:getBoundingBoxSize()
+    local minX, maxX, minY, maxY = self:AABB()
     return maxX - minX, maxY - minY
 end
 
