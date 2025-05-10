@@ -236,64 +236,74 @@ end
 
 ---旋转椭圆（修改当前椭圆）
 ---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse 自身引用
-function Ellipse:rotate(rad)
+function Ellipse:rotate(rad, center)
     self.direction = self.direction:rotated(rad)
+    if center then
+        local dx = self.center.x - center.x
+        local dy = self.center.y - center.y
+        local cosA, sinA = math.cos(rad), math.sin(rad)
+        self.center.x = center.x + dx * cosA - dy * sinA
+        self.center.y = center.y + dx * sinA + dy * cosA
+    end
     return self
 end
 
 ---旋转椭圆（修改当前椭圆）
 ---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse 自身引用
-function Ellipse:degreeRotate(angle)
-    return self:rotate(math.rad(angle))
+function Ellipse:degreeRotate(angle, center)
+    return self:rotate(math.rad(angle), center)
 end
 
 ---获取旋转后的椭圆副本
 ---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse
-function Ellipse:rotated(rad)
-    return Ellipse.create(
-            self.center:clone(),
-            self.rx,
-            self.ry,
-            self.direction:rotated(rad)
-    )
+function Ellipse:rotated(rad, center)
+    local result = Ellipse.create(self.center:clone(), self.rx, self.ry, self.direction:clone())
+    return result:rotate(rad, center)
 end
 
 ---获取旋转后的椭圆副本
 ---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse
-function Ellipse:degreeRotated(angle)
-    return self:rotated(math.rad(angle))
+function Ellipse:degreeRotated(angle, center)
+    return self:rotated(math.rad(angle), center)
 end
 
 ---缩放椭圆（修改当前椭圆）
 ---@param scale number|foundation.math.Vector2 缩放比例
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse 自身引用
-function Ellipse:scale(scale)
+function Ellipse:scale(scale, center)
     local scaleX, scaleY
     if type(scale) == "number" then
         scaleX, scaleY = scale, scale
     else
         scaleX, scaleY = scale.x, scale.y
     end
+    center = center or self.center
+
     self.rx = self.rx * scaleX
     self.ry = self.ry * scaleY
+    local dx = self.center.x - center.x
+    local dy = self.center.y - center.y
+    self.center.x = center.x + dx * scaleX
+    self.center.y = center.y + dy * scaleY
     return self
 end
 
 ---获取缩放后的椭圆副本
 ---@param scale number|foundation.math.Vector2 缩放比例
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为椭圆中心
 ---@return foundation.shape.Ellipse
-function Ellipse:scaled(scale)
-    local scaleX, scaleY
-    if type(scale) == "number" then
-        scaleX, scaleY = scale, scale
-    else
-        scaleX, scaleY = scale.x, scale.y
-    end
-    return Ellipse.create(self.center:clone(), self.rx * scaleX, self.ry * scaleY, self.direction)
+function Ellipse:scaled(scale, center)
+    local result = Ellipse.create(self.center:clone(), self.rx, self.ry, self.direction:clone())
+    return result:scale(scale, center)
 end
 
 ---检查点是否在椭圆内或椭圆上

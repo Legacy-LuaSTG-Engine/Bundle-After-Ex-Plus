@@ -346,19 +346,19 @@ end
 
 ---将当前多边形旋转指定弧度（更改当前多边形）
 ---@param rad number 旋转弧度
----@param center foundation.math.Vector2 旋转中心
----@return foundation.shape.Polygon 旋转后的多边形（自身引用）
----@overload fun(self:foundation.shape.Polygon, rad:number): foundation.shape.Polygon 将多边形绕中心点旋转指定弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为多边形重心
+---@return foundation.shape.Polygon 自身引用
 function Polygon:rotate(rad, center)
     center = center or self:centroid()
     local cosRad = math.cos(rad)
     local sinRad = math.sin(rad)
 
     for i = 0, self.size - 1 do
-        local dx = self.points[i].x - center.x
-        local dy = self.points[i].y - center.y
-        self.points[i].x = dx * cosRad - dy * sinRad + center.x
-        self.points[i].y = dx * sinRad + dy * cosRad + center.y
+        local point = self.points[i]
+        local dx = point.x - center.x
+        local dy = point.y - center.y
+        point.x = center.x + dx * cosRad - dy * sinRad
+        point.y = center.y + dx * sinRad + dy * cosRad
     end
 
     return self
@@ -366,45 +366,28 @@ end
 
 ---将当前多边形旋转指定角度（更改当前多边形）
 ---@param angle number 旋转角度
----@param center foundation.math.Vector2 旋转中心
----@return foundation.shape.Polygon 旋转后的多边形（自身引用）
----@overload fun(self:foundation.shape.Polygon, angle:number): foundation.shape.Polygon 将多边形绕中心点旋转指定角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为多边形重心
+---@return foundation.shape.Polygon 自身引用
 function Polygon:degreeRotate(angle, center)
-    angle = math.rad(angle)
-    return self:rotate(angle, center)
+    return self:rotate(math.rad(angle), center)
 end
 
 ---获取当前多边形旋转指定弧度的副本
 ---@param rad number 旋转弧度
----@param center foundation.math.Vector2 旋转中心
----@return foundation.shape.Polygon 旋转后的多边形副本
----@overload fun(self:foundation.shape.Polygon, rad:number): foundation.shape.Polygon 将多边形绕中心点旋转指定弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为多边形重心
+---@return foundation.shape.Polygon
 function Polygon:rotated(rad, center)
-    center = center or self:centroid()
-    local cosRad = math.cos(rad)
-    local sinRad = math.sin(rad)
-
-    local newPoints = {}
-    for i = 0, self.size - 1 do
-        local dx = self.points[i].x - center.x
-        local dy = self.points[i].y - center.y
-        newPoints[i + 1] = Vector2.create(
-                dx * cosRad - dy * sinRad + center.x,
-                dx * sinRad + dy * cosRad + center.y
-        )
-    end
-
-    return Polygon.create(newPoints)
+    local points = self:getVertices()
+    local result = Polygon.create(points)
+    return result:rotate(rad, center)
 end
 
 ---获取当前多边形旋转指定角度的副本
 ---@param angle number 旋转角度
----@param center foundation.math.Vector2 旋转中心
----@return foundation.shape.Polygon 旋转后的多边形副本
----@overload fun(self:foundation.shape.Polygon, angle:number): foundation.shape.Polygon 将多边形绕中心点旋转指定角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为多边形重心
+---@return foundation.shape.Polygon
 function Polygon:degreeRotated(angle, center)
-    angle = math.rad(angle)
-    return self:rotated(angle, center)
+    return self:rotated(math.rad(angle), center)
 end
 
 ---将当前多边形缩放指定倍数（更改当前多边形）

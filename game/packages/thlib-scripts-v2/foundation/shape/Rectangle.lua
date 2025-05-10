@@ -193,65 +193,77 @@ end
 
 ---旋转矩形（更改当前矩形）
 ---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle 自身引用
-function Rectangle:rotate(rad)
+function Rectangle:rotate(rad, center)
     local cosA, sinA = math.cos(rad), math.sin(rad)
     local x = self.direction.x * cosA - self.direction.y * sinA
     local y = self.direction.x * sinA + self.direction.y * cosA
     self.direction = Vector2.create(x, y):normalized()
+    
+    if center then
+        local dx = self.center.x - center.x
+        local dy = self.center.y - center.y
+        self.center.x = center.x + dx * cosA - dy * sinA
+        self.center.y = center.y + dx * sinA + dy * cosA
+    end
     return self
 end
 
 ---旋转矩形（更改当前矩形）
 ---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle 自身引用
-function Rectangle:degreeRotate(angle)
-    return self:rotate(math.rad(angle))
+function Rectangle:degreeRotate(angle, center)
+    return self:rotate(math.rad(angle), center)
 end
 
 ---获取旋转后的矩形副本
 ---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle
-function Rectangle:rotated(rad)
-    local cosA, sinA = math.cos(rad), math.sin(rad)
-    local x = self.direction.x * cosA - self.direction.y * sinA
-    local y = self.direction.x * sinA + self.direction.y * cosA
-    return Rectangle.create(self.center, self.width, self.height, Vector2.create(x, y):normalized())
+function Rectangle:rotated(rad, center)
+    local result = Rectangle.create(self.center:clone(), self.width, self.height, self.direction:clone())
+    return result:rotate(rad, center)
 end
 
 ---获取旋转后的矩形副本
 ---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle
-function Rectangle:degreeRotated(angle)
-    return self:rotated(math.rad(angle))
+function Rectangle:degreeRotated(angle, center)
+    return self:rotated(math.rad(angle), center)
 end
 
 ---缩放矩形（更改当前矩形）
 ---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle 自身引用
-function Rectangle:scale(scale)
+function Rectangle:scale(scale, center)
     local scaleX, scaleY
     if type(scale) == "number" then
         scaleX, scaleY = scale, scale
     else
         scaleX, scaleY = scale.x, scale.y
     end
+    center = center or self.center
+    
     self.width = self.width * scaleX
     self.height = self.height * scaleY
+    local dx = self.center.x - center.x
+    local dy = self.center.y - center.y
+    self.center.x = center.x + dx * scaleX
+    self.center.y = center.y + dy * scaleY
     return self
 end
 
 ---获取缩放后的矩形副本
 ---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为矩形中心
 ---@return foundation.shape.Rectangle
-function Rectangle:scaled(scale)
-    local scaleX, scaleY
-    if type(scale) == "number" then
-        scaleX, scaleY = scale, scale
-    else
-        scaleX, scaleY = scale.x, scale.y
-    end
-    return Rectangle.create(self.center, self.width * scaleX, self.height * scaleY, self.direction)
+function Rectangle:scaled(scale, center)
+    local result = Rectangle.create(self.center:clone(), self.width, self.height, self.direction:clone())
+    return result:scale(scale, center)
 end
 
 ---检查点是否在矩形内（包括边界）

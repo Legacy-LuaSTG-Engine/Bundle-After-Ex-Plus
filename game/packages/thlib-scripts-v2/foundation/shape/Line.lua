@@ -63,7 +63,7 @@ function Line.create(point, direction)
         ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
-    
+
     local line = ffi.new("foundation_shape_Line", point, direction)
     local result = {
         __data = line,
@@ -256,6 +256,35 @@ end
 function Line:degreeRotated(angle, center)
     angle = math.rad(angle)
     return self:rotated(angle, center)
+end
+
+---缩放直线（更改当前直线）
+---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为直线上的点
+---@return foundation.shape.Line 自身引用
+function Line:scale(scale, center)
+    local scaleX, scaleY
+    if type(scale) == "number" then
+        scaleX, scaleY = scale, scale
+    else
+        scaleX, scaleY = scale.x, scale.y
+    end
+    center = center or self.point
+
+    local dx = self.point.x - center.x
+    local dy = self.point.y - center.y
+    self.point.x = center.x + dx * scaleX
+    self.point.y = center.y + dy * scaleY
+    return self
+end
+
+---获取缩放后的直线副本
+---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为直线上的点
+---@return foundation.shape.Line
+function Line:scaled(scale, center)
+    local result = Line.create(self.point:clone(), self.direction:clone())
+    return result:scale(scale, center)
 end
 
 ---检查与其他形状的相交

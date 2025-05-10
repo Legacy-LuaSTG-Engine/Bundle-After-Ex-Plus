@@ -111,47 +111,74 @@ function Circle:moved(v)
     return Circle.create(Vector2.create(self.center.x + moveX, self.center.y + moveY), self.radius)
 end
 
----旋转圆（没有实际效果）
----@param _ number 旋转弧度
+---旋转圆（修改当前圆）
+---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为圆心
 ---@return foundation.shape.Circle 自身引用
-function Circle:rotate(_)
+function Circle:rotate(rad, center)
+    if center then
+        local dx = self.center.x - center.x
+        local dy = self.center.y - center.y
+        local cosA, sinA = math.cos(rad), math.sin(rad)
+        self.center.x = center.x + dx * cosA - dy * sinA
+        self.center.y = center.y + dx * sinA + dy * cosA
+    end
     return self
 end
 
----旋转圆（没有实际效果）
----@param _ number 旋转角度
+---旋转圆（修改当前圆）
+---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为圆心
 ---@return foundation.shape.Circle 自身引用
-function Circle:degreeRotate(_)
-    return self
+function Circle:degreeRotate(angle, center)
+    return self:rotate(math.rad(angle), center)
 end
 
----获取旋转后的圆副本（没有实际效果）
----@param _ number 旋转弧度
+---获取旋转后的圆副本
+---@param rad number 旋转弧度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为圆心
 ---@return foundation.shape.Circle
-function Circle:rotated(_)
-    return Circle.create(self.center:clone(), self.radius)
+function Circle:rotated(rad, center)
+    local result = Circle.create(self.center:clone(), self.radius)
+    return result:rotate(rad, center)
 end
 
----获取旋转后的圆副本（没有实际效果）
----@param _ number 旋转角度
+---获取旋转后的圆副本
+---@param angle number 旋转角度
+---@param center foundation.math.Vector2|nil 旋转中心点，默认为圆心
 ---@return foundation.shape.Circle
-function Circle:degreeRotated(_)
-    return Circle.create(self.center:clone(), self.radius)
+function Circle:degreeRotated(angle, center)
+    return self:rotated(math.rad(angle), center)
 end
 
 ---缩放圆（修改当前圆）
----@param scale number 缩放比例
+---@param scale number|foundation.math.Vector2 缩放比例
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为圆心
 ---@return foundation.shape.Circle 自身引用
-function Circle:scale(scale)
-    self.radius = self.radius * scale
+function Circle:scale(scale, center)
+    local scaleX, scaleY
+    if type(scale) == "number" then
+        scaleX, scaleY = scale, scale
+    else
+        scaleX, scaleY = scale.x, scale.y
+    end
+    center = center or self.center
+
+    self.radius = self.radius * math.sqrt(scaleX * scaleY)
+    local dx = self.center.x - center.x
+    local dy = self.center.y - center.y
+    self.center.x = center.x + dx * scaleX
+    self.center.y = center.y + dy * scaleY
     return self
 end
 
 ---获取缩放后的圆副本
----@param scale number 缩放比例
+---@param scale number|foundation.math.Vector2 缩放比例
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为圆心
 ---@return foundation.shape.Circle
-function Circle:scaled(scale)
-    return Circle.create(self.center, self.radius * scale)
+function Circle:scaled(scale, center)
+    local result = Circle.create(self.center:clone(), self.radius)
+    return result:scale(scale, center)
 end
 
 ---检查与其他形状的相交

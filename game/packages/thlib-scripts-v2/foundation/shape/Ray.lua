@@ -63,7 +63,7 @@ function Ray.create(point, direction)
         ---@diagnostic disable-next-line: need-check-nil
         direction = direction:clone()
     end
-    
+
     local ray = ffi.new("foundation_shape_Ray", point, direction)
     local result = {
         __data = ray,
@@ -271,6 +271,35 @@ end
 function Ray:degreeRotated(angle, center)
     angle = math.rad(angle)
     return self:rotated(angle, center)
+end
+
+---缩放射线（更改当前射线）
+---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为射线的起始点
+---@return foundation.shape.Ray 自身引用
+function Ray:scale(scale, center)
+    local scaleX, scaleY
+    if type(scale) == "number" then
+        scaleX, scaleY = scale, scale
+    else
+        scaleX, scaleY = scale.x, scale.y
+    end
+    center = center or self.point
+
+    local dx = self.point.x - center.x
+    local dy = self.point.y - center.y
+    self.point.x = center.x + dx * scaleX
+    self.point.y = center.y + dy * scaleY
+    return self
+end
+
+---获取缩放后的射线副本
+---@param scale number|foundation.math.Vector2 缩放倍数
+---@param center foundation.math.Vector2|nil 缩放中心点，默认为射线的起始点
+---@return foundation.shape.Ray
+function Ray:scaled(scale, center)
+    local result = Ray.create(self.point:clone(), self.direction:clone())
+    return result:scale(scale, center)
 end
 
 ---检查与其他形状的相交
