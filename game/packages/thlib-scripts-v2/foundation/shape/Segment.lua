@@ -136,6 +136,13 @@ function Segment:getCenter()
     return self:midpoint()
 end
 
+---计算线段的取点
+---@param t number 取点参数，范围0到1
+---@return foundation.math.Vector2 线段上t位置的点
+function Segment:getPoint(t)
+    return self.point1 + (self.point2 - self.point1) * t
+end
+
 ---获取线段的AABB包围盒
 ---@return number, number, number, number
 function Segment:AABB()
