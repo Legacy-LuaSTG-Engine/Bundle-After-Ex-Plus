@@ -43,51 +43,97 @@ function plus.Class(base)
     return class
 end
 
---! @brief 模拟TryCatch块
---! @param t 条件上下文
---!
---! 执行一个try..catch..finally块
---! 当try语句中出现错误时，将把错误信息发送到catch语句块，否则返回try函数结果
---! 当catch语句块被执行时，若发生错误将重新抛出，否则返回catch函数结果
---! finally块总是会保证在try或者catch后被执行
-function plus.TryCatch(t)
-    assert(t.try ~= nil, "invalid argument.")
+do
+    local type = type
+    local concat = table.concat
+    local unpack = table.unpack or unpack
+    local select = select
+    local assert = assert
+    local xpcall = xpcall
+    local traceback = debug.traceback
+    local error = error
 
-    local ret = {
-        xpcall(t.try, function(err)
-            return err .. "\n<=== inner traceback ===>\n" .. debug.traceback() .. "\n<=======================>"
-        end)
+    ---@class plus.TryCatch.Data
+    ---@field try function @尝试执行
+    ---@field catch function @错误捕获
+    ---@field finally function @结束行为
+    local _ = {
+        try = function()
+        end,
+        ---@param err string @错误信息
+        catch = function(err)
+        end,
+        finally = function()
+        end
     }
-    if ret[1] == true then
-        if t.finally then
-            t.finally()
-        end
-        return unpack(ret, 2)
-    else
-        local cret
 
-        if t.catch then
-            cret = {
-                xpcall(t.catch, function(err)
-                    return "error in catch block: " .. err .. "\n<=== inner traceback ===>\n" .. debug.traceback() .. "\n<=======================>"
-                end, ret[2])
-            }
-        end
+    ---基础错误回调
+    ---@param err string @错误信息
+    ---@return string
+    local function innerFunc(err)
+        return concat({
+            err or "unknown exception",
+            "<=== inner traceback ===>",
+            traceback(),
+            "<=======================>",
+        }, "\n")
+    end
 
-        if t.finally then
-            t.finally()
-        end
+    ---捕获仍然错误回调
+    ---@param err string @错误信息
+    ---@return string
+    local function innerCatchFunc(err)
+        return concat({
+            "error in catch block: ",
+            err or "unknown exception",
+            "<=== inner traceback ===>",
+            traceback(),
+            "<=======================>"
+        }, "\n")
+    end
 
-        if cret == nil then
-            error("unhandled error: " .. ret[2])
+    ---捕获所有返回值
+    ---@return number, table
+    local function packageResult(...)
+        return select("#", ...), { ... }
+    end
+
+    ---```
+    ---模拟TryCatch块
+    ---执行一个try..catch..finally块
+    ---当try语句中出现错误时，将把错误信息发送到catch语句块，否则返回try函数结果
+    ---当catch语句块被执行时，若发生错误将重新抛出，否则返回catch函数结果
+    ---finally块总是会保证在try或者catch后被执行
+    ---```
+    ---@param data plus.TryCatch.Data @条件上下文
+    local function tryCatch(data, ...)
+        local try, catch, finally = data.try, data.catch, data.finally
+        assert(type(try) == "function", "invalid argument(try).")
+        assert(type(catch) == "function" or type(catch) == "nil", "invalid argument(catch).")
+        assert(type(finally) == "function" or type(finally) == "nil", "invalid argument(finally).")
+        local num, result = packageResult(xpcall(try, innerFunc, ...))
+        if result[1] then
+            if finally then
+                finally()
+            end
+            return unpack(result, 2, num)
         else
-            if cret[1] == true then
-                return unpack(cret, 2)
+            if catch then
+                num, result = packageResult(xpcall(catch, innerCatchFunc, result[2]))
+            end
+            if finally then
+                finally()
+            end
+            if not (catch) then
+                error("unhandled error: " .. result[2], 2)
+            elseif result[1] then
+                return unpack(result, 2, num)
             else
-                error(cret[2])
+                error(result[2], 2)
             end
         end
     end
+    plus.TryCatch = tryCatch
 end
 
 local BIT_NUMBERS = {
