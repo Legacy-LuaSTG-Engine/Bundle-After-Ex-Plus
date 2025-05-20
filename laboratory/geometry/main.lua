@@ -1,6 +1,6 @@
 local lstg = require("lstg")
 lstg.FileManager.AddSearchPath("../../game/packages/thlib-scripts/")
-lstg.FileManager.AddSearchPath("../../game/packages/thlib-scripts-v2/")
+lstg.FileManager.AddSearchPath("../../game/packages/lua-ffi-math/")
 lstg.FileManager.AddSearchPath("../../game/packages/thlib-resources/")
 
 local Keyboard = lstg.Input.Keyboard
