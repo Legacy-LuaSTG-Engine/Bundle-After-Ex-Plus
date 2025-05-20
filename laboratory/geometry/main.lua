@@ -950,6 +950,53 @@ end
 function Scene10:draw()
     object:draw()
 end
+
+local Vector3 = require("foundation.math.Vector3")
+local Triangle3D = require("foundation.shape3D.Triangle3D")
+
+local Scene11 = {}
+Scene11.name = "3D Triangle"
+function Scene11:create()
+    self.timer = -1
+
+    self.triangle = Triangle3D.create(
+        Vector3.create(-100, -100, 100),
+        Vector3.create(100, -100, 100),
+        Vector3.create(0, 100, 100)
+    ):move(Vector3.create(window.width / 2, window.height / 2, 0))
+
+    self.rotateAxis = Vector3.create(1, 1, 1):normalize()
+    self.rotateAngle = 1
+    self.rotateCenter = Vector3.create(window.width / 2, window.height / 2, 0)
+end
+
+function Scene11:destroy()
+    object:clear()
+end
+
+function Scene11:update()
+    self.timer = self.timer + 1
+    self.triangleRotated = self.triangle:degreeRotated(self.rotateAxis, self.rotateAngle * self.timer, self.rotateCenter)
+end
+
+function Scene11:draw()
+    local vertices = self.triangleRotated:getVertices()
+
+    setColor(192, 255, 255, 255)
+    for i = 1, #vertices do
+        local p1 = vertices[i]
+        local p2 = vertices[i % #vertices + 1]
+        renderLine(p1, p2, 2)
+    end
+    if self.render_vertex then
+        setColor(127, 255, 0, 0)
+        for _, vertex in ipairs(vertices) do
+            renderPoint(vertex, 4)
+        end
+        setColor(127, 255, 0, 0)
+        renderPoint(self.triangle:centroid(), 4)
+    end
+end
 --endregion
 
 ---@generic T
@@ -962,6 +1009,7 @@ local function makeInstance(class)
 end
 
 local scenes = {
+    Scene11,
     Scene1,
     Scene2,
     Scene3,
