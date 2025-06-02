@@ -187,10 +187,13 @@ local function loadBulletDefinitions(path)
             if sprite.center ~= nil then
                 lstg.SetImageCenter(sprite.name, sprite.center.x, sprite.center.y)
             end
-            if sprite.scaling ~= nil then
+            if type(sprite.scaling) == "number" then
+                assert(sprite.scaling > 0.0, "sprite field 'scaling' must > 0.0")
                 lstg.SetImageScale(sprite.name, sprite.scaling)
             end
-            if sprite.blend ~= nil then
+            if type(sprite.blend) == "string" then
+                assert(sprite.blend == "" or sprite.blend == "mul+alpha" or sprite.blend == "mul+add", "sprite field 'blend' must be '' or 'mul+alpha' or 'mul+add'")
+                print(sprite.name, sprite.blend, lstg.Color(255, 255, 255, 255))
                 lstg.SetImageState(sprite.name, sprite.blend, lstg.Color(255, 255, 255, 255))
             end
         end
@@ -212,7 +215,8 @@ local function loadBulletDefinitions(path)
             else
                 lstg.LoadAnimation(sprite_sequence.name, sprite_sequence.sprites, sprite_sequence.interval or 1)
             end
-            if sprite_sequence.blend ~= nil then
+            if type(sprite_sequence.blend) == "string" then
+                assert(sprite_sequence.blend == "" or sprite_sequence.blend == "mul+alpha" or sprite_sequence.blend == "mul+add", "sprite-sequence field 'blend' must be '' or 'mul+alpha' or 'mul+add'")
                 lstg.SetAnimationState(sprite_sequence.name, sprite_sequence.blend, lstg.Color(255, 255, 255, 255))
             end
         end

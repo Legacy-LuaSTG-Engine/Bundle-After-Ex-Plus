@@ -34,7 +34,7 @@ end
 arrow_mid = Class(img_class)
 arrow_mid.size = 0.61
 function arrow_mid:init(index)
-    self.img = 'arrow_mid' .. int((index + 1) / 2)
+    self.img = 'arrow_mid' .. index
 end
 ----------------------------------------------------------------
 gun_bullet = Class(img_class)
@@ -52,7 +52,7 @@ end
 butterfly = Class(img_class)
 butterfly.size = 0.7
 function butterfly:init(index)
-    self.img = 'butterfly' .. int((index + 1) / 2)
+    self.img = 'butterfly' .. index
 end
 ----------------------------------------------------------------
 square = Class(img_class)
@@ -112,7 +112,7 @@ end
 star_big = Class(img_class)
 star_big.size = 0.998
 function star_big:init(index)
-    self.img = 'star_big' .. int((index + 1) / 2)
+    self.img = 'star_big' .. index
 end
 ----------------------------------------------------------------
 star_big_b = Class(img_class)
@@ -124,7 +124,7 @@ end
 ball_huge = Class(img_class)
 ball_huge.size = 2.0
 function ball_huge:init(index)
-    self.img = 'ball_huge' .. int((index + 1) / 2)
+    self.img = 'ball_huge' .. index
 end
 function ball_huge:frame()
     if not self.stay then
@@ -162,7 +162,7 @@ end
 ball_huge_dark = Class(img_class)
 ball_huge_dark.size = 2.0
 function ball_huge_dark:init(index)
-    self.img = 'ball_huge_dark' .. int((index + 1) / 2)
+    self.img = 'ball_huge_dark' .. index
 end
 function ball_huge_dark:frame()
     if not self.stay then
@@ -200,7 +200,7 @@ end
 ball_light = Class(img_class)
 ball_light.size = 2.0
 function ball_light:init(index)
-    self.img = 'ball_light' .. int((index + 1) / 2)
+    self.img = 'ball_light' .. index
 end
 function ball_light:frame()
     if not self.stay then
@@ -238,7 +238,7 @@ end
 ball_light_dark = Class(img_class)
 ball_light_dark.size = 2.0
 function ball_light_dark:init(index)
-    self.img = 'ball_light_dark' .. int((index + 1) / 2)
+    self.img = 'ball_light_dark' .. index
 end
 function ball_light_dark:frame()
     if not self.stay then
@@ -282,7 +282,7 @@ end
 heart = Class(img_class)
 heart.size = 1.0
 function heart:init(index)
-    self.img = 'heart' .. int((index + 1) / 2)
+    self.img = 'heart' .. index
 end
 ----------------------------------------------------------------
 ball_small = Class(img_class)
@@ -324,7 +324,7 @@ end
 knife_b = Class(img_class)
 knife_b.size = 0.755
 function knife_b:init(index)
-    self.img = 'knife_b' .. int((index + 1) / 2)
+    self.img = 'knife_b' .. index
 end
 ----------------------------------------------------------------
 arrow_small = Class(img_class)
@@ -358,7 +358,7 @@ end
 silence = Class(img_class)
 silence.size = 0.8
 function silence:init(index)
-    self.img = 'silence' .. int((index + 1) / 2)
+    self.img = 'silence' .. index
 end
 ----------------------------------------------------------------
 BULLETSTYLE = {
