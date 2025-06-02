@@ -70,7 +70,7 @@ end
 ball_mid_b = Class(img_class)
 ball_mid_b.size = 0.751
 function ball_mid_b:init(index)
-    self.img = 'ball_mid_b' .. int((index + 1) / 2)
+    self.img = 'ball_mid_b' .. index
 end
 ----------------------------------------------------------------
 ball_mid_c = Class(img_class)
