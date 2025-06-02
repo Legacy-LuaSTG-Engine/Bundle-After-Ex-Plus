@@ -31,7 +31,7 @@ function laser_bent:init(index, x, y, l, w, sample, node)
     self.listy = {}
     self.node = node or 0
     self._l = int(l / 4)
-    self.img4 = 'laser_node' .. int((self.index + 1) / 2)
+    self.img4 = 'laser_node' .. self.index
     self.pause = 0
     self.a = 0
     self.b = 0
