@@ -1,15 +1,15 @@
 
 ----------------------------------------------------------------
 function img_class:del()
-    New(bubble2, 'preimg' .. self.index, self.x, self.y, self.dx, self.dy, 11, self.imgclass.size, 0, Color(0xFFFFFFFF), Color(0xFFFFFFFF), self.layer, 'mul+add')
+    New(bubble2, 'preimg' .. self._index, self.x, self.y, self.dx, self.dy, 11, self.imgclass.size, 0, Color(0xFFFFFFFF), Color(0xFFFFFFFF), self.layer, 'mul+add')
 end
 function img_class:render()
     if self._blend then
-        SetImageState('preimg' .. self.index, self._blend, Color(255 * self.timer / 11, 255, 255, 255))
+        SetImageState('preimg' .. self._index, self._blend, Color(255 * self.timer / 11, 255, 255, 255))
     else
-        SetImageState('preimg' .. self.index, '', Color(255 * self.timer / 11, 255, 255, 255))
+        SetImageState('preimg' .. self._index, '', Color(255 * self.timer / 11, 255, 255, 255))
     end
-    Render('preimg' .. self.index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 3 + 1) * self.imgclass.size)
+    Render('preimg' .. self._index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 3 + 1) * self.imgclass.size)
 end
 ----------------------------------------------------------------
 particle_img = Class(object)
@@ -64,7 +64,7 @@ end
 ball_mid = Class(img_class)
 ball_mid.size = 0.75
 function ball_mid:init(index)
-    self.img = 'ball_mid' .. int((index + 1) / 2)
+    self.img = 'ball_mid' .. index
 end
 ----------------------------------------------------------------
 ball_mid_b = Class(img_class)
@@ -76,7 +76,7 @@ end
 ball_mid_c = Class(img_class)
 ball_mid_c.size = 0.752
 function ball_mid_c:init(index)
-    self.img = 'ball_mid_c' .. int((index + 1) / 2)
+    self.img = 'ball_mid_c' .. index
 end
 ----------------------------------------------------------------
 ball_mid_d = Class(img_class)
@@ -100,7 +100,7 @@ end
 ellipse = Class(img_class)
 ellipse.size = 0.701
 function ellipse:init(index)
-    self.img = 'ellipse' .. int((index + 1) / 2)
+    self.img = 'ellipse' .. index
 end
 ----------------------------------------------------------------
 star_small = Class(img_class)
@@ -276,7 +276,7 @@ end
 ball_big = Class(img_class)
 ball_big.size = 1.0
 function ball_big:init(index)
-    self.img = 'ball_big' .. int((index + 1) / 2)
+    self.img = 'ball_big' .. index
 end
 ----------------------------------------------------------------
 heart = Class(img_class)
@@ -318,7 +318,7 @@ end
 knife = Class(img_class)
 knife.size = 0.754
 function knife:init(index)
-    self.img = 'knife' .. int((index + 1) / 2)
+    self.img = 'knife' .. index
 end
 ----------------------------------------------------------------
 knife_b = Class(img_class)
@@ -339,8 +339,8 @@ function water_drop:init(index)
     self.img = 'water_drop' .. int((index + 1) / 2)
 end
 function water_drop:render()
-    SetImageState('preimg' .. self.index, 'mul+add', Color(255 * self.timer / 11, 255, 255, 255))
-    Render('preimg' .. self.index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 2 + 1) * self.imgclass.size)
+    SetImageState('preimg' .. self._index, 'mul+add', Color(255 * self.timer / 11, 255, 255, 255))
+    Render('preimg' .. self._index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 2 + 1) * self.imgclass.size)
 end
 ----------------------------------------------------------------
 water_drop_dark = Class(img_class)   --2 4 6 10 12
