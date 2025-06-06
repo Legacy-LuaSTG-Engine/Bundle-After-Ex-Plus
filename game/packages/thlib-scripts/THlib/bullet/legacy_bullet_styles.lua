@@ -336,7 +336,7 @@ end
 water_drop = Class(img_class)   --2 4 6 10 12
 water_drop.size = 0.702
 function water_drop:init(index)
-    self.img = 'water_drop' .. int((index + 1) / 2)
+    self.img = 'water_drop' .. index
 end
 function water_drop:render()
     SetImageState('preimg' .. self._index, 'mul+add', Color(255 * self.timer / 11, 255, 255, 255))
@@ -346,13 +346,13 @@ end
 water_drop_dark = Class(img_class)   --2 4 6 10 12
 water_drop_dark.size = 0.702
 function water_drop_dark:init(index)
-    self.img = 'water_drop_dark' .. int((index + 1) / 2)
+    self.img = 'water_drop_dark' .. index
 end
 ----------------------------------------------------------------
 music = Class(img_class)
 music.size = 0.8
 function music:init(index)
-    self.img = 'music' .. int((index + 1) / 2)
+    self.img = 'music' .. index
 end
 ----------------------------------------------------------------
 silence = Class(img_class)
