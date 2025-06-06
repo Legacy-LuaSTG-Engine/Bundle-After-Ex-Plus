@@ -8,6 +8,12 @@
 
 更新日志：
 
+    aex+ v0.9.0-alpha.8
+        THlib
+            修改：重写了 plus.TryCatch 的代码，并提供了更好的 Lua LSP 代码提示支持
+            新增：新增高清消弹效果动画（位于 community-creations 包内），替换掉ZUN的原作素材
+            移除：移除ZUN的消弹效果动画，删除了 THlib/bullet/etbreak.png
+            新增：补全 16 色的 960p 高清子弹素材（位于 community-creations 包内）
     aex+ v0.9.0-alpha.7
         THlib
             修复：修复 arrow_mid 的图片渲染中心问题
