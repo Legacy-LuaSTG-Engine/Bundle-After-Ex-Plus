@@ -1,7 +1,7 @@
-lstg.LoadTexture('etbreak', 'assets/cake/bullet/etbreak.png')
+lstg.LoadTexture('etbreak', 'assets/olc/bullet/etbreak.png')
 for j = 1, 16 do
     lstg.LoadAnimation('etbreak' .. j, 'etbreak', 0, 0, 128, 128, 4, 2, 3)
-    --lstg.SetAnimationScale('etbreak' .. j, 0.5)
+    lstg.SetAnimationScale('etbreak' .. j, 0.5)
 end
 local BulletBreakIndex = {
     lstg.Color(0xC0FF3030), --red
