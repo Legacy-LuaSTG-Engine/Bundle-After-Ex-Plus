@@ -1,15 +1,15 @@
 
 ----------------------------------------------------------------
 function img_class:del()
-    New(bubble2, 'preimg' .. self.index, self.x, self.y, self.dx, self.dy, 11, self.imgclass.size, 0, Color(0xFFFFFFFF), Color(0xFFFFFFFF), self.layer, 'mul+add')
+    New(bubble2, 'preimg' .. self._index, self.x, self.y, self.dx, self.dy, 11, self.imgclass.size, 0, Color(0xFFFFFFFF), Color(0xFFFFFFFF), self.layer, 'mul+add')
 end
 function img_class:render()
     if self._blend then
-        SetImageState('preimg' .. self.index, self._blend, Color(255 * self.timer / 11, 255, 255, 255))
+        SetImageState('preimg' .. self._index, self._blend, Color(255 * self.timer / 11, 255, 255, 255))
     else
-        SetImageState('preimg' .. self.index, '', Color(255 * self.timer / 11, 255, 255, 255))
+        SetImageState('preimg' .. self._index, '', Color(255 * self.timer / 11, 255, 255, 255))
     end
-    Render('preimg' .. self.index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 3 + 1) * self.imgclass.size)
+    Render('preimg' .. self._index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 3 + 1) * self.imgclass.size)
 end
 ----------------------------------------------------------------
 particle_img = Class(object)
@@ -34,7 +34,7 @@ end
 arrow_mid = Class(img_class)
 arrow_mid.size = 0.61
 function arrow_mid:init(index)
-    self.img = 'arrow_mid' .. int((index + 1) / 2)
+    self.img = 'arrow_mid' .. index
 end
 ----------------------------------------------------------------
 gun_bullet = Class(img_class)
@@ -52,7 +52,7 @@ end
 butterfly = Class(img_class)
 butterfly.size = 0.7
 function butterfly:init(index)
-    self.img = 'butterfly' .. int((index + 1) / 2)
+    self.img = 'butterfly' .. index
 end
 ----------------------------------------------------------------
 square = Class(img_class)
@@ -64,19 +64,19 @@ end
 ball_mid = Class(img_class)
 ball_mid.size = 0.75
 function ball_mid:init(index)
-    self.img = 'ball_mid' .. int((index + 1) / 2)
+    self.img = 'ball_mid' .. index
 end
 ----------------------------------------------------------------
 ball_mid_b = Class(img_class)
 ball_mid_b.size = 0.751
 function ball_mid_b:init(index)
-    self.img = 'ball_mid_b' .. int((index + 1) / 2)
+    self.img = 'ball_mid_b' .. index
 end
 ----------------------------------------------------------------
 ball_mid_c = Class(img_class)
 ball_mid_c.size = 0.752
 function ball_mid_c:init(index)
-    self.img = 'ball_mid_c' .. int((index + 1) / 2)
+    self.img = 'ball_mid_c' .. index
 end
 ----------------------------------------------------------------
 ball_mid_d = Class(img_class)
@@ -100,7 +100,7 @@ end
 ellipse = Class(img_class)
 ellipse.size = 0.701
 function ellipse:init(index)
-    self.img = 'ellipse' .. int((index + 1) / 2)
+    self.img = 'ellipse' .. index
 end
 ----------------------------------------------------------------
 star_small = Class(img_class)
@@ -112,7 +112,7 @@ end
 star_big = Class(img_class)
 star_big.size = 0.998
 function star_big:init(index)
-    self.img = 'star_big' .. int((index + 1) / 2)
+    self.img = 'star_big' .. index
 end
 ----------------------------------------------------------------
 star_big_b = Class(img_class)
@@ -124,7 +124,7 @@ end
 ball_huge = Class(img_class)
 ball_huge.size = 2.0
 function ball_huge:init(index)
-    self.img = 'ball_huge' .. int((index + 1) / 2)
+    self.img = 'ball_huge' .. index
 end
 function ball_huge:frame()
     if not self.stay then
@@ -162,7 +162,7 @@ end
 ball_huge_dark = Class(img_class)
 ball_huge_dark.size = 2.0
 function ball_huge_dark:init(index)
-    self.img = 'ball_huge_dark' .. int((index + 1) / 2)
+    self.img = 'ball_huge_dark' .. index
 end
 function ball_huge_dark:frame()
     if not self.stay then
@@ -200,7 +200,7 @@ end
 ball_light = Class(img_class)
 ball_light.size = 2.0
 function ball_light:init(index)
-    self.img = 'ball_light' .. int((index + 1) / 2)
+    self.img = 'ball_light' .. index
 end
 function ball_light:frame()
     if not self.stay then
@@ -238,7 +238,7 @@ end
 ball_light_dark = Class(img_class)
 ball_light_dark.size = 2.0
 function ball_light_dark:init(index)
-    self.img = 'ball_light_dark' .. int((index + 1) / 2)
+    self.img = 'ball_light_dark' .. index
 end
 function ball_light_dark:frame()
     if not self.stay then
@@ -276,13 +276,13 @@ end
 ball_big = Class(img_class)
 ball_big.size = 1.0
 function ball_big:init(index)
-    self.img = 'ball_big' .. int((index + 1) / 2)
+    self.img = 'ball_big' .. index
 end
 ----------------------------------------------------------------
 heart = Class(img_class)
 heart.size = 1.0
 function heart:init(index)
-    self.img = 'heart' .. int((index + 1) / 2)
+    self.img = 'heart' .. index
 end
 ----------------------------------------------------------------
 ball_small = Class(img_class)
@@ -318,13 +318,13 @@ end
 knife = Class(img_class)
 knife.size = 0.754
 function knife:init(index)
-    self.img = 'knife' .. int((index + 1) / 2)
+    self.img = 'knife' .. index
 end
 ----------------------------------------------------------------
 knife_b = Class(img_class)
 knife_b.size = 0.755
 function knife_b:init(index)
-    self.img = 'knife_b' .. int((index + 1) / 2)
+    self.img = 'knife_b' .. index
 end
 ----------------------------------------------------------------
 arrow_small = Class(img_class)
@@ -336,29 +336,29 @@ end
 water_drop = Class(img_class)   --2 4 6 10 12
 water_drop.size = 0.702
 function water_drop:init(index)
-    self.img = 'water_drop' .. int((index + 1) / 2)
+    self.img = 'water_drop' .. index
 end
 function water_drop:render()
-    SetImageState('preimg' .. self.index, 'mul+add', Color(255 * self.timer / 11, 255, 255, 255))
-    Render('preimg' .. self.index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 2 + 1) * self.imgclass.size)
+    SetImageState('preimg' .. self._index, 'mul+add', Color(255 * self.timer / 11, 255, 255, 255))
+    Render('preimg' .. self._index, self.x, self.y, self.rot, ((11 - self.timer) / 11 * 2 + 1) * self.imgclass.size)
 end
 ----------------------------------------------------------------
 water_drop_dark = Class(img_class)   --2 4 6 10 12
 water_drop_dark.size = 0.702
 function water_drop_dark:init(index)
-    self.img = 'water_drop_dark' .. int((index + 1) / 2)
+    self.img = 'water_drop_dark' .. index
 end
 ----------------------------------------------------------------
 music = Class(img_class)
 music.size = 0.8
 function music:init(index)
-    self.img = 'music' .. int((index + 1) / 2)
+    self.img = 'music' .. index
 end
 ----------------------------------------------------------------
 silence = Class(img_class)
 silence.size = 0.8
 function silence:init(index)
-    self.img = 'silence' .. int((index + 1) / 2)
+    self.img = 'silence' .. index
 end
 ----------------------------------------------------------------
 BULLETSTYLE = {
