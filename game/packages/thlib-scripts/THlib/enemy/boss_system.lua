@@ -3,7 +3,6 @@
 ---@return lstg.StopWatch
 local StopWatch = plus.Class()
 
-
 ---初始化函数
 function StopWatch:init()
     self:Reset()
@@ -739,8 +738,18 @@ function system:popSpellResult()
         b._timer = b.timer
         b._timeout = b.timeout
     end
-    local t = self.clock:GetElapsed() * time_rate
-    b._real_timer = t
+    local tmpvar = lstg.tmpvar
+    local timerRecordIndex = (tmpvar.timer_record_index or 0) + 1
+    tmpvar.timer_record_index = timerRecordIndex
+    local timerRecordName = table.concat({ "boss_timer", timerRecordIndex }, "|")
+    if ext.replay.IsReplay() then
+        local t = ext.stage_data.GetStageData(timerRecordName)
+        b._real_timer = t or 0
+    else
+        local t = self.clock:GetElapsed() * time_rate
+        ext.stage_data.SetStageData(timerRecordName, t)
+        b._real_timer = t
+    end
     b.timeout = nil
     self:finishSpellHist(b._getcard)
     local c = {}
@@ -838,7 +847,7 @@ function system:refresh(part)
         b._sp_point_auto = {}
         b.__is_waiting = true
         b.__hpbartype = -1
-        self.is_killing = false 
+        self.is_killing = false
     end
 end
 

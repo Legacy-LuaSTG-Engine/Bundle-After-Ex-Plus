@@ -21,6 +21,8 @@ DoFile(extpath .. "ext_replay.lua")
  --CHU爷爷的replay系统以及切关函数重载
 DoFile(extpath .. "ext_stage_group.lua")
  --关卡组
+DoFile(extpath .. "ext_stage_data.lua")
+ --关卡数据
 
 ext.replayTicker = 0
  --控制录像播放速度时有用
@@ -178,6 +180,8 @@ function ChangeGameStage()
         lstg.var = lstg.nextvar
         lstg.nextvar = nil
     end
+
+    ext.stage_data.InitStageData()
 
     -- 初始化随机数
     if lstg.var.ran_seed then
