@@ -55,8 +55,8 @@ do
 
     ---@class plus.TryCatch.Data
     ---@field try function @尝试执行
-    ---@field catch function @错误捕获
-    ---@field finally function @结束行为
+    ---@field catch function | nil @错误捕获
+    ---@field finally function | nil @结束行为
     local _ = {
         try = function()
         end,
