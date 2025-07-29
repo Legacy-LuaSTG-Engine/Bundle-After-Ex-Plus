@@ -3,6 +3,8 @@ local player_lib = player_lib
 ---@return player.system
 player_lib.system = plus.Class()
 
+local input_rep = require("foundation.input.replay")
+
 local defaultKeys = {
     "up", "down", "left", "right",
     "slow", "shoot", "spell", "special",
@@ -10,30 +12,30 @@ local defaultKeys = {
 player_lib.defaultKeys = defaultKeys
 
 local defaultKeyEvent = {
-    { "up", "down", "key.up.down", 0, function(self)
-        self.__up_flag = true
-    end },
-    { "up", "up", "key.up.up", 0, function(self)
-        self.__up_flag = false
-    end },
-    { "down", "down", "key.down.down", 0, function(self)
-        self.__down_flag = true
-    end },
-    { "down", "up", "key.down.up", 0, function(self)
-        self.__down_flag = false
-    end },
-    { "left", "down", "key.left.down", 0, function(self)
-        self.__left_flag = true
-    end },
-    { "left", "up", "key.left.up", 0, function(self)
-        self.__left_flag = false
-    end },
-    { "right", "down", "key.right.down", 0, function(self)
-        self.__right_flag = true
-    end },
-    { "right", "up", "key.right.up", 0, function(self)
-        self.__right_flag = false
-    end },
+    -- { "up", "down", "key.up.down", 0, function(self)
+    --     self.__up_flag = true
+    -- end },
+    -- { "up", "up", "key.up.up", 0, function(self)
+    --     self.__up_flag = false
+    -- end },
+    -- { "down", "down", "key.down.down", 0, function(self)
+    --     self.__down_flag = true
+    -- end },
+    -- { "down", "up", "key.down.up", 0, function(self)
+    --     self.__down_flag = false
+    -- end },
+    -- { "left", "down", "key.left.down", 0, function(self)
+    --     self.__left_flag = true
+    -- end },
+    -- { "left", "up", "key.left.up", 0, function(self)
+    --     self.__left_flag = false
+    -- end },
+    -- { "right", "down", "key.right.down", 0, function(self)
+    --     self.__right_flag = true
+    -- end },
+    -- { "right", "up", "key.right.up", 0, function(self)
+    --     self.__right_flag = false
+    -- end },
     { "slow", "down", "key.slow.down", 0, function(self)
         self.__slow_flag = true
     end },
@@ -114,27 +116,38 @@ local defaultFrameEvent = {
                 if self.slow == 1 then
                     v = self.lspeed
                 end
-                if self.__up_flag then
-                    dy = dy + 1
+                -- if self.__up_flag then
+                --     dy = dy + 1
+                -- end
+                -- if self.__down_flag then
+                --     dy = dy - 1
+                -- end
+                -- if self.__left_flag then
+                --     dx = dx - 1
+                -- end
+                -- if self.__right_flag then
+                --     dx = dx + 1
+                -- end
+                -- if dx * dy ~= 0 then
+                --     v = v * SQRT2_2
+                -- end
+
+                dx, dy = input_rep.getVector2ActionValue("move")
+                local ang = atan2(dy, dx)
+                local r = math.sqrt(dx * dx + dy * dy)
+
+                if (r >= 0.1) then
+                    if USE_8_DIRECTIONS then
+                        ang = math.floor((ang + 360 + 22.5) / 45) * 45
+                    end
+
+                    dx = v * cos(ang)
+                    dy = v * sin(ang)
+                    self.x = self.x + dx
+                    self.y = self.y + dy
+                    self.x = math.max(math.min(self.x, lstg.world.pr - 8), lstg.world.pl + 8)
+                    self.y = math.max(math.min(self.y, lstg.world.pt - 32), lstg.world.pb + 16)
                 end
-                if self.__down_flag then
-                    dy = dy - 1
-                end
-                if self.__left_flag then
-                    dx = dx - 1
-                end
-                if self.__right_flag then
-                    dx = dx + 1
-                end
-                if dx * dy ~= 0 then
-                    v = v * SQRT2_2
-                end
-                dx = v * dx
-                dy = v * dy
-                self.x = self.x + dx
-                self.y = self.y + dy
-                self.x = math.max(math.min(self.x, lstg.world.pr - 8), lstg.world.pl + 8)
-                self.y = math.max(math.min(self.y, lstg.world.pt - 32), lstg.world.pb + 16)
             end
         end
         self.__move_dx = dx
@@ -463,11 +476,15 @@ end
 ---更新自机按键状态
 function system:updateKeyState()
     local p = self.player
-    local keyState = p.key or KeyState
+    local use_virtual_key = (type(p.key) == "table")
     for key in pairs(self._keys) do
         --更新已注册按键状态并执行事件组
         self.keyStatePre[key] = self.keyState[key]
-        self.keyState[key] = keyState[key] or false
+        if use_virtual_key then
+            self.keyState[key] = p.key[key] or false
+        else
+            self.keyState[key] = KeyIsDown(key) or false
+        end
         if self.keyState[key] then
             if self.keyStatePre[key] then
                 self:doKeyEvent(key, "hold") --保持按住
