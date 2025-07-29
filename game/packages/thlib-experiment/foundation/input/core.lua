@@ -12,6 +12,7 @@ local xinput = require("xinput")
 local dinput = require("dinput")
 local xinput_ex = require("foundation.input.adapter.Xinput")
 local dinput_ex = require("foundation.input.adapter.DirectInput")
+local config = require("foundation.input.config.Manager")
 
 ---@class foundation.input.core
 local M = {}
@@ -123,125 +124,11 @@ function M.clear()
 end
 
 --------------------------------------------------------------------------------
---- 默认映射
+--- Notice:默认映射已移动至 config 里
 
-local keyboard_map = {
-    boolean = {
-        -- 基本单元
-        up = { keyboard.Up },
-        down = { keyboard.Down },
-        left = { keyboard.Left },
-        right = { keyboard.Right },
-        shoot = { keyboard.Z },
-        spell = { keyboard.X },
-        -- 自机
-        slow = { keyboard.LeftShift },
-        special = { keyboard.C },
-        -- replay
-        repfast = { keyboard.LeftControl },
-        repslow = { keyboard.LeftShift },
-        -- 菜单
-        menu = { keyboard.Escape },
-        snapshot = { keyboard.Home },
-        retry = { keyboard.R },
-    },
-    scalar = {},
-    vector2 = {},
-}
+-- TODO: 支持将多个布尔类型映射为标量
 
-local mouse_map = {
-    boolean = {
-        -- 基本单元
-        up = { mouse.None },
-        down = { mouse.None },
-        left = { mouse.None },
-        right = { mouse.None },
-        shoot = { mouse.Left },
-        spell = { mouse.Right },
-        -- 自机
-        slow = { mouse.None },
-        special = { mouse.None },
-        -- replay
-        repfast = { mouse.None },
-        repslow = { mouse.None },
-        -- 菜单
-        menu = { mouse.Middle },
-        snapshot = { mouse.None },
-        retry = { mouse.None },
-    },
-    scalar = {},
-    vector2 = {},
-}
-
-local controller_map = {
-    device_index = 0, -- 填 0 代表自动选择，在 xinput 中，最多支持 4 个设备，也就是 1 到 4
-    boolean = {
-        -- 基本单元
-        up = {
-            xinput_ex.Key.Up,
-            --xinput_ex.Key.LeftThumbPositiveY,
-            --xinput_ex.Key.RightThumbPositiveY,
-        },
-        down = {
-            xinput_ex.Key.Down,
-            --xinput_ex.Key.LeftThumbNegativeY,
-            --xinput_ex.Key.RightThumbNegativeY,
-        },
-        left = {
-            xinput_ex.Key.Left,
-            --xinput_ex.Key.LeftThumbNegativeX,
-            --xinput_ex.Key.RightThumbNegativeX,
-        },
-        right = {
-            xinput_ex.Key.Right,
-            --xinput_ex.Key.LeftThumbPositiveX,
-            --xinput_ex.Key.RightThumbPositiveX,
-        },
-        shoot = { xinput_ex.Key.A },
-        spell = { xinput_ex.Key.B },
-        -- 自机
-        slow = { xinput_ex.Key.LeftShoulder },
-        special = { xinput_ex.Key.X },
-        -- replay
-        repfast = { xinput_ex.Key.A },
-        repslow = { xinput_ex.Key.B },
-        -- 菜单
-        menu = { xinput_ex.Key.Start },
-        snapshot = { xinput_ex.Key.RightTrigger },
-        retry = { xinput_ex.Key.Back },
-    },
-    scalar = {},
-    vector2 = {
-        move = { 1 }, -- 1 代表左摇杆，2代表右摇杆
-    },
-}
-
-local hid_map = {
-    device_index = 0, -- 填 0 代表自动选择
-    boolean = {
-        -- 基本单元
-        up = { dinput_ex.Key.NegativeAxisY },
-        down = { dinput_ex.Key.PositiveAxisY },
-        left = { dinput_ex.Key.NegativeAxisX },
-        right = { dinput_ex.Key.PositiveAxisX },
-        shoot = { dinput_ex.Key.Button2 },
-        spell = { dinput_ex.Key.Button3 },
-        -- 自机
-        slow = { dinput_ex.Key.Button5 },
-        special = { dinput_ex.Key.Button1 },
-        -- replay
-        repfast = { dinput_ex.Key.Null },
-        repslow = { dinput_ex.Key.Null },
-        -- 菜单
-        menu = { dinput_ex.Key.Button4 },
-        snapshot = { dinput_ex.Key.Null },
-        retry = { dinput_ex.Key.Null },
-    },
-    scalar = {},
-    vector2 = {},
-}
-
--- TODO: 支持将多个布尔类型映射为标量或二维向量类型
+local vector2_normalize_list = {"move"} --需要归一化的向量
 
 ---@param raw_index number
 ---@return number
@@ -297,29 +184,86 @@ function M.update()
     copy_state_to_last()
     clear_current_state()
 
-    -- TODO: 可变键位映射
-    for k, v in pairs(keyboard_map.boolean) do
+    local current_config = config.get_current_config()
+    for k, v in pairs(current_config.keyboard_map.boolean) do
         for _, code in ipairs(v) do
             if code ~= keyboard.None then
                 boolean_action_state[k] = boolean_action_state[k] or keyboard.GetKeyState(code)
             end
         end
     end
+    -- 修改：向量直接相加，最后归一化
+    for k, v in pairs(current_config.keyboard_map.vector2) do
+        local x, y = 0, 0
+        if vector2_action_state[k] then
+            x, y = vector2_action_state[k].x, vector2_action_state[k].y
+        else
+            vector2_action_state[k] = {x = 0.0, y = 0.0}
+        end
+        local component_scalar = v.component_scalar or 1
+        for _, code in ipairs(v.x_positive) do
+            if code ~= keyboard.None then
+                if keyboard.GetKeyState(code) then
+                    x = x + component_scalar
+                    break
+                end
+            end
+        end
+        for _, code in ipairs(v.x_negative) do
+            if code ~= keyboard.None then
+                if keyboard.GetKeyState(code) then
+                    x = x - component_scalar
+                    break
+                end
+            end
+        end
+        for _, code in ipairs(v.y_positive) do
+            if code ~= keyboard.None then
+                if keyboard.GetKeyState(code) then
+                    y = y + component_scalar
+                    break
+                end
+            end
+        end
+        for _, code in ipairs(v.y_negative) do
+            if code ~= keyboard.None then
+                if keyboard.GetKeyState(code) then
+                    y = y - component_scalar
+                    break
+                end
+            end
+        end
+        vector2_action_state[k].x = x
+        vector2_action_state[k].y = y
+    end
 
-    -- TODO: 可变键位映射
-    for k, v in pairs(mouse_map.boolean) do
+    for k, v in pairs(current_config.mouse_map.boolean) do
         for _, code in ipairs(v) do
             if code ~= mouse.None then
                 boolean_action_state[k] = boolean_action_state[k] or mouse.GetKeyState(code)
             end
         end
     end
+    for k, v in pairs(current_config.mouse_map.vector2) do
+        local x, y = 0, 0
+        if vector2_action_state[k] then
+            x, y = vector2_action_state[k].x, vector2_action_state[k].y
+        else
+            vector2_action_state[k] = {x = 0.0, y = 0.0}
+        end
+        --参见 lib/ui.lua
+        local mx, my = lstg.GetMousePosition() -- 左下角为原点，y 轴向上
+        -- 转换到 UI 视口
+        x = x + (mx - screen.dx) / (screen.width * screen.scale)
+        y = y + (my - screen.dy) / (screen.height * screen.scale)
+        vector2_action_state[k].x = x
+        vector2_action_state[k].y = y
+    end
 
-    -- TODO: 可变键位映射
-    local device_index = get_controller_device_index(controller_map.device_index)
+    local device_index = get_controller_device_index(current_config.controller_map.device_index)
     if device_index > 0 then
         local state = xinput_ex.mapKeyStateFromIndex(device_index)
-        for k, v in pairs(controller_map.boolean) do
+        for k, v in pairs(current_config.controller_map.boolean) do
             for _, code in ipairs(v) do
                 if code ~= xinput_ex.Key.Null then
                     boolean_action_state[k] = boolean_action_state[k] or xinput_ex.getKeyState(state, code)
@@ -329,9 +273,13 @@ function M.update()
 
         -- TODO: 支持标量类型
 
-        -- TODO: 这种向量合成的方式真的没问题吗（
-        for k, v in pairs(controller_map.vector2) do
+        for k, v in pairs(current_config.controller_map.vector2) do
             local x, y = 0, 0
+            if vector2_action_state[k] then
+                x, y = vector2_action_state[k].x, vector2_action_state[k].y
+            else
+                vector2_action_state[k] = {x = 0.0, y = 0.0}
+            end
             for _, component in ipairs(v) do
                 if component == 1 then
                     x = x + xinput.getLeftThumbX(device_index)
@@ -341,19 +289,15 @@ function M.update()
                     y = y + xinput.getRightThumbY(device_index)
                 end
             end
-            local a = math.atan2(y, x)
-            local r = math.min(math.sqrt(x * x + y * y), 1)
-            vector2_action_state[k] = vector2_action_state[k] or {}
-            vector2_action_state[k].x = r * math.cos(a)
-            vector2_action_state[k].y = r * math.sin(a)
+            vector2_action_state[k].x = x
+            vector2_action_state[k].y = y
         end
     end
 
-    -- TODO: 可变键位映射
-    local device_index = get_hid_device_index(hid_map.device_index)
+    local device_index = get_hid_device_index(current_config.hid_map.device_index)
     if device_index > 0 then
         local state = dinput_ex.mapKeyStateFromIndex(device_index)
-        for k, v in pairs(hid_map.boolean) do
+        for k, v in pairs(current_config.hid_map.boolean) do
             for _, code in ipairs(v) do
                 if code ~= dinput_ex.Key.Null then
                     boolean_action_state[k] = boolean_action_state[k] or dinput_ex.getKeyState(state, code)
@@ -362,6 +306,18 @@ function M.update()
         end
         -- TODO: 支持标量类型
         -- TODO: 支持二维向量类型
+    end
+
+    -- 向量归一化
+    for _, k in ipairs(vector2_normalize_list) do
+        if vector2_action_state[k] then
+            local x, y = vector2_action_state[k].x, vector2_action_state[k].y
+            local r = math.sqrt(x * x + y * y)
+            if r > 1 then
+                vector2_action_state[k].x = x / r
+                vector2_action_state[k].y = y / r
+            end
+        end
     end
 end
 
