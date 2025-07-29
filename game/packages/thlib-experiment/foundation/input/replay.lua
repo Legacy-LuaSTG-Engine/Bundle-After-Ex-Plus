@@ -102,11 +102,20 @@ local function validate_state_type()
 
     for k, v in pairs(last_vector2_action_state) do
         assert(type(k) == "string" and type(v) == "table")
-        assert(type(v.r) == "number" and type(v.a) == "number")
+        assert(type(v.x) == "number" and type(v.y) == "number")
     end
     for k, v in pairs(vector2_action_state) do
         assert(type(k) == "string" and type(v) == "table")
-        assert(type(v.r) == "number" and type(v.a) == "number")
+        assert(type(v.x) == "number" and type(v.y) == "number")
+    end
+    
+    for k, v in pairs(last_polar_vector2_action_state) do
+        assert(type(k) == "string" and type(v) == "table")
+        assert(type(v.a) == "number" and type(v.r) == "number")
+    end
+    for k, v in pairs(polar_vector2_action_state) do
+        assert(type(k) == "string" and type(v) == "table")
+        assert(type(v.a) == "number" and type(v.r) == "number")
     end
 end
 
@@ -240,9 +249,9 @@ function M.update()
             local r_norm = clamp(r, 0.0, 1.0) -- 限制区间 0.0 到 1.0
             local r_uint = round(r_norm * 100) -- 编码为 0 到 100 的整数
             local a_uint = round(a) % 360 -- 编码为 0 到 360 的整数
-            polar_vector2_action_state[k] = polar_vector2_action_state[k] or {}
-            polar_vector2_action_state[k].r = r_uint
-            polar_vector2_action_state[k].a = a_uint
+            polar_vector2_action_state[k.name] = polar_vector2_action_state[k.name] or {}
+            polar_vector2_action_state[k.name].r = r_uint
+            polar_vector2_action_state[k.name].a = a_uint
         else
             local x_norm, y_norm
             if k.unsigned then
@@ -254,9 +263,9 @@ function M.update()
             end
             local x_uint = round(x_norm * (256 ^ (k.byte or 1) - 1))
             local y_uint = round(y_norm * (256 ^ (k.byte or 1) - 1))
-            vector2_action_state[k] = vector2_action_state[k] or {}
-            vector2_action_state[k].x = x_uint
-            vector2_action_state[k].y = y_uint
+            vector2_action_state[k.name] = vector2_action_state[k.name] or {}
+            vector2_action_state[k.name].x = x_uint
+            vector2_action_state[k.name].y = y_uint
         end
     end
 end
@@ -389,11 +398,13 @@ function M.decodeFromByteArray(byte_array)
         for i = 8, 1, -1 do -- 这里要反过来迭代，从高位到低位
             local k = (j - 1) * 8 + i
             local key = boolean_action_list[k]
-            if byte >= byte_mask[i] then
-                byte = byte - byte_mask[i]
-                boolean_action_state[key] = true -- 第 i 位是激活的
-            else
-                boolean_action_state[key] = false -- 需要修改为未激活
+            if key then
+                if byte >= byte_mask[i] then
+                    byte = byte - byte_mask[i]
+                    boolean_action_state[key] = true -- 第 i 位是激活的
+                else
+                    boolean_action_state[key] = false -- 需要修改为未激活
+                end
             end
         end
     end
