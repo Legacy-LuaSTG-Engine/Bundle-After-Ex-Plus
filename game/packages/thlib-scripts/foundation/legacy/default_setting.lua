@@ -1,3 +1,4 @@
+local input_config = require("foundation.input.config.Manager")
 
 ---@class legacy.default_setting.player_keys
 local p1 = {
