@@ -13,6 +13,7 @@ local dinput_ex = require("foundation.input.adapter.DirectInput")
 M.configs = {
     default = {
         keyboard_map = {
+            enable = true,
             boolean = {
                 -- 基本单元
                 up = { keyboard.Up },
@@ -46,6 +47,7 @@ M.configs = {
             },
         },
         mouse_map = {
+            enable = false,
             boolean = {
                 -- 基本单元
                 up = { mouse.None },
@@ -72,6 +74,7 @@ M.configs = {
             },
         },
         controller_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择，在 xinput 中，最多支持 4 个设备，也就是 1 到 4
             boolean = {
                 -- 基本单元
@@ -115,6 +118,7 @@ M.configs = {
             },
         },
         hid_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择
             boolean = {
                 -- 基本单元
@@ -142,6 +146,7 @@ M.configs = {
     },
     ui = {
         keyboard_map = {
+            enable = true,
             boolean = {
                 -- 基本单元
                 up = { keyboard.Up },
@@ -164,6 +169,7 @@ M.configs = {
             vector2 = {},
         },
         mouse_map = {
+            enable = false,
             boolean = {
                 -- 基本单元
                 up = { mouse.None },
@@ -187,6 +193,7 @@ M.configs = {
             },
         },
         controller_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择，在 xinput 中，最多支持 4 个设备，也就是 1 到 4
             boolean = {
                 -- 基本单元
@@ -226,6 +233,7 @@ M.configs = {
             },
         },
         hid_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择
             boolean = {
                 -- 基本单元
@@ -250,6 +258,7 @@ M.configs = {
     },
     game = {
         keyboard_map = {
+            enable = true,
             boolean = {
                 -- 基本单元
                 shoot = { keyboard.Z },
@@ -275,6 +284,7 @@ M.configs = {
             },
         },
         mouse_map = {
+            enable = false,
             boolean = {
                 -- 基本单元
                 shoot = { mouse.Left },
@@ -293,6 +303,7 @@ M.configs = {
             },
         },
         controller_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择，在 xinput 中，最多支持 4 个设备，也就是 1 到 4
             boolean = {
                 -- 基本单元
@@ -312,6 +323,7 @@ M.configs = {
             },
         },
         hid_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择
             boolean = {
                 shoot = { dinput_ex.Key.Button2 },
@@ -330,6 +342,7 @@ M.configs = {
     },
     replay = {
         keyboard_map = {
+            enable = true,
             boolean = {
                 -- replay
                 repfast = { keyboard.LeftControl },
@@ -342,6 +355,7 @@ M.configs = {
             vector2 = {},
         },
         mouse_map = {
+            enable = false,
             boolean = {
                 -- replay
                 repfast = { mouse.None },
@@ -356,6 +370,7 @@ M.configs = {
             },
         },
         controller_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择，在 xinput 中，最多支持 4 个设备，也就是 1 到 4
             boolean = {
                 -- replay
@@ -369,6 +384,7 @@ M.configs = {
             vector2 = {},
         },
         hid_map = {
+            enable = true,
             device_index = 0, -- 填 0 代表自动选择
             boolean = {
                 -- replay

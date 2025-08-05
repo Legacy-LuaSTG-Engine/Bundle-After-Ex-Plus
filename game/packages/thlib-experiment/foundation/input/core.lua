@@ -185,108 +185,53 @@ function M.update()
     clear_current_state()
 
     local current_config = config.get_current_config()
-    for k, v in pairs(current_config.keyboard_map.boolean) do
-        for _, code in ipairs(v) do
-            if code ~= keyboard.None then
-                boolean_action_state[k] = boolean_action_state[k] or keyboard.GetKeyState(code)
-            end
-        end
-    end
-    -- 修改：向量直接相加，最后归一化
-    for k, v in pairs(current_config.keyboard_map.vector2) do
-        local x, y = 0, 0
-        if vector2_action_state[k] then
-            x, y = vector2_action_state[k].x, vector2_action_state[k].y
-        else
-            vector2_action_state[k] = {x = 0.0, y = 0.0}
-        end
-        local component_scalar = v.component_scalar or 1
-        for _, code in ipairs(v.x_positive) do
-            if code ~= keyboard.None then
-                if keyboard.GetKeyState(code) then
-                    x = x + component_scalar
-                    break
-                end
-            end
-        end
-        for _, code in ipairs(v.x_negative) do
-            if code ~= keyboard.None then
-                if keyboard.GetKeyState(code) then
-                    x = x - component_scalar
-                    break
-                end
-            end
-        end
-        for _, code in ipairs(v.y_positive) do
-            if code ~= keyboard.None then
-                if keyboard.GetKeyState(code) then
-                    y = y + component_scalar
-                    break
-                end
-            end
-        end
-        for _, code in ipairs(v.y_negative) do
-            if code ~= keyboard.None then
-                if keyboard.GetKeyState(code) then
-                    y = y - component_scalar
-                    break
-                end
-            end
-        end
-        vector2_action_state[k].x = x
-        vector2_action_state[k].y = y
-    end
-
-    for k, v in pairs(current_config.mouse_map.boolean) do
-        for _, code in ipairs(v) do
-            if code ~= mouse.None then
-                boolean_action_state[k] = boolean_action_state[k] or mouse.GetKeyState(code)
-            end
-        end
-    end
-    for k, v in pairs(current_config.mouse_map.vector2) do
-        local x, y = 0, 0
-        if vector2_action_state[k] then
-            x, y = vector2_action_state[k].x, vector2_action_state[k].y
-        else
-            vector2_action_state[k] = {x = 0.0, y = 0.0}
-        end
-        --参见 lib/ui.lua
-        local mx, my = lstg.GetMousePosition() -- 左下角为原点，y 轴向上
-        -- 转换到 UI 视口
-        x = x + (mx - screen.dx) / (screen.width * screen.scale)
-        y = y + (my - screen.dy) / (screen.height * screen.scale)
-        vector2_action_state[k].x = x
-        vector2_action_state[k].y = y
-    end
-
-    local device_index = get_controller_device_index(current_config.controller_map.device_index)
-    if device_index > 0 then
-        local state = xinput_ex.mapKeyStateFromIndex(device_index)
-        for k, v in pairs(current_config.controller_map.boolean) do
+    if current_config.keyboard_map.enable then
+        for k, v in pairs(current_config.keyboard_map.boolean) do
             for _, code in ipairs(v) do
-                if code ~= xinput_ex.Key.Null then
-                    boolean_action_state[k] = boolean_action_state[k] or xinput_ex.getKeyState(state, code)
+                if code ~= keyboard.None then
+                    boolean_action_state[k] = boolean_action_state[k] or keyboard.GetKeyState(code)
                 end
             end
         end
-
-        -- TODO: 支持标量类型
-
-        for k, v in pairs(current_config.controller_map.vector2) do
+        -- 修改：向量直接相加，最后归一化
+        for k, v in pairs(current_config.keyboard_map.vector2) do
             local x, y = 0, 0
             if vector2_action_state[k] then
                 x, y = vector2_action_state[k].x, vector2_action_state[k].y
             else
                 vector2_action_state[k] = {x = 0.0, y = 0.0}
             end
-            for _, component in ipairs(v) do
-                if component == 1 then
-                    x = x + xinput.getLeftThumbX(device_index)
-                    y = y + xinput.getLeftThumbY(device_index)
-                elseif component == 2 then
-                    x = x + xinput.getRightThumbX(device_index)
-                    y = y + xinput.getRightThumbY(device_index)
+            local component_scalar = v.component_scalar or 1
+            for _, code in ipairs(v.x_positive) do
+                if code ~= keyboard.None then
+                    if keyboard.GetKeyState(code) then
+                        x = x + component_scalar
+                        break
+                    end
+                end
+            end
+            for _, code in ipairs(v.x_negative) do
+                if code ~= keyboard.None then
+                    if keyboard.GetKeyState(code) then
+                        x = x - component_scalar
+                        break
+                    end
+                end
+            end
+            for _, code in ipairs(v.y_positive) do
+                if code ~= keyboard.None then
+                    if keyboard.GetKeyState(code) then
+                        y = y + component_scalar
+                        break
+                    end
+                end
+            end
+            for _, code in ipairs(v.y_negative) do
+                if code ~= keyboard.None then
+                    if keyboard.GetKeyState(code) then
+                        y = y - component_scalar
+                        break
+                    end
                 end
             end
             vector2_action_state[k].x = x
@@ -294,28 +239,91 @@ function M.update()
         end
     end
 
-    local device_index = get_hid_device_index(current_config.hid_map.device_index)
-    if device_index > 0 then
-        local state = dinput_ex.mapKeyStateFromIndex(device_index)
-        for k, v in pairs(current_config.hid_map.boolean) do
+    if current_config.mouse_map.enable then
+        for k, v in pairs(current_config.mouse_map.boolean) do
             for _, code in ipairs(v) do
-                if code ~= dinput_ex.Key.Null then
-                    boolean_action_state[k] = boolean_action_state[k] or dinput_ex.getKeyState(state, code)
+                if code ~= mouse.None then
+                    boolean_action_state[k] = boolean_action_state[k] or mouse.GetKeyState(code)
                 end
             end
         end
-        -- TODO: 支持标量类型
-        -- TODO: 支持二维向量类型
+        for k, v in pairs(current_config.mouse_map.vector2) do
+            local x, y = 0, 0
+            if vector2_action_state[k] then
+                x, y = vector2_action_state[k].x, vector2_action_state[k].y
+            else
+                vector2_action_state[k] = {x = 0.0, y = 0.0}
+            end
+            --参见 lib/ui.lua
+            local mx, my = lstg.GetMousePosition() -- 左下角为原点，y 轴向上
+            -- 转换到 UI 视口
+            x = x + (mx - screen.dx) / (screen.width * screen.scale)
+            y = y + (my - screen.dy) / (screen.height * screen.scale)
+            vector2_action_state[k].x = x
+            vector2_action_state[k].y = y
+        end
     end
 
-    -- 向量归一化
-    for _, k in ipairs(vector2_normalize_list) do
-        if vector2_action_state[k] then
-            local x, y = vector2_action_state[k].x, vector2_action_state[k].y
-            local r = math.sqrt(x * x + y * y)
-            if r > 1 then
-                vector2_action_state[k].x = x / r
-                vector2_action_state[k].y = y / r
+    if current_config.controller_map.enable then 
+        local device_index = get_controller_device_index(current_config.controller_map.device_index)
+        if device_index > 0 then
+            local state = xinput_ex.mapKeyStateFromIndex(device_index)
+            for k, v in pairs(current_config.controller_map.boolean) do
+                for _, code in ipairs(v) do
+                    if code ~= xinput_ex.Key.Null then
+                        boolean_action_state[k] = boolean_action_state[k] or xinput_ex.getKeyState(state, code)
+                    end
+                end
+            end
+
+            -- TODO: 支持标量类型
+
+            for k, v in pairs(current_config.controller_map.vector2) do
+                local x, y = 0, 0
+                if vector2_action_state[k] then
+                    x, y = vector2_action_state[k].x, vector2_action_state[k].y
+                else
+                    vector2_action_state[k] = {x = 0.0, y = 0.0}
+                end
+                for _, component in ipairs(v) do
+                    if component == 1 then
+                        x = x + xinput.getLeftThumbX(device_index)
+                        y = y + xinput.getLeftThumbY(device_index)
+                    elseif component == 2 then
+                        x = x + xinput.getRightThumbX(device_index)
+                        y = y + xinput.getRightThumbY(device_index)
+                    end
+                end
+                vector2_action_state[k].x = x
+                vector2_action_state[k].y = y
+            end
+        end
+    end
+
+    if current_config.hid_map.enable then
+        local device_index = get_hid_device_index(current_config.hid_map.device_index)
+        if device_index > 0 then
+            local state = dinput_ex.mapKeyStateFromIndex(device_index)
+            for k, v in pairs(current_config.hid_map.boolean) do
+                for _, code in ipairs(v) do
+                    if code ~= dinput_ex.Key.Null then
+                        boolean_action_state[k] = boolean_action_state[k] or dinput_ex.getKeyState(state, code)
+                    end
+                end
+            end
+            -- TODO: 支持标量类型
+            -- TODO: 支持二维向量类型
+        end
+
+        -- 向量归一化
+        for _, k in ipairs(vector2_normalize_list) do
+            if vector2_action_state[k] then
+                local x, y = vector2_action_state[k].x, vector2_action_state[k].y
+                local r = math.sqrt(x * x + y * y)
+                if r > 1 then
+                    vector2_action_state[k].x = x / r
+                    vector2_action_state[k].y = y / r
+                end
             end
         end
     end
