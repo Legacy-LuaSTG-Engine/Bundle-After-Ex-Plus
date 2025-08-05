@@ -1,5 +1,7 @@
 local cjson_util = require("cjson.util")
 
+local temp_file_suffix = ".writing"
+
 ---@class foundation.DataStorage
 local M = {}
 
@@ -170,11 +172,18 @@ function M:load()
 end
 
 ---@param fmt boolean
+---@param safemode boolean
 ---@overload fun(self:foundation.DataStorage)
-function M:save(fmt)
+---@overload fun(self:foundation.DataStorage, fmt:boolean)
+function M:save(fmt, safemode)
     local r, s = pcall(cjson.encode, copy_proxy(self.data))
     if r then
-        local f, e = io.open(self.path, "wb")
+        local filepath = self.path
+        if safemode and lstg.FileManager.FileExist(filepath) then
+            filepath = filepath .. temp_file_suffix
+        end
+        
+        local f, e = io.open(filepath, "wb")
         if f then
             if fmt then
                 f:write(cjson_util.format_json(s))
@@ -182,8 +191,25 @@ function M:save(fmt)
                 f:write(s)
             end
             f:close()
+            
+            -- 如果是安全模式且使用了临时文件，则替换原文件
+            if safemode and filepath ~= self.path then
+                local success, err
+                success, err = os.remove(self.path)
+                if not success then
+                    lstg.Log(4, string.format("failed to remove file '%s': %s", self.path, tostring(err)))
+                    return false
+                end
+                success, err = os.rename(filepath, self.path)
+                if not success then
+                    lstg.Log(4, string.format("rename temp file to data storage file '%s' failed: %s", self.path, tostring(err)))
+                    return false
+                end
+            end
+            
+            return true
         else
-            lstg.Log(4, string.format("write data storage file '%s' failed: %s", self.path, tostring(e)))
+            lstg.Log(4, string.format("write data storage file '%s' failed: %s", filepath, tostring(e)))
         end
     else
         lstg.Log(4, string.format("encode data storage file '%s' failed: %s", self.path, tostring(s)))
