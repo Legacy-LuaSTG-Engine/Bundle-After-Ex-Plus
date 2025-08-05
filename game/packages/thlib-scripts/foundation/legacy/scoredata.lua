@@ -45,7 +45,7 @@ scoredata = nil -- TODO: 铲掉这个屎山
 
 function SaveScoreData()
     if global_data_storage then
-        global_data_storage:save()
+        global_data_storage:save(false, true)
     end
 end
 
