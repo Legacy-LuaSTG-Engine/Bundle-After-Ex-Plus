@@ -26,8 +26,9 @@ function M.writeString(path, content)
         error("open file '%s' failed (%s)", path, tostring(msg))
         return false, msg
     end
-    f, msg = f:write(content)
-    if not f then
+    local r
+    r, msg = f:write(content)
+    if not r then
         error("write to file '%s' failed (%s)", path, tostring(msg))
         return false, msg
     end
