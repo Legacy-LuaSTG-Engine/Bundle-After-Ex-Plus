@@ -171,6 +171,50 @@ function M:load()
     end
 end
 
+---@param content string
+---@param path string
+---@param safemode boolean
+---@return boolean
+function M.save_text(content, path, safemode)
+    local using_safemode = false
+    if safemode and lstg.FileManager.FileExist(path) then
+        using_safemode = true
+    end
+    local f, e
+    local outputpath
+    if using_safemode then
+        outputpath = path .. temp_file_suffix
+    else
+        outputpath = path
+    end
+
+    f, e = io.open(outputpath, "wb")
+    if f then
+        f:write(content)
+        f:close()
+    else
+        lstg.Log(4, string.format("failed to open file '%s': %s", outputpath, tostring(e)))
+        return false
+    end
+
+    if using_safemode then
+        local success, err
+        success, err = os.remove(path)
+        if not success then
+            lstg.Log(4, string.format("remove file '%s' failed: %s", path, tostring(err)))
+            return false
+        end
+        success, err = os.rename(outputpath, path)
+        if not success then
+            lstg.Log(4, string.format("rename file '%s' to '%s' failed: %s", outputpath, path, tostring(err)))
+            return false
+        end
+        return true
+    else
+        return true
+    end
+end
+
 ---@param fmt boolean
 ---@param safemode boolean
 ---@overload fun(self:foundation.DataStorage)
@@ -178,39 +222,13 @@ end
 function M:save(fmt, safemode)
     local r, s = pcall(cjson.encode, copy_proxy(self.data))
     if r then
-        local filepath = self.path
-        if safemode and lstg.FileManager.FileExist(filepath) then
-            filepath = filepath .. temp_file_suffix
-        end
-        
-        local f, e = io.open(filepath, "wb")
-        if f then
-            if fmt then
-                f:write(cjson_util.format_json(s))
-            else
-                f:write(s)
-            end
-            f:close()
-            
-            -- 如果是安全模式且使用了临时文件，则替换原文件
-            if safemode and filepath ~= self.path then
-                local success, err
-                success, err = os.remove(self.path)
-                if not success then
-                    lstg.Log(4, string.format("failed to remove file '%s': %s", self.path, tostring(err)))
-                    return false
-                end
-                success, err = os.rename(filepath, self.path)
-                if not success then
-                    lstg.Log(4, string.format("rename temp file to data storage file '%s' failed: %s", self.path, tostring(err)))
-                    return false
-                end
-            end
-            
-            return true
+        local content
+        if fmt then
+            content = cjson_util.format_json(s)
         else
-            lstg.Log(4, string.format("write data storage file '%s' failed: %s", filepath, tostring(e)))
+            content = s
         end
+        return M.save_text(content, self.path, safemode)
     else
         lstg.Log(4, string.format("encode data storage file '%s' failed: %s", self.path, tostring(s)))
     end
