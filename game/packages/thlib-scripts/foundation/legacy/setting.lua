@@ -38,10 +38,10 @@ local launch_config
 
 ---@diagnostic disable-next-line: lowercase-global
 function loadConfigure()
-	setting_storage = DataStorage.open(getSettingPath(), default_setting)
+	setting_storage = DataStorage.open(getSettingPath(), default_setting, true)
 	---@diagnostic disable-next-line: lowercase-global
 	setting = setting_storage:root()
-	launch_config_storage = DataStorage.open(getLaunchConfigPath(), default_launch_config)
+	launch_config_storage = DataStorage.open(getLaunchConfigPath(), default_launch_config, true)
 	launch_config = launch_config_storage:root()
 end
 

@@ -139,10 +139,16 @@ end
 
 ---@return boolean
 function M:load()
+    local function deep_proxy_or_not(data)
+        if self.proxy then
+            return deep_proxy(data)
+        end
+        return data
+    end
     if self.default_definitions then
-        self.data = deep_proxy(deep_copy(self.default_definitions))
+        self.data = deep_proxy_or_not(deep_copy(self.default_definitions))
     else
-        self.data = deep_proxy({})
+        self.data = deep_proxy_or_not({})
     end
     if lstg.FileManager.FileExist(self.path) then
         local f, e = io.open(self.path, "rb") -- TODO: 其他平台应该没有 b 模式
@@ -152,9 +158,9 @@ function M:load()
             local r, t = pcall(cjson.decode, s)
             if r then
                 if self.default_definitions then
-                    self.data = deep_proxy(template_copy(self.default_definitions, t))
+                    self.data = deep_proxy_or_not(template_copy(self.default_definitions, t))
                 else
-                    self.data = deep_proxy(deep_copy(t))
+                    self.data = deep_proxy_or_not(deep_copy(t))
                 end
                 return true
             else
@@ -173,7 +179,11 @@ end
 ---@param fmt boolean?
 ---@param backup boolean?
 function M:save(fmt, backup)
-    local r, s = pcall(cjson.encode, copy_proxy(self.data))
+    local data = self.data
+    if self.proxy then
+        data = copy_proxy(self.data)
+    end
+    local r, s = pcall(cjson.encode, data)
     if not r then
         lstg.Log(4, string.format("encode data storage file '%s' failed: %s", self.path, tostring(s)))
         return false
@@ -212,9 +222,11 @@ end
 ---@private
 ---@generic T
 ---@param path string
----@param default_definitions T
-function M:initialize(path, default_definitions)
+---@param default_definitions T?
+---@param proxy boolean?
+function M:initialize(path, default_definitions, proxy)
     self.path = path
+    self.proxy = not (not proxy)
     if default_definitions then
         self.default_definitions = deep_copy(default_definitions)
     end
@@ -224,12 +236,13 @@ end
 ---@generic T
 ---@param path string
 ---@param default_definitions T?
+---@param no_proxy boolean?
 ---@return foundation.DataStorage
-function M.open(path, default_definitions)
+function M.open(path, default_definitions, no_proxy)
     ---@type foundation.DataStorage
     local I = {}
     setmetatable(I, { __index = M })
-    I:initialize(path, default_definitions)
+    I:initialize(path, default_definitions, not no_proxy)
     return I
 end
 
