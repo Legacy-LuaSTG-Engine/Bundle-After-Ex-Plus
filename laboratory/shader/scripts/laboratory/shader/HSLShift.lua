@@ -13,7 +13,7 @@ function HSLShift:create()
     local old = lstg.GetResourceStatus()
     lstg.SetResourceStatus("stage")
     lstg.CreateRenderTarget("rt:canvas1")
-    Resources.loadSprite("canvas2", "canvas2.jpg")
+    Resources.loadSprite("canvas2", "assets/texture/canvas2.jpg")
     lstg.SetResourceStatus(old)
     self.timer = -1
     self.pointer_x = 0

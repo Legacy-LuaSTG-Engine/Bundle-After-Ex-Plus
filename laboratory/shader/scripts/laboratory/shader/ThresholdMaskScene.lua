@@ -13,8 +13,8 @@ function ThresholdMaskScene:create()
     lstg.SetResourceStatus("stage")
     lstg.CreateRenderTarget("rt:canvas1")
     lstg.CreateRenderTarget("rt:mask2")
-    Resources.loadSprite("canvas1", "canvas1.png")
-    Resources.loadSprite("mask2", "mask2.png")
+    Resources.loadSprite("canvas1", "assets/texture/canvas1.png")
+    Resources.loadSprite("mask2", "assets/texture/mask2.png")
     lstg.SetResourceStatus(old)
     self.timer = -1
 end

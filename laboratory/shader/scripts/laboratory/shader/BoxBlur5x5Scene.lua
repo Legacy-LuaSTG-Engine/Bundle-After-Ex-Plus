@@ -12,7 +12,7 @@ function BoxBlur5x5Scene:create()
     local old = lstg.GetResourceStatus()
     lstg.SetResourceStatus("stage")
     lstg.CreateRenderTarget("rt:mask1")
-    Resources.loadSprite("mask1", "mask1.png")
+    Resources.loadSprite("mask1", "assets/texture/mask1.png")
     lstg.SetResourceStatus(old)
     self.timer = -1
 end

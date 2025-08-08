@@ -14,8 +14,8 @@ function ThresholdEdgeScene:create()
     lstg.SetResourceStatus("stage")
     lstg.CreateRenderTarget("rt:canvas1")
     lstg.CreateRenderTarget("rt:mask3")
-    Resources.loadSprite("canvas2", "canvas2.jpg")
-    Resources.loadSprite("mask3", "mask3.png")
+    Resources.loadSprite("canvas2", "assets/texture/canvas2.jpg")
+    Resources.loadSprite("mask3", "assets/texture/mask3.png")
     lstg.SetResourceStatus(old)
     self.timer = -1
 end

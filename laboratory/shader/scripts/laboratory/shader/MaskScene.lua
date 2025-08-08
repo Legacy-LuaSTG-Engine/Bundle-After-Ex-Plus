@@ -13,8 +13,8 @@ function MaskScene:create()
     lstg.SetResourceStatus("stage")
     lstg.CreateRenderTarget("rt:canvas1")
     lstg.CreateRenderTarget("rt:mask1")
-    Resources.loadSprite("canvas1", "canvas1.png")
-    Resources.loadSprite("mask1", "mask1.png")
+    Resources.loadSprite("canvas1", "assets/texture/canvas1.png")
+    Resources.loadSprite("mask1", "assets/texture/mask1.png")
     lstg.SetResourceStatus(old)
     self.timer = -1
 end
