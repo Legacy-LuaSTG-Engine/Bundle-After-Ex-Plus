@@ -7,5 +7,25 @@
     "engine_cache_directory": "",
     "single_application_instance": true,
     "application_instance_id": "0689df8f-7886-4d89-a335-5fba6e855d05",
-    "debug_track_window_focus": false
+    "debug_track_window_focus": false,
+    "file_system": {
+        "resources": [
+            {
+                "name": "thlib-scripts",
+                "type": "directory",
+                "path": "../../game/packages/thlib-scripts/"
+            },
+            {
+                "name": "thlib-resources",
+                "type": "directory",
+                "path": "../../game/packages/thlib-resources/"
+            },
+            {
+                "name": "scripts",
+                "type": "directory",
+                "path": "scripts/"
+            }
+        ],
+        "user": "userdata/"
+    }
 }
