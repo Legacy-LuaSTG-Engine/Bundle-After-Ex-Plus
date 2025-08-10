@@ -15,15 +15,23 @@ function UpdateControllerView:update() end
 function UpdateControllerView:layout()
     if ext and ext.debug_data then
         local db = ext.debug_data
-    
+
+        _, db.game_loop_v2 = imgui.ImGui.Checkbox("Game Loop V2", db.game_loop_v2)
         _, db.x_speed_update = imgui.ImGui.Checkbox("Enable", db.x_speed_update)
-    
-        if db.x_speed_update_value == 0 then
-            if imgui.ImGui.Button("Request Once Update") then
-                db.request_once_update = true
-            end
+
+        if not db.x_speed_update then
+            imgui.ImGui.BeginDisabled()
         end
-    
+        if db.x_speed_update_value ~= 0 then
+            imgui.ImGui.BeginDisabled()
+        end
+        if imgui.ImGui.Button("Request Once Update") then
+            db.request_once_update = true
+        end
+        if db.x_speed_update_value ~= 0 then
+            imgui.ImGui.EndDisabled()
+        end
+
         if imgui.ImGui.RadioButton("Speed x1/16", db.x_speed_update_value == -16) then
             db.x_speed_update_value = -16
         end
@@ -53,6 +61,10 @@ function UpdateControllerView:layout()
         end
         if imgui.ImGui.RadioButton("Speed x16", db.x_speed_update_value == 16) then
             db.x_speed_update_value = 16
+        end
+
+        if not db.x_speed_update then
+            imgui.ImGui.EndDisabled()
         end
     end
 end

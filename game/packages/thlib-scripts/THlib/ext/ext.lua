@@ -49,6 +49,8 @@ ext.debug_data = {
     request_once_update = false,
     --- 更新计时器
     timer = -1,
+    --- 第二代游戏循环
+    game_loop_v2 = true,
 }
 
 --- [调试功能] 是否启用了更新速率调试
@@ -268,43 +270,85 @@ end)
 function DoFrame()
     -- 标题设置
     ChangeGameTitle()
-    -- 上一帧的处理
-    lstg.AfterFrame(2) -- TODO: remove (2)
-    -- 获取输入
-    GetInput()
-    gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
-    -- 切关处理
-    if stage.NextStageExist() then
-        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
-        stage.DestroyCurrentStage()
-        ChangeGameStage()
-        stage.CreateNextStage()
-        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
-    end
-    -- 关卡更新
-    gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
-    if GetCurrentSuperPause() <= 0 or stage.nopause then
-        ex.Frame()
-        stage.Update()
-        gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
-    end
-    -- 游戏对象更新
-    gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
-    lstg.ObjFrame(2) -- TODO: remove (2)
-    gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
-    -- 碰撞检测
-    if GetCurrentSuperPause() <= 0 then
-        gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
-    end
-    IntersectionDetectionManager.execute()
-    if GetCurrentSuperPause() <= 0 then
-        gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
-    end
-    -- 出界检测
-    if GetCurrentSuperPause() <= 0 or stage.nopause then
-        gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
-        lstg.BoundCheck(2) -- TODO: remove (2)
-        gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
+    if ext.debug_data.game_loop_v2 then
+        -- 上一帧的处理
+        lstg.AfterFrame(2) -- TODO: remove (2)
+        -- 获取输入
+        GetInput()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
+        -- 切关处理
+        if stage.NextStageExist() then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
+            stage.DestroyCurrentStage()
+            ChangeGameStage()
+            stage.CreateNextStage()
+            gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
+        end
+        -- 关卡更新
+        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
+        if GetCurrentSuperPause() <= 0 or stage.nopause then
+            ex.Frame()
+            stage.Update()
+            gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
+        end
+        -- 游戏对象更新
+        gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
+        lstg.ObjFrame(2) -- TODO: remove (2)
+        gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
+        -- 碰撞检测
+        if GetCurrentSuperPause() <= 0 then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
+        end
+        IntersectionDetectionManager.execute()
+        if GetCurrentSuperPause() <= 0 then
+            gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
+        end
+        -- 出界检测
+        if GetCurrentSuperPause() <= 0 or stage.nopause then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
+            lstg.BoundCheck(2) -- TODO: remove (2)
+            gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
+        end
+    else
+        -- 获取输入
+        GetInput()
+        gameEventDispatcher:DispatchEvent("GameState.AfterGetInput")
+        -- 切关处理
+        if stage.NextStageExist() then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageChange")
+            stage.DestroyCurrentStage()
+            ChangeGameStage()
+            stage.CreateNextStage()
+            gameEventDispatcher:DispatchEvent("GameState.AfterGameStageChange")
+        end
+        -- 关卡更新
+        gameEventDispatcher:DispatchEvent("GameState.BeforeGameStageUpdate")
+        if GetCurrentSuperPause() <= 0 or stage.nopause then
+            ex.Frame()
+            stage.Update()
+            gameEventDispatcher:DispatchEvent("GameState.AfterGameStageUpdate")
+        end
+        -- 游戏对象更新
+        gameEventDispatcher:DispatchEvent("GameState.BeforeObjFrame")
+        lstg.ObjFrame()
+        gameEventDispatcher:DispatchEvent("GameState.AfterObjFrame")
+        -- 出界检测
+        if GetCurrentSuperPause() <= 0 or stage.nopause then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeBoundCheck")
+            lstg.BoundCheck()
+            gameEventDispatcher:DispatchEvent("GameState.AfterBoundCheck")
+        end
+        -- 碰撞检测
+        if GetCurrentSuperPause() <= 0 then
+            gameEventDispatcher:DispatchEvent("GameState.BeforeCollisionCheck")
+        end
+        IntersectionDetectionManager.execute() -- TODO: 并不完全和 V1 一致
+        if GetCurrentSuperPause() <= 0 then
+            gameEventDispatcher:DispatchEvent("GameState.AfterCollisionCheck")
+        end
+        -- 上一帧的处理
+        lstg.UpdateXY()
+        lstg.AfterFrame()
     end
 end
 
