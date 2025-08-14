@@ -61,10 +61,13 @@ end
 
 function ext.replay.SaveReplay(stageNames, slot, playerName, finish)
     local stages = {}
+    local gameExtendInfo = {}
     finish = finish or 0
     for _, v in ipairs(stageNames) do
-        assert(replayStages[v], 'Stage not found')
-        table.insert(stages, replayStages[v])
+        local replayStage = replayStages[v]
+        assert(replayStage, 'Stage not found')
+        table.insert(stages, replayStage)
+        gameExtendInfo[#stages] = replayStage.stageData or {}
     end
 
     -- TODO: gameName和gameVersion可以被用来检查录像文件的合法性
@@ -74,6 +77,7 @@ function ext.replay.SaveReplay(stageNames, slot, playerName, finish)
         userName = playerName,
         group_finish = finish,
         stages = stages,
+        gameExtendInfo = Serialize(gameExtendInfo),
     })
 end
 
@@ -126,7 +130,7 @@ function stage.Set(stageName, mode, path)
         local recordStage = replayStages[lstg.var.stage_name]
         recordStage.score = lstg.var.score
         recordStage.stageTime = os.time() - recordStage.stageTime  -- TODO：这个方法只保存了大致时间，包括了暂停
-        --recordStage.stageExtendInfo = Serialize(lstg.var)--错误的保存位置
+        recordStage.stageData = ext.stage_data.SerializeStageData()
     end
 
     -- 关闭上一个场景的录像读写
@@ -221,6 +225,15 @@ function stage.Set(stageName, mode, path)
         --lstg.var = DeSerialize(nextRecordStage.stageExtendInfo)--不能这么加载，因为场景里还有东西，在下一帧加载
         lstg.nextvar = DeSerialize(nextRecordStage.stageExtendInfo)
         --assert(lstg.var.ran_seed == nextRecordStage.randomSeed)  -- 这两个应该相等
+
+        --准备额外关卡数据
+        if replayInfo.gameExtendInfo:match("%S") then
+            local gameExtendInfo = DeSerialize(replayInfo.gameExtendInfo)
+            local stageData = gameExtendInfo[replayStageIdx]
+            if stageData then
+                ext.stage_data.PrepareStageData(stageData)
+            end
+        end
 
         --初始化随机数
         --if lstg.var.ran_seed then
