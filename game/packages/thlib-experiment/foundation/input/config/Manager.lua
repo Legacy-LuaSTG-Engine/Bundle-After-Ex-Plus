@@ -238,6 +238,11 @@ local generate_default_config = {
 
 for category, v1 in pairs(generate_default_config) do
     for adapter, v2 in pairs(v1) do
+        M.configs[category][adapter] = {
+            boolean = {},
+            vector2 = {},
+            scalar = {}
+        }
         for valuetype, v3 in pairs(v2) do
             M.configs[category][adapter][valuetype] = {}
             for _, keyitem in ipairs(v3) do

@@ -257,6 +257,27 @@ function ReplayFrameWriterV2:CopyToFileStream(fs)
     end
 end
 
+function ReplayFrameWriterV2:dump(path)
+    local fhandle = io.open(path, "a")
+    if fhandle then
+        for i = 1, self._count do
+            fhandle:write("Framecount #" .. tostring(i) .. "\n")
+            fhandle:write("keystate:")
+            fhandle:write(string.byte(self.keystate_data[i], 1, #self.keystate_data[i]))
+            fhandle:write("\n")
+            fhandle:write("extradata:" .. "\n")
+            for j, v in ipairs(self.frame_extra_data) do
+                fhandle:write(string.format("[#%d] type : %s , value : %s\n", j, v.type, tostring(self.extra_data[i][j])))
+            end
+            fhandle:write("\n")
+        end
+        fhandle:close()
+        return true
+    else
+        return false
+    end
+end
+
 function ReplayFrameWriterV2:GetCount()
     return self._count
 end
@@ -506,6 +527,16 @@ function ReplayManager.SaveReplayInfo(path, data)
             end
 
             _save_finish = true
+        end,
+        catch = function(e)
+            local stageCount = #data.stages
+            local dump_success = true
+            for i = 1, stageCount do
+                local stage = data.stages[i]
+                dump_success = dump_success and stage.frameData:dump("stagedatadump" .. ".stage" .. i)
+            end
+            print(e)
+            print("dump_success:", dump_success)
         end,
         finally = function()
             f:Close()

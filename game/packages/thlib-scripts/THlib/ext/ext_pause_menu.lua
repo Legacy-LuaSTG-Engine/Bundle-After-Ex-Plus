@@ -6,6 +6,7 @@
 ---暂停菜单
 
 local input = require("foundation.input.core")
+local input_config = require("foundation.input.config.Manager")
 local key_repeated_activate = input.isBooleanActionRepeatedActivate
 
 ---@class ext.pausemenu @暂停菜单对象
@@ -300,6 +301,7 @@ function ext.pausemenu:FlyIn()
             task.Wait(1)
         end
         self.lock = false
+        input_config.switch_config("ui")
     end)
 end
 
@@ -334,6 +336,11 @@ function ext.pausemenu:FlyOut()
         end)
 
         self.kill = true--标记为关闭状态
+        if ext.replay.IsReplay() then
+            input_config.switch_config("replay")
+        else
+            input_config.switch_config("game")
+        end
 
         --清除一些flag
         lstg.tmpvar.death = false

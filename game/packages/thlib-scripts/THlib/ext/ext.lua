@@ -240,8 +240,10 @@ function GetInput()
             framedata = {}
             if not replayReader:Next(framedata) then
                 ext.PushPauseMenuOrder("Replay Again")
+                ext.pause_menu:FlyIn()
+            else
+                input_rep.decodeFromString(framedata.keystate)
             end
-            input_rep.decodeFromString(framedata.keystate)
         end
     end
 end
