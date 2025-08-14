@@ -32,6 +32,9 @@ local last_boolean_action_state = {}
 ---@type table<string, boolean>
 local boolean_action_state = {}
 
+---@type table<string, number>
+local boolean_action_duration = {}
+
 -- TODO: 这个可能用不上，应该去除
 ---@type table<string, number>
 local last_scalar_action_state = {}
@@ -52,6 +55,9 @@ local function validate_state_type()
     end
     for k, v in pairs(boolean_action_state) do
         assert(type(k) == "string" and type(v) == "boolean")
+    end
+    for k, v in pairs(boolean_action_duration) do
+        assert(type(k) == "string" and type(v) == "number")
     end
 
     for k, v in pairs(last_scalar_action_state) do
@@ -105,6 +111,9 @@ end
 local function clear_current_state()
     for k, _ in pairs(boolean_action_state) do
         boolean_action_state[k] = false
+    end
+    for k, _ in ipairs(boolean_action_duration) do
+        boolean_action_duration[k] = 0
     end
 
     for k, _ in pairs(scalar_action_state) do
@@ -314,17 +323,28 @@ function M.update()
             -- TODO: 支持标量类型
             -- TODO: 支持二维向量类型
         end
+    end
 
-        -- 向量归一化
-        for _, k in ipairs(vector2_normalize_list) do
-            if vector2_action_state[k] then
-                local x, y = vector2_action_state[k].x, vector2_action_state[k].y
-                local r = math.sqrt(x * x + y * y)
-                if r > 1 then
-                    vector2_action_state[k].x = x / r
-                    vector2_action_state[k].y = y / r
-                end
+    -- 向量归一化
+    for _, k in ipairs(vector2_normalize_list) do
+        if vector2_action_state[k] then
+            local x, y = vector2_action_state[k].x, vector2_action_state[k].y
+            local r = math.sqrt(x * x + y * y)
+            if r > 1 then
+                vector2_action_state[k].x = x / r
+                vector2_action_state[k].y = y / r
             end
+        end
+    end
+
+    for k, v in pairs(boolean_action_state) do
+        if v then
+            if not boolean_action_duration[k] then
+                boolean_action_duration[k] = 0
+            end
+            boolean_action_duration[k] = boolean_action_duration[k] + 1
+        else
+            boolean_action_duration[k] = 0
         end
     end
 end
@@ -376,6 +396,17 @@ end
 ---@return boolean
 function M.isBooleanActionDeactivate(name)
     return last_boolean_action_state[name] and (not boolean_action_state[name])
+end
+
+--- 模拟重复延迟
+---@param name string
+---@param delay number 超过此时间开始重复
+---@param interval number 重复间隔
+function M.isBooleanActionRepeatedActivate(name, delay, interval)
+    delay = delay or 30
+    interval = interval or 5
+    local duration = boolean_action_duration[name] or 0
+    return duration == 1 or (duration >= delay and (duration - delay - 1) % interval == 0)
 end
 
 return M
