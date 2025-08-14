@@ -8,7 +8,6 @@ local IntersectionDetectionManager = require("foundation.IntersectionDetectionMa
 local gameEventDispatcher = lstg.globalEventDispatcher
 
 -- input system
-require("foundation.input.compat")
 local input = require("foundation.input.core")
 local input_rep = require("foundation.input.replay")
 
@@ -108,7 +107,7 @@ end
 --把暂停菜单相关操作移到gameEventDispatcher里完成
 --按键弹出菜单
 gameEventDispatcher:RegisterEvent("GameState.BeforeDoFrame", "pop_pause_menu", 0, function ()
-    if ext.pause_menu:IsKilled() and (GetLastKey() == setting.keysys.menu or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
+    if ext.pause_menu:IsKilled() and (MenuKeyIsPressed("menu") or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
         ext.pause_menu:FlyIn()
     end
 end)
@@ -225,23 +224,14 @@ function GetInput()
     if stage.next_stage then
         input.clear()
         input_rep.clear()
-    elseif ext.pause_menu:IsKilled() then
-        -- 刷新KeyStatePre
-        -- for k, _ in pairs(setting.keys) do
-        --     KeyStatePre[k] = KeyState[k]
-        -- end
     end
     input.update()
 
-    -- 不是录像时更新按键状态
-    if not ext.replay.IsReplay() then
-        -- for k, v in pairs(setting.keys) do
-        --     KeyState[k] = GetKeyState(v)
-        -- end
-        input_rep.update()
-    end
-
     if ext.pause_menu:IsKilled() then
+        -- 不是录像且非暂停时更新按键状态
+        if not ext.replay.IsReplay() then
+            input_rep.update()
+        end
         if ext.replay.IsRecording() then
             -- 录像模式下记录当前帧的按键
             replayWriter:Record(input_rep.encodeToString())
@@ -417,6 +407,8 @@ function GameScene:onUpdate()
     if ext.pause_menu:IsKilled() then
         --处理录像速度与正常更新逻辑
         DoFrameEx()
+    else
+        GetInput()
     end
     gameEventDispatcher:DispatchEvent("GameState.AfterDoFrame")
 end

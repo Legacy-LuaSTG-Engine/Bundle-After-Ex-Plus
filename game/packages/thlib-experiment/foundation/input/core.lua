@@ -400,8 +400,9 @@ end
 
 --- 模拟重复延迟
 ---@param name string
----@param delay number 超过此时间开始重复
----@param interval number 重复间隔
+---@param delay number? 超过此时间开始重复，默认为 30
+---@param interval number? 重复间隔，默认为 5
+---@return boolean
 function M.isBooleanActionRepeatedActivate(name, delay, interval)
     delay = delay or 30
     interval = interval or 5

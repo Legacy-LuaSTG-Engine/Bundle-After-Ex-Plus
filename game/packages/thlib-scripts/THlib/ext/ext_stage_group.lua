@@ -367,7 +367,7 @@ function M.frame_sc_pr(self)
         end
         lstg.var.lifeleft = 0
     end
-    if ext.GetPauseMenuOrder() == 'Give up and Retry' or ext.GetPauseMenuOrder() == 'Restart' or (stage.group.sc_pr_fast_retry and lstg.GetLastKey() == KEY.R) then
+    if ext.GetPauseMenuOrder() == 'Give up and Retry' or ext.GetPauseMenuOrder() == 'Restart' or (stage.group.sc_pr_fast_retry and MenuKeyIsPressed("retry")) then
         stage.Restart()
         lstg.tmpvar.pause_menu_text = nil
         lstg.var.timeslow = nil
