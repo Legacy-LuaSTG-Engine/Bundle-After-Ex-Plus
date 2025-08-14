@@ -51,11 +51,6 @@
                 "path": "packages/thlib-scripts-v2/"
             },
             {
-                "name": "thlib-experiment",
-                "type": "directory",
-                "path": "packages/thlib-experiment/"
-            },
-            {
                 "name": "community-creations",
                 "type": "directory",
                 "path": "packages/community-creations/"
