@@ -8,6 +8,10 @@
 
 更新日志：
 
+    aex+ v0.9.0-alpha.9
+        其他工具
+            移除：pngopt 命令行工具（建议改用：https://github.com/Legacy-LuaSTG-Engine/png-pixel-bleeding）
+            移除：texasm 命令行工具
     aex+ v0.9.0-alpha.8
         THlib
             修改：重写了 plus.TryCatch 的代码，并提供了更好的 Lua LSP 代码提示支持
