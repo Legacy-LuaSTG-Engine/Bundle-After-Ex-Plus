@@ -9,9 +9,20 @@
 更新日志：
 
     aex+ v0.9.0-alpha.9
+        LuaSTG Sub 引擎
+            更新到 v0.21.112
+            v0.21.103 到 v0.21.112
+                具体更改内容请阅读 document/engine/history.md
+        THlib
+            修改：更安全的 scoredata 保存机制，先写入到临时文件，成功后备份当前的存档文件，最后覆盖存档文件
+            修改：更安全的 setting 保存机制，先写入到临时文件，成功后备份当前的存档文件，最后覆盖存档文件
+            修改：主菜单 BGM 文件移动到 community-creations 包内（可能影响某些硬编码了文件路径的遗留代码），并明确使用协议
+            修改：在 F3 调试菜单的 Update Controller 中新增了一个 Game Loop V2 开关，默认开启。
+                该选项为游戏循环逻辑的版本切换开关，关于第二代游戏循环的变化详见：document/framework/游戏循环更新顺序.md。
+                如果发现某些遗留代码运行结果和 LuaSTG aex+ v0.8.22 及更早版本不符，可尝试关闭该选项回到旧版本的行为。
         其他工具
             移除：pngopt 命令行工具（建议改用：https://github.com/Legacy-LuaSTG-Engine/png-pixel-bleeding）
-            移除：texasm 命令行工具
+            移除：texasm 命令行工具（更好用的贴图图集打包工具正在开发中）
     aex+ v0.9.0-alpha.8
         THlib
             修改：重写了 plus.TryCatch 的代码，并提供了更好的 Lua LSP 代码提示支持
