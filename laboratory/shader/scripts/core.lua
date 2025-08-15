@@ -1,4 +1,5 @@
 local SceneManager = require("laboratory.shader.SceneManager")
+local HelloScene = require("laboratory.shader.HelloScene")
 local MaskScene = require("laboratory.shader.MaskScene")
 local ThresholdMaskScene = require("laboratory.shader.ThresholdMaskScene")
 local ThresholdEdgeScene = require("laboratory.shader.ThresholdEdgeScene")
@@ -9,6 +10,7 @@ local HSLShift = require("laboratory.shader.HSLShift")
 
 function GameInit()
     SceneManager.initialize()
+    SceneManager.add(HelloScene)
     SceneManager.add(MaskScene)
     SceneManager.add(ThresholdMaskScene)
     SceneManager.add(ThresholdEdgeScene)

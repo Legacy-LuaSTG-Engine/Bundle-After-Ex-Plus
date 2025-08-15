@@ -1,0 +1,31 @@
+struct EffectParameters
+{
+    float4 background_color;
+};
+
+// ConstantBuffer<EffectParameters> effect;
+cbuffer effect {
+    EffectParameters effect;
+}
+Texture2D render_target;
+SamplerState render_target_sampler;
+
+struct ShaderInput
+{
+    float4 sxy : SV_Position;
+    float2 uv : TEXCOORD0;
+    float4 color : COLOR0;
+};
+
+struct ShaderOutput
+{
+    float4 color : SV_Target;
+};
+
+ShaderOutput main(ShaderInput input)
+{
+    float4 add_color = render_target.Sample(render_target_sampler, input.uv);
+    ShaderOutput output;
+    output.color = add_color + effect.background_color;
+    return output;
+}
