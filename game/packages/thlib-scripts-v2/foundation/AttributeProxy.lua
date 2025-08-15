@@ -3,7 +3,7 @@ local rawset = rawset
 local type = type
 local pairs = pairs
 local setmetatable = setmetatable
-local lstg = lstg
+local lstg = require("lstg")
 
 local KEY_ATTRIBUTE_PROXIES_LIST = "___attribute_proxies"
 local KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT = "___attribute_proxies_is_game_object"
@@ -72,6 +72,7 @@ function M:___metatableIndex(key)
         return proxy.getter(self, key, self[KEY_ATTRIBUTE_PROXIES_STORAGE])
     end
     if self[KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT] then
+        ---@diagnostic disable-next-line: param-type-mismatch
         return lstg.GetAttr(self, key)
     end
     return rawget(self, key)
@@ -87,6 +88,7 @@ function M:___metatableNewIndex(key, value)
         return
     end
     if self[KEY_ATTRIBUTE_PROXIES_IS_GAME_OBJECT] then
+        ---@diagnostic disable-next-line: param-type-mismatch
         lstg.SetAttr(self, key, value)
         return
     end
