@@ -46,10 +46,16 @@ end
 --------------------------------------------------------------------------------
 --- 状态集
 
----@class foundation.input.replay.Vector2
+---@class foundation.input.replay.PolarVector2
 local _ = {
     r = 0,
     a = 0,
+}
+
+---@class foundation.input.replay.Vector2
+local _ = {
+    x = 0,
+    y = 0,
 }
 
 ---@type table<string, boolean>
@@ -64,6 +70,13 @@ local last_scalar_action_state = {}
 
 ---@type table<string, number>
 local scalar_action_state = {}
+
+-- TODO: 这个可能用不上，应该去除
+---@type table<string, foundation.input.replay.PolarVector2>
+local last_polar_vector2_action_state = {}
+
+---@type table<string, foundation.input.replay.PolarVector2>
+local polar_vector2_action_state = {}
 
 -- TODO: 这个可能用不上，应该去除
 ---@type table<string, foundation.input.replay.Vector2>
@@ -89,11 +102,20 @@ local function validate_state_type()
 
     for k, v in pairs(last_vector2_action_state) do
         assert(type(k) == "string" and type(v) == "table")
-        assert(type(v.r) == "number" and type(v.a) == "number")
+        assert(type(v.x) == "number" and type(v.y) == "number")
     end
     for k, v in pairs(vector2_action_state) do
         assert(type(k) == "string" and type(v) == "table")
-        assert(type(v.r) == "number" and type(v.a) == "number")
+        assert(type(v.x) == "number" and type(v.y) == "number")
+    end
+    
+    for k, v in pairs(last_polar_vector2_action_state) do
+        assert(type(k) == "string" and type(v) == "table")
+        assert(type(v.a) == "number" and type(v.r) == "number")
+    end
+    for k, v in pairs(polar_vector2_action_state) do
+        assert(type(k) == "string" and type(v) == "table")
+        assert(type(v.a) == "number" and type(v.r) == "number")
     end
 end
 
@@ -108,8 +130,14 @@ local function copy_state_to_last()
 
     for k, v in pairs(vector2_action_state) do
         last_vector2_action_state[k] = last_vector2_action_state[k] or {}
-        last_vector2_action_state[k].r = v.r
-        last_vector2_action_state[k].a = v.a
+        last_vector2_action_state[k].x = v.x
+        last_vector2_action_state[k].y = v.y
+    end
+
+    for k, v in pairs(polar_vector2_action_state) do
+        last_polar_vector2_action_state[k] = last_polar_vector2_action_state[k] or {}
+        last_polar_vector2_action_state[k].a = v.a
+        last_polar_vector2_action_state[k].r = v.r
     end
 end
 
@@ -123,6 +151,11 @@ local function clear_last_state()
     end
 
     for _, v in pairs(last_vector2_action_state) do
+        v.x = 0.0
+        v.y = 0.0
+    end
+
+    for _, v in pairs(last_polar_vector2_action_state) do
         v.r = 0.0
         v.a = 0.0
     end
@@ -138,6 +171,11 @@ local function clear_current_state()
     end
 
     for _, v in pairs(vector2_action_state) do
+        v.x = 0.0
+        v.y = 0.0
+    end
+
+    for _, v in pairs(polar_vector2_action_state) do
         v.r = 0.0
         v.a = 0.0
     end
@@ -164,15 +202,19 @@ local boolean_action_list = {
     -- 自机
     "slow",
     "special",
+    "skip"
 }
 
----@type string[]
-local scalar_action_list = {}
+---@type table[]
+local scalar_action_list = {
+    -- { name = "test", byte = 1, unsigned = true }
+}
 
----@type string[]
+---@type table[]
 local vector2_action_list = {
     -- 基本单元
-    "move",
+    { name = "move", polar = true },
+    { name = "cursor", byte = 2, unsigned = true}
 }
 
 --------------------------------------------------------------------------------
@@ -189,21 +231,42 @@ function M.update()
         boolean_action_state[k] = core.getBooleanActionValue(k)
     end
     for _, k in ipairs(scalar_action_list) do
-        local v = core.getScalarActionValue(k)
-        local v_norm = clamp(v, 0.0, 1.0) -- 限制区间 0.0 到 1.0
-        local v_uint = round(v_norm * 255) -- 编码为 0 到 255 的整数
+        local v = core.getScalarActionValue(k.name)
+        local v_norm
+        if k.unsigned then
+            v_norm = clamp(v, 0.0, 1.0)
+        else
+            v_norm = (clamp(v, -1.0, 1.0) + 1) / 2
+        end
+        local v_uint = round(v_norm * (256 ^ (k.byte or 1) - 1)) -- 编码为 0 到 256 ^ k.byte - 1 的整数
         scalar_action_state[k] = v_uint
     end
     for _, k in ipairs(vector2_action_list) do
-        local x, y = core.getVector2ActionValue(k)
-        local r = math.sqrt(x * x + y * y)
-        local a = math.deg(atan(y, x))
-        local r_norm = clamp(r, 0.0, 1.0) -- 限制区间 0.0 到 1.0
-        local r_uint = round(r_norm * 100) -- 编码为 0 到 100 的整数
-        local a_uint = round(a) % 360 -- 编码为 0 到 360 的整数
-        vector2_action_state[k] = vector2_action_state[k] or {}
-        vector2_action_state[k].r = r_uint
-        vector2_action_state[k].a = a_uint
+        local x, y = core.getVector2ActionValue(k.name)
+        if k.polar then
+            local r = math.sqrt(x * x + y * y)
+            local a = math.deg(atan(y, x))
+            local r_norm = clamp(r, 0.0, 1.0) -- 限制区间 0.0 到 1.0
+            local r_uint = round(r_norm * 100) -- 编码为 0 到 100 的整数
+            local a_uint = round(a) % 360 -- 编码为 0 到 360 的整数
+            polar_vector2_action_state[k.name] = polar_vector2_action_state[k.name] or {}
+            polar_vector2_action_state[k.name].r = r_uint
+            polar_vector2_action_state[k.name].a = a_uint
+        else
+            local x_norm, y_norm
+            if k.unsigned then
+                x_norm = clamp(x, 0.0, 1.0)
+                y_norm = clamp(x, 0.0, 1.0)
+            else
+                x_norm = (clamp(x, -1.0, 1.0) + 1) / 2
+                y_norm = (clamp(y, -1.0, 1.0) + 1) / 2
+            end
+            local x_uint = round(x_norm * (256 ^ (k.byte or 1) - 1))
+            local y_uint = round(y_norm * (256 ^ (k.byte or 1) - 1))
+            vector2_action_state[k.name] = vector2_action_state[k.name] or {}
+            vector2_action_state[k.name].x = x_uint
+            vector2_action_state[k.name].y = y_uint
+        end
     end
 end
 
@@ -228,7 +291,7 @@ local function ByteArrayReader(byte_array)
     local index = 0
     local function read()
         index = index + 1
-        assert(index <= length)
+        assert(index <= length, "End of array")
         return byte_array[index]
     end
     return read
@@ -254,34 +317,56 @@ function M.encodeToByteArray()
     end
     -- 编码标量动作
     for _, k in ipairs(scalar_action_list) do
-        local byte = scalar_action_state[k] or 0
-        table.insert(byte_array, byte)
+        local num = scalar_action_state[k.name] or 0
+        --按照小端序储存数据
+        for _ = 1, k.byte do
+            local byte = num % 256
+            table.insert(byte_array, byte)
+            num = math.floor(num / 256)
+        end
     end
     -- 编码二维矢量动作
     for _, k in ipairs(vector2_action_list) do
-        if vector2_action_state[k] then
-            local value = vector2_action_state[k] or 0
-            local byte1 = value.r
-            local byte2 = value.a
-            if byte2 > 255 then
-                -- byte1 存的是 0 到 100 的长度，不会用到第 8 位
-                -- byte2 存的是 0 到 359 的角度，超过了 255，会用到第 9 位
-                -- 所以要把 byte2 第 9 位挪到 byte1 第 8 位储存
-                byte1 = byte1 + 128
-                byte2 = byte2 - 256
+        if k.polar then
+            if polar_vector2_action_state[k.name] then
+                local value = polar_vector2_action_state[k.name] or { r = 0.0, a = 0.0 }
+                local byte1 = value.r
+                local byte2 = value.a
+                if byte2 > 255 then
+                    -- byte1 存的是 0 到 100 的长度，不会用到第 8 位
+                    -- byte2 存的是 0 到 359 的角度，超过了 255，会用到第 9 位
+                    -- 所以要把 byte2 第 9 位挪到 byte1 第 8 位储存
+                    byte1 = byte1 + 128
+                    byte2 = byte2 - 256
+                end
+                table.insert(byte_array, byte1)
+                table.insert(byte_array, byte2)
+            else
+                table.insert(byte_array, 0)
+                table.insert(byte_array, 0)
             end
-            table.insert(byte_array, byte1)
-            table.insert(byte_array, byte2)
         else
-            table.insert(byte_array, 0)
-            table.insert(byte_array, 0)
+            local vec = vector2_action_state[k.name] or { x = 0.0, y = 0.0}
+            local x = vec.x
+            local y = vec.y
+            --按照小端序储存数据
+            for _ = 1, k.byte do
+                local byte = x % 256
+                table.insert(byte_array, byte)
+                x = math.floor(x / 256)
+            end
+            for _ = 1, k.byte do
+                local byte = y % 256
+                table.insert(byte_array, byte)
+                y = math.floor(y / 256)
+            end
         end
     end
     -- 验证所有的值范围
     for _, v in ipairs(byte_array) do
-        assert(v >= 0 and v <= 255)
+        assert(v >= 0 and v <= 255, "Some byte(s) in the encoded array exceeded the range, check 'foundation.input.replay' for more information.")
     end
-    assert(#byte_array == M.getEncodeSize()) -- 交叉验证
+    assert(#byte_array == M.getEncodeSize(), "Byte array size does not match the estimated size, check 'foundation.input.replay' for more information.") -- 交叉验证
     return byte_array
 end
 
@@ -300,9 +385,9 @@ end
 function M.decodeFromByteArray(byte_array)
     -- 验证所有的值范围
     for _, v in ipairs(byte_array) do
-        assert(v >= 0 and v <= 255)
+        assert(v >= 0 and v <= 255, "Some byte(s) in the encoded array exceeded the range, check 'foundation.input.replay' for more information.")
     end
-    assert(#byte_array == M.getEncodeSize()) -- 交叉验证
+    assert(#byte_array == M.getEncodeSize(), "Byte array size does not match the estimated size, check 'foundation.input.replay' for more information.") -- 交叉验证
     -- 创建单向读取迭代器
     local read = ByteArrayReader(byte_array)
     -- 计算布尔动作编码为多少个字节
@@ -313,34 +398,61 @@ function M.decodeFromByteArray(byte_array)
         for i = 8, 1, -1 do -- 这里要反过来迭代，从高位到低位
             local k = (j - 1) * 8 + i
             local key = boolean_action_list[k]
-            if byte >= byte_mask[i] then
-                byte = byte - byte_mask[i]
-                boolean_action_state[key] = true -- 第 i 位是激活的
-            else
-                boolean_action_state[key] = false -- 需要修改为未激活
+            if key then
+                if byte >= byte_mask[i] then
+                    byte = byte - byte_mask[i]
+                    boolean_action_state[key] = true -- 第 i 位是激活的
+                else
+                    boolean_action_state[key] = false -- 需要修改为未激活
+                end
             end
         end
     end
     -- 解码标量动作
     for _, k in ipairs(scalar_action_list) do
-        local byte = read()
-        scalar_action_state[k] = byte
+        local num = 0
+        local multiply = 1
+        for _ = 1, k.byte do
+            local byte = read()
+            num = num + multiply * byte
+            multiply = multiply * 256
+        end
+        scalar_action_state[k.name] = num
     end
     -- 解码二维矢量动作
     for _, k in ipairs(vector2_action_list) do
-        local byte1 = read()
-        local byte2 = read()
-        if byte1 > 127 then
-            -- byte1 存的是 0 到 100 的长度，不会用到第 8 位
-            -- byte2 存的是 0 到 359 的角度，超过了 255，会用到第 9 位
-            -- 之前把 byte2 第 9 位挪到 byte1 第 8 位储存
-            -- 现在如果 byte1 超过了 127，则需要恢复回来
-            byte1 = byte1 - 128
-            byte2 = byte2 + 256
+        if k.polar then
+            local byte1 = read()
+            local byte2 = read()
+            if byte1 > 127 then
+                -- byte1 存的是 0 到 100 的长度，不会用到第 8 位
+                -- byte2 存的是 0 到 359 的角度，超过了 255，会用到第 9 位
+                -- 之前把 byte2 第 9 位挪到 byte1 第 8 位储存
+                -- 现在如果 byte1 超过了 127，则需要恢复回来
+                byte1 = byte1 - 128
+                byte2 = byte2 + 256
+            end
+            local value = polar_vector2_action_state[k.name] or {}
+            value.r = byte1
+            value.a = byte2
+        else
+            local x, y = 0, 0
+            local multiply = 1
+            for _ = 1, k.byte do
+                local byte = read()
+                x = x + multiply * byte
+                multiply = multiply * 256
+            end
+            multiply = 1
+            for _ = 1, k.byte do
+                local byte = read()
+                y = y + multiply * byte
+                multiply = multiply * 256
+            end
+            local value = vector2_action_state[k.name] or {}
+            value.x = x
+            value.y = y
         end
-        local value = vector2_action_state[k] or {}
-        value.r = byte1
-        value.a = byte2
     end
 end
 
@@ -359,7 +471,19 @@ end
 function M.getEncodeSize()
     -- 计算布尔动作需要编码为多少个字节
     local byte_count = math.ceil((#boolean_action_list) / 8)
-    return byte_count + (#scalar_action_list) + (2 * (#vector2_action_list))
+
+    for _, v in ipairs(scalar_action_list) do
+        byte_count = byte_count + (v.byte or 1)
+    end
+
+    for _, v in ipairs(vector2_action_list) do
+        if v.polar then
+            byte_count = byte_count + 2
+        else
+            byte_count = byte_count + v.byte * 2
+        end
+    end
+    return byte_count
 end
 
 --------------------------------------------------------------------------------
@@ -378,8 +502,22 @@ end
 function M.getScalarActionValue(name)
     if scalar_action_state[name] then
         -- 解码为归一化浮点数
+        local byte = 1
+        local unsigned = true
+        for _, v in ipairs(scalar_action_list) do
+            if v.name == name then
+                byte = v.byte
+                unsigned = v.unsigned
+                break
+            end
+        end
         local v_uint = scalar_action_state[name]
-        local v_norm = v_uint / 255.0
+        local v_norm
+        if unsigned then
+            v_norm = v_uint / (256 ^ byte - 1)
+        else
+            v_norm = v_uint / (256 ^ byte - 1) * 2 - 1
+        end
         return v_norm
     else
         return 0.0
@@ -390,14 +528,34 @@ end
 ---@param name string
 ---@return number, number
 function M.getVector2ActionValue(name)
-    if vector2_action_state[name] then
+    if polar_vector2_action_state[name] then
         -- 解码为归一化二维向量
-        local r_uint = vector2_action_state[name].r
-        local a_uint = vector2_action_state[name].a
+        local r_uint = polar_vector2_action_state[name].r
+        local a_uint = polar_vector2_action_state[name].a
         local r_norm = r_uint / 100.0
         local x = r_norm * math.cos(math.rad(a_uint))
         local y = r_norm * math.sin(math.rad(a_uint))
         return x, y
+    elseif vector2_action_state[name] then
+        local byte = 1
+        local unsigned = true
+        for _, v in ipairs(vector2_action_list) do
+            if v.name == name then
+                byte = v.byte
+                unsigned = v.unsigned
+                break
+            end
+        end
+        local x_uint, y_uint = vector2_action_state[name].x, vector2_action_state[name].y
+        local x_component, y_component
+        if unsigned then
+            x_component = x_uint / (256 ^ byte - 1)
+            y_component = y_uint / (256 ^ byte - 1)
+        else
+            x_component = x_uint / (256 ^ byte - 1) * 2 - 1
+            y_component = y_uint / (256 ^ byte - 1) * 2 - 1
+        end
+        return x_component, y_component
     else
         return 0.0, 0.0
     end

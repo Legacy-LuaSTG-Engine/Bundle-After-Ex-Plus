@@ -5,6 +5,9 @@
 ----------------------------------------
 ---background
 
+local input = require("foundation.input.core")
+local key_repeated_activate = input.isBooleanActionRepeatedActivate
+
 background = Class(object)
 
 function background:init(is_sc_bg)
@@ -44,14 +47,14 @@ function camera_setter:init()
 end
 
 function camera_setter:frame()
-    if GetLastKey() == setting.keys.shoot then
+    if key_repeated_activate("shoot") then
         self.edit = true
         PlaySound('select00', 0.3)
         if not self.edit then
             self.posx = 1
         end
     end
-    if GetLastKey() == setting.keys.spell then
+    if key_repeated_activate("spell") then
         self.edit = false
         PlaySound('cancel00', 0.3)
     end
@@ -63,27 +66,27 @@ function camera_setter:frame()
         if KeyIsDown 'slow' then
             step = 0.01
         end
-        if GetLastKey() == setting.keys.left then
+        if key_repeated_activate("left") then
             self.posx = self.posx - 1
             PlaySound('select00', 0.3)
         end
-        if GetLastKey() == setting.keys.right then
+        if key_repeated_activate("right") then
             self.posx = self.posx + 1
             PlaySound('select00', 0.3)
         end
         self.posx = (self.posx - 1 + self.nitem[self.pos]) % self.nitem[self.pos] + 1
         if self.pos <= 3 or self.pos == 5 then
             local item = lstg.view3d[self.text[self.pos]]
-            if GetLastKey() == setting.keys.up then
+            if key_repeated_activate("up") then
                 item[self.posx] = item[self.posx] + step
                 PlaySound('select00', 0.3)
             end
-            if GetLastKey() == setting.keys.down then
+            if key_repeated_activate("down") then
                 item[self.posx] = item[self.posx] - step
                 PlaySound('select00', 0.3)
             end
         elseif self.pos == 6 then
-            if GetLastKey() == setting.keys.up then
+            if key_repeated_activate("up") then
                 lstg.view3d.fog[self.posx] = lstg.view3d.fog[self.posx] + step
                 PlaySound('select00', 0.3)
                 if lstg.view3d.fog[1] < -0.0001 then
@@ -94,7 +97,7 @@ function camera_setter:frame()
                     end
                 end
             end
-            if GetLastKey() == setting.keys.down then
+            if key_repeated_activate("down") then
                 lstg.view3d.fog[self.posx] = lstg.view3d.fog[self.posx] - step
                 if lstg.view3d.fog[1] < -1.0001 then
                     lstg.view3d.fog[1] = -2
@@ -117,33 +120,33 @@ function camera_setter:frame()
                 step = 1
             end
             alpha, c[1], c[2], c[3] = lstg.view3d.fog[3]:ARGB()
-            if GetLastKey() == setting.keys.up then
+            if key_repeated_activate("up") then
                 c[self.posx] = c[self.posx] + step
                 PlaySound('select00', 0.3)
             end
-            if GetLastKey() == setting.keys.down then
+            if key_repeated_activate("down") then
                 c[self.posx] = c[self.posx] - step
                 PlaySound('select00', 0.3)
             end
             c[self.posx] = max(0, min(c[self.posx], 255))
             lstg.view3d.fog[3] = Color(alpha, unpack(c))
         elseif self.pos == 4 then
-            if GetLastKey() == setting.keys.up then
+            if key_repeated_activate("up") then
                 lstg.view3d.fovy = lstg.view3d.fovy + step
                 PlaySound('select00', 0.3)
             end
-            if GetLastKey() == setting.keys.down then
+            if key_repeated_activate("down") then
                 lstg.view3d.fovy = lstg.view3d.fovy - step
                 PlaySound('select00', 0.3)
             end
         end
     else
-        if GetLastKey() == setting.keys.up then
+        if key_repeated_activate("up") then
             self.pos = self.pos - 1
             self.pos_changed = ui.menu.shake_time
             PlaySound('select00', 0.3)
         end
-        if GetLastKey() == setting.keys.down then
+        if key_repeated_activate("down") then
             self.pos = self.pos + 1
             self.pos_changed = ui.menu.shake_time
             PlaySound('select00', 0.3)

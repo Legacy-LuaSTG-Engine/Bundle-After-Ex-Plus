@@ -5,6 +5,10 @@
 ----------------------------------------
 ---暂停菜单
 
+local input = require("foundation.input.core")
+local input_config = require("foundation.input.config.Manager")
+local key_repeated_activate = input.isBooleanActionRepeatedActivate
+
 ---@class ext.pausemenu @暂停菜单对象
 ext.pausemenu = plus.Class()
 
@@ -54,9 +58,8 @@ function ext.pausemenu:frame()
     task.Do(self)
     --执行选项操作
     if (not self.lock) and self.t < 1 then
-        local lastkey = GetLastKey()
         --关闭暂停菜单
-        if lastkey == setting.keysys.menu and (not lstg.tmpvar.death) then
+        if MenuKeyIsPressed("menu") and (not lstg.tmpvar.death) then
             if not ext.rep_over then
                 self.t = 60
                 PlaySound('cancel00', 0.3)
@@ -65,7 +68,7 @@ function ext.pausemenu:frame()
             end
         end
         --直接重开
-        if lastkey == setting.keysys.retry and (not lstg.tmpvar.death) then
+        if MenuKeyIsPressed("retry") and (not lstg.tmpvar.death) then
             self.t = 60
             PlaySound('ok00', 0.3)
             self.choose = false
@@ -78,7 +81,7 @@ function ext.pausemenu:frame()
         end
         --槽位切换
         do
-            if lastkey == setting.keys.up then
+            if key_repeated_activate("up") then
                 self.t = 4
                 PlaySound('select00', 0.3)
                 if not self.choose then
@@ -86,7 +89,7 @@ function ext.pausemenu:frame()
                 else
                     self.pos2 = self.pos2 - 1
                 end
-            elseif lastkey == setting.keys.down then
+            elseif key_repeated_activate("down") then
                 self.t = 4
                 PlaySound('select00', 0.3)
                 if not self.choose then
@@ -99,7 +102,7 @@ function ext.pausemenu:frame()
             self.pos2 = (self.pos2 - 1) % (2) + 1
         end
         --取消操作
-        if lastkey == setting.keys.spell then
+        if key_repeated_activate("spell") then
             if self.choose then
                 self.t = 15
                 PlaySound('cancel00', 0.3)
@@ -113,7 +116,7 @@ function ext.pausemenu:frame()
             end
         end
         --按键操作
-        if lastkey == setting.keys.shoot then
+        if key_repeated_activate("shoot") then
             if self.choose then
                 if self.pos2 == 1 then
                     --确认选项，推送命令，暂停菜单关闭
@@ -298,6 +301,7 @@ function ext.pausemenu:FlyIn()
             task.Wait(1)
         end
         self.lock = false
+        input_config.switch_config("ui")
     end)
 end
 
@@ -332,6 +336,11 @@ function ext.pausemenu:FlyOut()
         end)
 
         self.kill = true--标记为关闭状态
+        if ext.replay.IsReplay() then
+            input_config.switch_config("replay")
+        else
+            input_config.switch_config("game")
+        end
 
         --清除一些flag
         lstg.tmpvar.death = false

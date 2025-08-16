@@ -7,6 +7,10 @@ local SceneManager = require("foundation.SceneManager")
 local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
+-- input system
+local input = require("foundation.input.core")
+local input_rep = require("foundation.input.replay")
+
 ----------------------------------------
 ---ext加强库
 
@@ -103,7 +107,7 @@ end
 --把暂停菜单相关操作移到gameEventDispatcher里完成
 --按键弹出菜单
 gameEventDispatcher:RegisterEvent("GameState.BeforeDoFrame", "pop_pause_menu", 0, function ()
-    if ext.pause_menu:IsKilled() and (GetLastKey() == setting.keysys.menu or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
+    if ext.pause_menu:IsKilled() and (MenuKeyIsPressed("menu") or ext.pop_pause_menu) and (not stage.current_stage.is_menu) then
         ext.pause_menu:FlyIn()
     end
 end)
@@ -215,33 +219,44 @@ function ChangeGameStage()
 end
 
 --- 获取输入
+local framedata = {}
 function GetInput()
     if stage.next_stage then
-        KeyStatePre = {}
-    elseif ext.pause_menu:IsKilled() then
-        -- 刷新KeyStatePre
-        for k, _ in pairs(setting.keys) do
-            KeyStatePre[k] = KeyState[k]
-        end
+        input.clear()
+        input_rep.clear()
     end
-
-    -- 不是录像时更新按键状态
-    if not ext.replay.IsReplay() then
-        for k, v in pairs(setting.keys) do
-            KeyState[k] = GetKeyState(v)
-        end
-    end
+    input.update()
 
     if ext.pause_menu:IsKilled() then
+        -- 不是录像且非暂停时更新按键状态
+        if not ext.replay.IsReplay() then
+            input_rep.update()
+        end
         if ext.replay.IsRecording() then
             -- 录像模式下记录当前帧的按键
-            replayWriter:Record(KeyState)
+            replayWriter:Record(input_rep.encodeToString())
         elseif ext.replay.IsReplay() then
             -- 回放时载入按键状态
-            replayReader:Next(KeyState)
+            framedata = {}
+            if not replayReader:Next(framedata) then
+                ext.PushPauseMenuOrder("Replay Again")
+                ext.pause_menu:FlyIn()
+            else
+                input_rep.decodeFromString(framedata.keystate)
+            end
         end
     end
 end
+
+gameEventDispatcher:RegisterEvent("GameState.AfterObjRender", "render_replay_fps", 0, function ()
+    if ext.replay.IsReplay() then
+        if framedata.extra and framedata.extra.fps then
+            SetViewMode("ui")
+            RenderTTF2("menuttf", string.format("Original FPS %0.1f", framedata.extra.fps), screen.width - 10, screen.width - 10, 30, 30, 1, Color(255, 255, 255, 255), "right", "vcenter")
+            SetViewMode("world")
+        end
+    end
+end)
 
 --- 逻辑帧更新，不和 FrameFunc 一一对应
 function DoFrame()
@@ -394,6 +409,8 @@ function GameScene:onUpdate()
     if ext.pause_menu:IsKilled() then
         --处理录像速度与正常更新逻辑
         DoFrameEx()
+    else
+        GetInput()
     end
     gameEventDispatcher:DispatchEvent("GameState.AfterDoFrame")
 end
