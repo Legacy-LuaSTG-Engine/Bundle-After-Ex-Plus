@@ -199,32 +199,8 @@ end
 --! @brief 以小端序读取一个32位浮点数
 --! @return 以number返回读取的浮点数
 function BinaryReader:ReadFloat()
-    -- local b1, b2, b3, b4 = self:ReadByte(), self:ReadByte(), self:ReadByte(), self:ReadByte()
-    -- local sign = (b4 >= 0x80)
-    -- local expo = (b4 % 0x80) * 0x2 + math.floor(b3 / 0x80)
-    -- local mant = ((b3 % 0x80) * 0x100 + b2) * 0x100 + b1
-
-    -- if sign then
-    --     sign = -1
-    -- else
-    --     sign = 1
-    -- end
-
-    -- local n
-
-    -- if mant == 0 and expo == 0 then
-    --     n = sign * 0.0
-    -- elseif expo == 0xFF then
-    --     if mant == 0 then
-    --         n = sign * math.huge
-    --     else
-    --         n = 0.0 / 0.0
-    --     end
-    -- else
-    --     n = sign * math.ldexp(1.0 + mant / 0x800000, expo - 0x7F)
-    -- end
-
-    -- return n
+    --- LuaSTG Sub LuaJIT has string.pack/unpack/packsize
+    ---@diagnostic disable-next-line: deprecated
     return string.unpack("<f", self:ReadString(string.packsize("<f")))
 end
 
@@ -320,52 +296,9 @@ end
 --! @brief 以小端序写入一个32位浮点数
 --! @param f 要写入的浮点数
 function BinaryWriter:WriteFloat(f)
+    --- LuaSTG Sub LuaJIT has string.pack/unpack/packsize
+    ---@diagnostic disable-next-line: deprecated
     self._stream:WriteBytes(string.pack("<f", f))
-    -- if f == 0.0 then
-    --     self._stream:WriteByte(0)
-    --     self._stream:WriteByte(0)
-    --     self._stream:WriteByte(0)
-    --     self._stream:WriteByte(0)
-    --     return
-    -- end
-
-    -- local sign = 0
-    -- if f < 0.0 then
-    --     sign = 0x80
-    --     f = -f
-    -- end
-
-    -- local mant, expo = math.frexp(f)
-    -- if mant ~= mant then
-    --     self._stream:WriteByte(0x00)
-    --     self._stream:WriteByte(0x00)
-    --     self._stream:WriteByte(0x88)
-    --     self._stream:WriteByte(0xFF)
-    -- elseif mant == math.huge or expo > 0x80 then
-    --     if sign == 0 then
-    --         self._stream:WriteByte(0x00)
-    --         self._stream:WriteByte(0x00)
-    --         self._stream:WriteByte(0x80)
-    --         self._stream:WriteByte(0x7F)
-    --     else
-    --         self._stream:WriteByte(0x00)
-    --         self._stream:WriteByte(0x00)
-    --         self._stream:WriteByte(0x80)
-    --         self._stream:WriteByte(0xFF)
-    --     end
-    -- elseif (mant == 0.0 and expo == 0) or expo < -0x7E then
-    --     self._stream:WriteByte(0x00)
-    --     self._stream:WriteByte(0x00)
-    --     self._stream:WriteByte(0x00)
-    --     self._stream:WriteByte(sign)
-    -- else
-    --     expo = expo + 0x7E
-    --     mant = (mant * 2.0 - 1.0) * math.ldexp(0.5, 24)
-    --     self._stream:WriteByte(math.floor(mant % 0x100))
-    --     self._stream:WriteByte(math.floor(mant / 0x100) % 0x100)
-    --     self._stream:WriteByte((expo % 0x2) * 0x80 + math.floor(mant / 0x10000))
-    --     self._stream:WriteByte(sign + math.floor(expo / 0x2))
-    -- end
 end
 
 --! @brief 写入一个字符串
