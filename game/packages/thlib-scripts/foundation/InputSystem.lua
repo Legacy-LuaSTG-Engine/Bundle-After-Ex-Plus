@@ -4,6 +4,7 @@ local InputSystem = {}
 
 --------------------------------------------------------------------------------
 --- 动作集辅助函数
+--#region
 
 ---@generic T
 ---@param array T[]
@@ -15,7 +16,20 @@ local function isArrayContains(array, value)
             return true
         end
     end
-    return false;
+    return false
+end
+
+---@generic T
+---@param array T[]
+---@param comparator fun(value: T):boolean
+---@return boolean
+local function isArrayContainsIf(array, comparator)
+    for i = 1, #array do
+        if comparator(array[i]) then
+            return true
+        end
+    end
+    return false
 end
 
 ---@generic T
@@ -29,8 +43,21 @@ local function removeArrayValue(array, value)
     end
 end
 
+---@generic T
+---@param array T[]
+---@param comparator fun(value: T):boolean
+local function removeArrayValueIf(array, comparator)
+    for i = #array, 1, -1 do
+        if comparator(array[i]) then
+            table.remove(array, i)
+        end
+    end
+end
+
+--#endregion
 --------------------------------------------------------------------------------
---- 动作集
+--- 动作
+--#region
 
 ---@alias foundation.InputSystem.ActionType '"boolean"' | '"scalar"' | '"vector2"'
 
@@ -38,63 +65,108 @@ end
 ---@field name string
 ---@field type foundation.InputSystem.ActionType
 
+---@alias foundation.InputSystem.PhysicalBindingType '"key"' | '"axis"' | '"joystick"'
+
+---@class foundation.InputSystem.Binding
+---@field type foundation.InputSystem.PhysicalBindingType
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 布尔动作，用于按键组件，比如键盘按键
+--#region
+
+---@class foundation.InputSystem.BooleanBinding : foundation.InputSystem.Binding
+---@field key integer
+
 ---@class foundation.InputSystem.BooleanAction : foundation.InputSystem.Action
----@field keyboard_bindings   integer[]
----@field mouse_bindings      integer[]
----@field controller_bindings integer[]
----@field hid_bindings        integer[]
+---@field keyboard_bindings   foundation.InputSystem.BooleanBinding[]
+---@field mouse_bindings      foundation.InputSystem.BooleanBinding[]
+---@field controller_bindings foundation.InputSystem.BooleanBinding[]
+---@field hid_bindings        foundation.InputSystem.BooleanBinding[]
 local BooleanAction = {}
 
 ---@param key integer
-function BooleanAction:addKeyboardBinding(key)
-    if isArrayContains(self.keyboard_bindings, key) then
+function BooleanAction:addKeyboardKeyBinding(key)
+    local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
         return
     end
-    table.insert(self.keyboard_bindings, key)
+    table.insert(self.keyboard_bindings, {
+        type = "key",
+        key = key,
+    })
 end
 
 ---@param key integer
-function BooleanAction:removeKeyboardBinding(key)
-    removeArrayValue(self.keyboard_bindings, key)
+function BooleanAction:removeKeyboardKeyBinding(key)
+    removeArrayValueIf(self.keyboard_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
 end
 
 ---@param key integer
-function BooleanAction:addMouseBinding(key)
-    if isArrayContains(self.mouse_bindings, key) then
+function BooleanAction:addMouseKeyBinding(key)
+    local exists = isArrayContainsIf(self.mouse_bindings, function(value)
+        return value.key == key
+    end)
+    if exists then
         return
     end
-    table.insert(self.mouse_bindings, key)
+    table.insert(self.mouse_bindings, {
+        type = "key",
+        key = key,
+    })
 end
 
 ---@param key integer
-function BooleanAction:removeMouseBinding(key)
-    removeArrayValue(self.mouse_bindings, key)
+function BooleanAction:removeMouseKeyBinding(key)
+    removeArrayValueIf(self.mouse_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
 end
 
 ---@param key integer
-function BooleanAction:addControllerBinding(key)
-    if isArrayContains(self.controller_bindings, key) then
+function BooleanAction:addControllerKeyBinding(key)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
         return
     end
-    table.insert(self.controller_bindings, key)
+    table.insert(self.controller_bindings, {
+        type = "key",
+        key = key,
+    })
 end
 
 ---@param key integer
-function BooleanAction:removeControllerBinding(key)
-    removeArrayValue(self.controller_bindings, key)
+function BooleanAction:removeControllerKeyBinding(key)
+    removeArrayValueIf(self.controller_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
 end
 
 ---@param key integer
-function BooleanAction:addHidBinding(key)
-    if isArrayContains(self.hid_bindings, key) then
+function BooleanAction:addHidKeyBinding(key)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
         return
     end
-    table.insert(self.hid_bindings, key)
+    table.insert(self.hid_bindings, {
+        type = "key",
+        key = key,
+    })
 end
 
 ---@param key integer
-function BooleanAction:removeHidBinding(key)
-    removeArrayValue(self.hid_bindings, key)
+function BooleanAction:removeHidKeyBinding(key)
+    removeArrayValueIf(self.hid_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
 end
 
 ---@param name string
@@ -112,10 +184,12 @@ function BooleanAction.create(name)
     return instance
 end
 
----@alias foundation.InputSystem.PhysicalBindingType '"key"' | '"axis"' | '"joystick"'
+--#endregion
+--------------------------------------------------------------------------------
+--- 标量动作，用于单轴组件，比如手柄扳机
+--#region
 
----@class foundation.InputSystem.ScalarBinding
----@field type foundation.InputSystem.PhysicalBindingType
+---@class foundation.InputSystem.ScalarBinding : foundation.InputSystem.Binding
 ---@field key  integer
 ---@field axis integer
 
@@ -124,9 +198,161 @@ end
 ---@field mouse_bindings      foundation.InputSystem.ScalarBinding[]
 ---@field controller_bindings foundation.InputSystem.ScalarBinding[]
 ---@field hid_bindings        foundation.InputSystem.ScalarBinding[]
+local ScalarAction = {}
 
----@class foundation.InputSystem.Vector2Binding
----@field type           foundation.InputSystem.PhysicalBindingType
+---@param key integer
+function ScalarAction:addKeyboardKeyBinding(key)
+    local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.keyboard_bindings, {
+        type = "key",
+        key = key,
+        axis = 0,
+    })
+end
+
+---@param key integer
+function ScalarAction:removeKeyboardKeyBinding(key)
+    removeArrayValueIf(self.keyboard_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+end
+
+---@param key integer
+function ScalarAction:addMouseKeyBinding(key)
+    local exists = isArrayContainsIf(self.mouse_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.mouse_bindings, {
+        type = "key",
+        key = key,
+        axis = 0,
+    })
+end
+
+---@param key integer
+function ScalarAction:removeMouseKeyBinding(key)
+    removeArrayValueIf(self.mouse_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+end
+
+---@param key integer
+function ScalarAction:addControllerKeyBinding(key)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.controller_bindings, {
+        type = "key",
+        key = key,
+        axis = 0,
+    })
+end
+
+---@param key integer
+function ScalarAction:removeControllerKeyBinding(key)
+    removeArrayValueIf(self.controller_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+end
+
+---@param axis integer
+function ScalarAction:addControllerAxisBinding(axis)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "axis" and value.axis == axis
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.controller_bindings, {
+        type = "axis",
+        key = axis,
+        axis = 0,
+    })
+end
+
+---@param axis integer
+function ScalarAction:removeControllerAxisBinding(axis)
+    removeArrayValueIf(self.controller_bindings, function(value)
+        return value.type == "axis" and value.axis == axis
+    end)
+end
+
+---@param key integer
+function ScalarAction:addHidKeyBinding(key)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.hid_bindings, {
+        type = "key",
+        key = key,
+        axis = 0,
+    })
+end
+
+---@param key integer
+function ScalarAction:removeHidKeyBinding(key)
+    removeArrayValueIf(self.hid_bindings, function(value)
+        return value.type == "key" and value.key == key
+    end)
+end
+
+---@param axis integer
+function ScalarAction:addHidAxisBinding(axis)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "axis" and value.axis == axis
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.hid_bindings, {
+        type = "axis",
+        key = axis,
+        axis = 0,
+    })
+end
+
+---@param axis integer
+function ScalarAction:removeHidAxisBinding(axis)
+    removeArrayValueIf(self.hid_bindings, function(value)
+        return value.type == "axis" and value.axis == axis
+    end)
+end
+
+---@param name string
+---@return foundation.InputSystem.ScalarAction
+function ScalarAction.create(name)
+    local instance = {
+        name = name,
+        type = "scalar",
+        keyboard_bindings = {},
+        mouse_bindings = {},
+        controller_bindings = {},
+        hid_bindings = {},
+    }
+    setmetatable(instance, { __index = ScalarAction })
+    return instance
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 二维矢量动作，用于双轴组件，比如手柄摇杆
+--#region
+
+---@class foundation.InputSystem.Vector2Binding : foundation.InputSystem.Binding
 ---@field joystick       integer
 ---@field x_axis         integer
 ---@field y_axis         integer
@@ -135,11 +361,67 @@ end
 ---@field positive_y_key integer
 ---@field negative_y_key integer
 
+---@param joystick integer
+---@return foundation.InputSystem.Vector2Binding
+local function createJoystickVector2Binding(joystick)
+    ---@type foundation.InputSystem.Vector2Binding
+    local result = {
+        type = "joystick",
+        joystick = joystick,
+        x_axis = 0,
+        y_axis = 0,
+        positive_x_key = 0,
+        negative_x_key = 0,
+        positive_y_key = 0,
+        negative_y_key = 0,
+    }
+    return result
+end
+
 ---@class foundation.InputSystem.Vector2Action : foundation.InputSystem.Action
 ---@field keyboard_bindings   foundation.InputSystem.Vector2Binding[]
 ---@field mouse_bindings      foundation.InputSystem.Vector2Binding[]
 ---@field controller_bindings foundation.InputSystem.Vector2Binding[]
 ---@field hid_bindings        foundation.InputSystem.Vector2Binding[]
+local Vector2Action = {}
+
+---@param joystick integer
+function Vector2Action:addControllerJoystickBinding(joystick)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "joystick" and value.joystick == joystick
+    end)
+    if exists then
+        return
+    end
+    table.insert(self.controller_bindings, createJoystickVector2Binding(joystick))
+end
+
+---@param joystick integer
+function Vector2Action:removeControllerJoystickBinding(joystick)
+    removeArrayValueIf(self.controller_bindings, function(value)
+        return value.type == "joystick" and value.joystick == joystick
+    end)
+end
+
+---@param name string
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action.create(name)
+    local instance = {
+        name = name,
+        type = "vector2",
+        keyboard_bindings = {},
+        mouse_bindings = {},
+        controller_bindings = {},
+        hid_bindings = {},
+    }
+    setmetatable(instance, { __index = Vector2Action })
+    return instance
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 动作集
+--#region
 
 ---@class foundation.InputSystem.ActionSet
 ---@field name            string
@@ -148,26 +430,106 @@ end
 ---@field vector2_actions table<string, foundation.InputSystem.Vector2Action>
 local ActionSet = {}
 
-function ActionSet:createAction(name)
-    
+---@param name string
+---@return foundation.InputSystem.BooleanAction
+function ActionSet:addBooleanAction(name)
+    assert(type(name) == "string", "name must be a string")
+    if self.boolean_actions[name] then
+        return self.boolean_actions[name]
+    end
+    local action = BooleanAction.create(name)
+    self.boolean_actions[name] = action
+    return action
+end
+
+---@param name string
+function ActionSet:removeBooleanAction(name)
+    assert(type(name) == "string", "name must be a string")
+    self.boolean_actions[name] = nil
+end
+
+---@param name string
+---@return foundation.InputSystem.BooleanAction
+function ActionSet:getBooleanAction(name)
+    assert(type(name) == "string", "name must be a string")
+    return assert(self.boolean_actions[name], ("BooleanAction '%s' does not exists"):format(name))
+end
+
+---@param name string
+---@return foundation.InputSystem.ScalarAction
+function ActionSet:addScalarAction(name)
+    assert(type(name) == "string", "name must be a string")
+    if self.scalar_actions[name] then
+        return self.scalar_actions[name]
+    end
+    local action = ScalarAction.create(name)
+    self.scalar_actions[name] = action
+    return action
+end
+
+---@param name string
+function ActionSet:removeScalarAction(name)
+    assert(type(name) == "string", "name must be a string")
+    self.scalar_actions[name] = nil
+end
+
+---@param name string
+---@return foundation.InputSystem.ScalarAction
+function ActionSet:getScalarAction(name)
+    assert(type(name) == "string", "name must be a string")
+    return assert(self.scalar_actions[name], ("ScalarAction '%s' does not exists"):format(name))
+end
+
+---@param name string
+---@return foundation.InputSystem.Vector2Action
+function ActionSet:addVector2Action(name)
+    assert(type(name) == "string", "name must be a string")
+    if self.vector2_actions[name] then
+        return self.vector2_actions[name]
+    end
+    local action = Vector2Action.create(name)
+    self.vector2_actions[name] = action
+    return action
+end
+
+---@param name string
+function ActionSet:removeVector2Action(name)
+    assert(type(name) == "string", "name must be a string")
+    self.vector2_actions[name] = nil
+end
+
+---@param name string
+---@return foundation.InputSystem.Vector2Action
+function ActionSet:getVector2Action(name)
+    assert(type(name) == "string", "name must be a string")
+    return assert(self.vector2_actions[name], ("Vector2Action '%s' does not exists"):format(name))
 end
 
 ---@param name string
 ---@return foundation.InputSystem.ActionSet
 function ActionSet.create(name)
+    ---@type foundation.InputSystem.ActionSet
     local instance = {
         name = name,
+        boolean_actions = {},
+        scalar_actions = {},
+        vector2_actions = {},
     }
     setmetatable(instance, { __index = ActionSet })
     return instance
 end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 动作集管理
+--#region
 
 ---@type table<string, foundation.InputSystem.ActionSet>
 local action_sets = {}
 
 ---@param name string
 ---@return foundation.InputSystem.ActionSet
-function InputSystem.createActionSet(name)
+function InputSystem.addActionSet(name)
     assert(type(name) == "string", "name must be a string")
     if action_sets[name] then
         return action_sets[name]
@@ -177,8 +539,23 @@ function InputSystem.createActionSet(name)
     return action_set
 end
 
+---@param name string
+function InputSystem.removeActionSet(name)
+    assert(type(name) == "string", "name must be a string")
+    action_sets[name] = nil
+end
+
+---@param name string
+---@return foundation.InputSystem.ActionSet
+function InputSystem.getActionSet(name)
+    assert(type(name) == "string", "name must be a string")
+    return assert(action_sets[name], ("ActionSet '%s' does not exists"):format(name))
+end
+
+--#endregion
 --------------------------------------------------------------------------------
 --- 动作集切换
+--#region
 
 --- 当前的动作集栈，栈为空时表示不指定动作集并从所有动作集读取值
 ---@type string[]
@@ -196,8 +573,10 @@ function InputSystem.popActionSet()
     table.remove(action_set_name_stack)
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 --- 输入系统内部状态
+--#region
 
 ---@class foundation.InputSystem.Vector2
 ---@field x number
@@ -246,8 +625,10 @@ local function getCurrentActionSetValues()
     return merged_action_set_values
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 --- 状态更新
+--#region
 
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function clearActionSetValues(action_set_values)
@@ -301,8 +682,10 @@ function InputSystem.update()
     copyLastActionSetValues(merged_action_set_values)
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 --- 读取动作值辅助函数
+--#region
 
 ---@param value boolean?
 ---@return boolean
@@ -330,8 +713,10 @@ local function toVector2(value)
     return { x = 0.0, y = 0.0 }
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 --- 读取动作值
+--#region
 
 --- 读取布尔类型的动作值  
 --- 可能值有：  
@@ -363,8 +748,10 @@ function InputSystem.getVector2Action(name)
     return value.x, value.y
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 --- 追踪动作值变化
+--#region
 
 ---@param name string
 ---@return boolean, boolean, integer
@@ -446,6 +833,7 @@ function InputSystem.getVector2ActionIncrement(name)
     return current.x - last.x, current.y - last.y
 end
 
+--#endregion
 --------------------------------------------------------------------------------
 
 return InputSystem
