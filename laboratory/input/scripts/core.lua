@@ -24,6 +24,7 @@ local white_initialized = false
 function GameInit()
     Viewport.initialize()
     InputSystem.pushActionSet("menu")
+    InputSystem.saveSetting()
 
     lstg.CreateRenderTarget("rt:white", 16, 16, false)
     lstg.LoadImage("white", "rt:white", 0, 0, 16, 16)

@@ -13,6 +13,27 @@ end
 ---@class foundation.Files
 local M = {}
 
+--- 辅助函数，从文件读取文本内容  
+---@param path string
+---@return string? result
+---@return string? message
+function M.readString(path)
+    assert(type(path) == "string", "parameter 'path' must be a string")
+    local f, msg = io.open(path, "rb")
+    if not f then
+        error("open file '%s' failed (%s)", path, tostring(msg))
+        return nil, msg
+    end
+    local r
+    r, msg = f:read("*a")
+    if not r then
+        error("read from file '%s' failed (%s)", path, tostring(msg))
+        return nil, msg
+    end
+    f:close()
+    return r, nil
+end
+
 --- 辅助函数，将文本内容保存到文件  
 ---@param path string
 ---@param content string
@@ -21,7 +42,7 @@ local M = {}
 function M.writeString(path, content)
     assert(type(path) == "string", "parameter 'path' must be a string")
     assert(type(content) == "string", "parameter 'content' must be a string")
-    local f, msg = io.open(path, "wb");
+    local f, msg = io.open(path, "wb")
     if not f then
         error("open file '%s' failed (%s)", path, tostring(msg))
         return false, msg

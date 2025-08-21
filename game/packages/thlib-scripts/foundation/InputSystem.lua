@@ -1,3 +1,5 @@
+local cjson = require("cjson")
+local cjson_util = require("cjson.util")
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
 local Mouse = lstg.Input.Mouse
@@ -5,6 +7,8 @@ local XInput = require("xinput")
 local XInputAdaptor = require("foundation.input.adapter.Xinput")
 local DirectInput = require("dinput")
 local DirectInputAdaptor = require("foundation.input.adapter.DirectInput")
+local LocalFileStorage = require("foundation.LocalFileStorage")
+local Files = require("foundation.Files")
 
 --- 输入系统
 ---@class foundation.InputSystem
@@ -59,6 +63,49 @@ local function removeArrayValueIf(array, comparator)
         if comparator(array[i]) then
             table.remove(array, i)
         end
+    end
+end
+
+---@generic T
+---@param array T[]
+local function clearArray(array)
+    for i = #array, 1, -1 do
+        array[i] = nil
+    end
+    for k, _ in pairs(array) do
+        array[k] = nil
+    end
+end
+
+---@generic T
+---@param array T[]
+---@param elements T[]
+local function appendToArray(array, elements)
+    local n = #array
+    for i = 1, #elements do
+        array[n + i] = elements[i]
+    end
+end
+
+---@generic T
+---@param value T
+---@return T
+local function copyTable(value)
+    local value_type = type(value)
+    if value_type == "boolean" or value_type == "number" or value_type == "string" then
+        return value
+    elseif value_type == "table" then
+        local result = {}
+        for key, v in pairs(value) do
+            local key_type = type(key)
+            if not (key_type == "number" or key_type == "string") then
+                error(("unsupported key type '%s'"):format(key_type))
+            end
+            result[key] = copyTable(v)
+        end
+        return result
+    else
+        error(("unsupported value type '%s'"):format(value_type))
     end
 end
 
@@ -696,6 +743,25 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 输入系统设置
+--#region
+
+---@class foundation.InputSystem.Setting
+local setting = {
+    --- 0: Auto  
+    --- 1-4: Xinput controllers 1 to 4  
+    controller_index = 0,
+    --- 0: Auto  
+    --- 1-?: DirectInput devices  
+    hid_index = 0,
+}
+
+function InputSystem.getSetting()
+    return setting
+end
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 状态更新
 --#region
 
@@ -959,6 +1025,125 @@ function InputSystem.getVector2ActionIncrement(name)
     local last = toVector2(action_set_values.last_vector2_action_values[name])
     local current = toVector2(action_set_values.vector2_action_values[name])
     return current.x - last.x, current.y - last.y
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 设置持久化
+--#region
+
+local function getDefaultSettingPath()
+    return LocalFileStorage.getRootDirectory() .. "/input.json"
+end
+
+--- 不提供路径参数时，保存到默认位置
+---@param path string?
+function InputSystem.saveSetting(path)
+    path = path or getDefaultSettingPath()
+    local data = {}
+    data.action_sets = copyTable(action_sets)
+    data.setting = copyTable(setting)
+    Files.writeStringWithBackup(path, cjson_util.format_json(cjson.encode(data)))
+end
+
+---@param source_action foundation.InputSystem.BooleanAction
+---@param target_action foundation.InputSystem.BooleanAction
+local function mergeBooleanAction(source_action, target_action)
+    ---@param binding foundation.InputSystem.BooleanBinding
+    local function isValidBinding(binding)
+        return type(binding) == "table"
+            and type(binding.type) == "string"
+            and binding.type == "key"
+            and type(binding.key) == "number"
+    end
+    ---@param source_bindings foundation.InputSystem.BooleanBinding[]
+    ---@param target_bindings foundation.InputSystem.BooleanBinding[]
+    local function mergeBindings(source_bindings, target_bindings)
+        ---@type foundation.InputSystem.BooleanBinding[]
+        local bindings = {}
+        for _, source_binding in ipairs(source_bindings) do
+            if isValidBinding(source_binding) then
+                table.insert(bindings, source_binding)
+            end
+        end
+        if #bindings > 0 then
+            clearArray(target_bindings)
+            appendToArray(target_bindings, bindings)
+        end
+    end
+    if type(source_action.keyboard_bindings) == "table" then
+        mergeBindings(source_action.keyboard_bindings, target_action.keyboard_bindings)
+    end
+    if type(source_action.mouse_bindings) == "table" then
+        mergeBindings(source_action.mouse_bindings, target_action.mouse_bindings)
+    end
+    if type(source_action.controller_bindings) == "table" then
+        mergeBindings(source_action.controller_bindings, target_action.controller_bindings)
+    end
+    if type(source_action.hid_bindings) == "table" then
+        mergeBindings(source_action.hid_bindings, target_action.hid_bindings)
+    end
+end
+
+---@param source_actions table<string, foundation.InputSystem.BooleanAction>
+---@param target_actions table<string, foundation.InputSystem.BooleanAction>
+local function mergeBooleanActions(source_actions, target_actions)
+    for _, source_action in pairs(source_actions) do
+        if type(source_action) == "table" then
+            if type(source_action.name) == "string" then
+                local target_action = target_actions[source_action.name]
+                if target_action then
+                    mergeBooleanAction(source_action, target_action)
+                end
+            end
+        end
+    end
+end
+
+---@param input_action_set foundation.InputSystem.ActionSet
+local function mergeActionSet(input_action_set)
+    if type(input_action_set) ~= "table" then
+        return
+    end
+    if type(input_action_set.name) ~= "string" then
+        return
+    end
+    local target_action_set = action_sets[input_action_set.name]
+    if not target_action_set then
+        return
+    end
+    if type(input_action_set.boolean_actions) == "table" then
+        mergeBooleanActions(input_action_set.boolean_actions, target_action_set.boolean_actions)
+    end
+end
+
+--- 不提供路径参数时，从默认位置读取
+---@param path string?
+function InputSystem.loadSetting(path)
+    path = path or getDefaultSettingPath()
+    local content = Files.readString(path)
+    local r, data = pcall(cjson.decode, content)
+    if not r then
+        return
+    end
+
+    ---@type table<string, foundation.InputSystem.ActionSet>?
+    local data_action_sets = data.action_sets
+    ---@type foundation.InputSystem.Setting?
+    local data_setting = data.setting
+
+    if type(data_action_sets) == "table" then
+        for _, data_action_set in pairs(data_action_sets) do
+            mergeActionSet(data_action_set)
+        end
+    end
+    if type(data_setting) == "table" then
+        for k, v in pairs(setting) do
+            if type(v) == type(data_setting[k]) then
+                setting[k] = data_setting[k]
+            end
+        end
+    end
 end
 
 --#endregion
