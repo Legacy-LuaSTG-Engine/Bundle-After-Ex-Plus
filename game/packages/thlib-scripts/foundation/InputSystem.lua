@@ -1,9 +1,17 @@
+local lstg = require("lstg")
+local Keyboard = lstg.Input.Keyboard
+local Mouse = lstg.Input.Mouse
+local XInput = require("xinput")
+local XInputAdaptor = require("foundation.input.adapter.Xinput")
+local DirectInput = require("dinput")
+local DirectInputAdaptor = require("foundation.input.adapter.DirectInput")
+
 --- 输入系统
 ---@class foundation.InputSystem
 local InputSystem = {}
 
 --------------------------------------------------------------------------------
---- 动作集辅助函数
+--- 辅助函数
 --#region
 
 ---@generic T
@@ -85,6 +93,10 @@ end
 ---@field hid_bindings        foundation.InputSystem.BooleanBinding[]
 local BooleanAction = {}
 
+function BooleanAction:keyboardBindings()
+    return ipairs(self.keyboard_bindings)
+end
+
 ---@param key integer
 function BooleanAction:addKeyboardKeyBinding(key)
     local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
@@ -104,6 +116,10 @@ function BooleanAction:removeKeyboardKeyBinding(key)
     removeArrayValueIf(self.keyboard_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
+end
+
+function BooleanAction:mouseBindings()
+    return ipairs(self.mouse_bindings)
 end
 
 ---@param key integer
@@ -127,6 +143,10 @@ function BooleanAction:removeMouseKeyBinding(key)
     end)
 end
 
+function BooleanAction:controllerBindings()
+    return ipairs(self.controller_bindings)
+end
+
 ---@param key integer
 function BooleanAction:addControllerKeyBinding(key)
     local exists = isArrayContainsIf(self.controller_bindings, function(value)
@@ -146,6 +166,10 @@ function BooleanAction:removeControllerKeyBinding(key)
     removeArrayValueIf(self.controller_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
+end
+
+function BooleanAction:hidBindings()
+    return ipairs(self.hid_bindings)
 end
 
 ---@param key integer
@@ -200,6 +224,10 @@ end
 ---@field hid_bindings        foundation.InputSystem.ScalarBinding[]
 local ScalarAction = {}
 
+function ScalarAction:keyboardBindings()
+    return ipairs(self.keyboard_bindings)
+end
+
 ---@param key integer
 function ScalarAction:addKeyboardKeyBinding(key)
     local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
@@ -222,6 +250,10 @@ function ScalarAction:removeKeyboardKeyBinding(key)
     end)
 end
 
+function ScalarAction:mouseBindings()
+    return ipairs(self.mouse_bindings)
+end
+
 ---@param key integer
 function ScalarAction:addMouseKeyBinding(key)
     local exists = isArrayContainsIf(self.mouse_bindings, function(value)
@@ -242,6 +274,10 @@ function ScalarAction:removeMouseKeyBinding(key)
     removeArrayValueIf(self.mouse_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
+end
+
+function ScalarAction:controllerBindings()
+    return ipairs(self.controller_bindings)
 end
 
 ---@param key integer
@@ -286,6 +322,10 @@ function ScalarAction:removeControllerAxisBinding(axis)
     removeArrayValueIf(self.controller_bindings, function(value)
         return value.type == "axis" and value.axis == axis
     end)
+end
+
+function ScalarAction:hidBindings()
+    return ipairs(self.hid_bindings)
 end
 
 ---@param key integer
@@ -430,6 +470,10 @@ end
 ---@field vector2_actions table<string, foundation.InputSystem.Vector2Action>
 local ActionSet = {}
 
+function ActionSet:booleanActions()
+    return pairs(self.boolean_actions)
+end
+
 ---@param name string
 ---@return foundation.InputSystem.BooleanAction
 function ActionSet:addBooleanAction(name)
@@ -527,6 +571,12 @@ end
 ---@type table<string, foundation.InputSystem.ActionSet>
 local action_sets = {}
 
+---@type fun(action_set:foundation.InputSystem.ActionSet)[]
+local on_action_set_added = {} -- internal hook
+
+---@type fun(action_set:foundation.InputSystem.ActionSet)[]
+local on_action_set_removed = {} -- internal hook
+
 ---@param name string
 ---@return foundation.InputSystem.ActionSet
 function InputSystem.addActionSet(name)
@@ -536,12 +586,20 @@ function InputSystem.addActionSet(name)
     end
     local action_set = ActionSet.create(name)
     action_sets[name] = action_set
+    for _, callback in ipairs(on_action_set_added) do
+        callback(action_set)
+    end
     return action_set
 end
 
 ---@param name string
 function InputSystem.removeActionSet(name)
     assert(type(name) == "string", "name must be a string")
+    if action_sets[name] then
+        for _, callback in ipairs(on_action_set_removed) do
+            callback(action_sets[name])
+        end
+    end
     action_sets[name] = nil
 end
 
@@ -611,6 +669,13 @@ end
 ---@type table<string, foundation.InputSystem.ActionSetValues>
 local raw_action_set_values = {}
 
+table.insert(on_action_set_added, function(action_set)
+    raw_action_set_values[action_set.name] = createActionSetValues()
+end)
+table.insert(on_action_set_removed, function(action_set)
+    raw_action_set_values[action_set.name] = nil
+end)
+
 ---@type foundation.InputSystem.ActionSetValues
 local merged_action_set_values = createActionSetValues()
 
@@ -675,11 +740,68 @@ function InputSystem.clear()
     clearActionSetValues(merged_action_set_values)
 end
 
+---@type foundation.input.adapter.XInput.KeyState[]
+local xinput_adaptor_map = {}
+
+local function updateXInput()
+    XInput.update()
+    for i = 1, 4 do
+        if XInput.isConnected(i) then
+            xinput_adaptor_map[i] = XInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+        else
+            xinput_adaptor_map[i] = {}
+        end
+    end
+end
+
+---@type foundation.input.adapter.DirectInput.KeyState[]
+local dinput_adaptor_map = {}
+
+local function updateDirectInput()
+    DirectInput.update()
+    local count = DirectInput.count()
+    for i = 1, count do
+        dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+    end
+    for i = #dinput_adaptor_map, count + 1, -1 do
+        dinput_adaptor_map[i] = nil
+    end
+end
+
+---@param action_set foundation.InputSystem.ActionSet
+---@param action_set_values foundation.InputSystem.ActionSetValues
+local function updateActionSet(action_set, action_set_values)
+    for name, action in action_set:booleanActions() do
+        for _, binding in action:keyboardBindings() do
+            action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or Keyboard.GetKeyState(binding.key)
+        end
+        for _, binding in action:mouseBindings() do
+            action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or Mouse.GetKeyState(binding.key)
+        end
+        for _, binding in action:controllerBindings() do
+            for _, map in ipairs(xinput_adaptor_map) do
+                action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or XInputAdaptor.getKeyState(map, binding.key)
+            end
+        end
+        for _, binding in action:hidBindings() do
+            for _, map in ipairs(dinput_adaptor_map) do
+                action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or DirectInputAdaptor.getKeyState(map, binding.key)
+            end
+        end
+    end
+    -- TODO: scalar actions
+end
+
 function InputSystem.update()
     for _, v in pairs(raw_action_set_values) do
         copyLastActionSetValues(v)
     end
     copyLastActionSetValues(merged_action_set_values)
+    updateXInput()
+    updateDirectInput()
+    for name, action_set in pairs(action_sets) do
+        updateActionSet(action_set, raw_action_set_values[name])
+    end
 end
 
 --#endregion
