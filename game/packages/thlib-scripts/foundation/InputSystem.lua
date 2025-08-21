@@ -103,12 +103,13 @@ function BooleanAction:addKeyboardKeyBinding(key)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.keyboard_bindings, {
         type = "key",
         key = key,
     })
+    return self
 end
 
 ---@param key integer
@@ -128,12 +129,13 @@ function BooleanAction:addMouseKeyBinding(key)
         return value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.mouse_bindings, {
         type = "key",
         key = key,
     })
+    return self
 end
 
 ---@param key integer
@@ -153,12 +155,13 @@ function BooleanAction:addControllerKeyBinding(key)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.controller_bindings, {
         type = "key",
         key = key,
     })
+    return self
 end
 
 ---@param key integer
@@ -178,12 +181,13 @@ function BooleanAction:addHidKeyBinding(key)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.hid_bindings, {
         type = "key",
         key = key,
     })
+    return self
 end
 
 ---@param key integer
@@ -795,8 +799,10 @@ end
 function InputSystem.update()
     for _, v in pairs(raw_action_set_values) do
         copyLastActionSetValues(v)
+        clearActionSetValues(v)
     end
     copyLastActionSetValues(merged_action_set_values)
+    clearActionSetValues(merged_action_set_values)
     updateXInput()
     updateDirectInput()
     for name, action_set in pairs(action_sets) do

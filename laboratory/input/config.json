@@ -1,0 +1,71 @@
+{
+    "application": {
+        "uuid": "ddb8fda8-d59e-464d-b7b0-238c441b4bc4",
+        "single_instance": true
+    },
+    "debug": {
+        "track_window_focus": false
+    },
+    "logging": {
+        "debugger": {
+            "enable": true,
+            "threshold": "debug"
+        },
+        "console": {
+            "enable": false,
+            "threshold": "debug",
+            "preserve": true
+        },
+        "file": {
+            "enable": true,
+            "threshold": "info",
+            "path": "userdata/engine.log"
+        },
+        "rolling_file": {
+            "enable": false,
+            "threshold": "info",
+            "path": "userdata/logs/",
+            "max_history": 10
+        }
+    },
+    "file_system": {
+        "resources": [
+            {
+                "name": "thlib-scripts",
+                "type": "directory",
+                "path": "../../game/packages/thlib-scripts/"
+            },
+            {
+                "name": "thlib-resources",
+                "type": "directory",
+                "path": "../../game/packages/thlib-resources/"
+            },
+            {
+                "name": "scripts",
+                "type": "directory",
+                "path": "scripts/"
+            }
+        ],
+        "user": "userdata/"
+    },
+    "timing": {
+        "frame_rate": 60
+    },
+    "window": {
+        "title": "LuaSTG | Laboratory | Input",
+        "cursor_visible": true,
+        "allow_window_corner": true
+    },
+    "graphics_system": {
+        "preferred_device_name": "",
+        "width": 1920,
+        "height": 1080,
+        "fullscreen": false,
+        "vsync": false
+    },
+    "audio_system": {
+        "preferred_endpoint_name": "",
+        "sound_effect_volume": 1.0,
+        "music_volume": 1.0
+    }
+}
