@@ -766,6 +766,39 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 转换 XInput 和 DirectInput
+--#region
+
+---@type foundation.input.adapter.XInput.KeyState[]
+local xinput_adaptor_map = {}
+
+local function updateXInput()
+    XInput.update()
+    for i = 1, 4 do
+        if XInput.isConnected(i) then
+            xinput_adaptor_map[i] = XInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+        else
+            xinput_adaptor_map[i] = {}
+        end
+    end
+end
+
+---@type foundation.input.adapter.DirectInput.KeyState[]
+local dinput_adaptor_map = {}
+
+local function updateDirectInput()
+    DirectInput.update()
+    local count = DirectInput.count()
+    for i = 1, count do
+        dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+    end
+    for i = #dinput_adaptor_map, count + 1, -1 do
+        dinput_adaptor_map[i] = nil
+    end
+end
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 状态更新
 --#region
 
@@ -812,34 +845,6 @@ function InputSystem.clear()
         clearActionSetValues(v)
     end
     clearActionSetValues(merged_action_set_values)
-end
-
----@type foundation.input.adapter.XInput.KeyState[]
-local xinput_adaptor_map = {}
-
-local function updateXInput()
-    XInput.update()
-    for i = 1, 4 do
-        if XInput.isConnected(i) then
-            xinput_adaptor_map[i] = XInputAdaptor.mapKeyStateFromIndex(i, 0.5)
-        else
-            xinput_adaptor_map[i] = {}
-        end
-    end
-end
-
----@type foundation.input.adapter.DirectInput.KeyState[]
-local dinput_adaptor_map = {}
-
-local function updateDirectInput()
-    DirectInput.update()
-    local count = DirectInput.count()
-    for i = 1, count do
-        dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyStateFromIndex(i, 0.5)
-    end
-    for i = #dinput_adaptor_map, count + 1, -1 do
-        dinput_adaptor_map[i] = nil
-    end
 end
 
 ---@param values table<string, boolean>
@@ -893,20 +898,22 @@ end
 local function updateScalarActions(action_set, action_set_values)
     -- 键盘没有标量输入组件，跳过（虽然市面上确实存在压感键盘……但应该没有什么软件会专门适配一款支持“轻推W向前”的键盘🤣）
     -- 鼠标没有标量输入组件，跳过
+    -- DirectInput 不知道怎么处理，跳过🤣
 
+    local values = action_set_values.scalar_action_values
     for name, action in action_set:scalarActions() do
         for _, binding in action:controllerBindings() do
             for i = 1, 4 do
                 if XInput.isConnected(i) then
                     if binding.type == "axis" then
                         if binding.axis == XInputAdaptor.Axis.LeftTrigger then
-                            addScalarActionValue(action_set_values.scalar_action_values, name, XInput.getLeftTrigger(i))
+                            addScalarActionValue(values, name, XInput.getLeftTrigger(i))
                         elseif binding.axis == XInputAdaptor.Axis.RightTrigger then
-                            addScalarActionValue(action_set_values.scalar_action_values, name, XInput.getRightTrigger(i))
+                            addScalarActionValue(values, name, XInput.getRightTrigger(i))
                         end
                     elseif binding.type == "key" then
                         if XInputAdaptor.getKeyState(xinput_adaptor_map[i], binding.key) then
-                            addScalarActionValue(action_set_values.scalar_action_values, name, 1) -- 按键按下映射为 1
+                            addScalarActionValue(values, name, 1) -- 按键按下映射为 1
                         end
                     end
                 end
