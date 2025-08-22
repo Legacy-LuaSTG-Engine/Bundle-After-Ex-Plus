@@ -1,7 +1,7 @@
 local debugger = require("lib.Ldebug")
 local SceneManager = require("foundation.SceneManager")
 local LocalFileStorage = require("foundation.LocalFileStorage")
-require("foundation.input.compat")
+require("foundation.legacy.input")
 
 function GameInit()
 end

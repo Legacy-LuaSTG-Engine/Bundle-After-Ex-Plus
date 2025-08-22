@@ -21,7 +21,6 @@ lstg.DoFile("plus/plus.lua")--CHU神的plus库，replay系统、plusClass、Nati
 lstg.DoFile("lib/Lobject.lua")--Luastg的Class、object
 lstg.DoFile("lib/Lresources.lua")--资源的加载函数、资源枚举和判断
 lstg.DoFile("lib/Lscreen.lua")--world、3d、viewmode的参数设置
-lstg.DoFile("lib/Linput.lua")--按键状态更新
 ---@diagnostic disable-next-line: lowercase-global
 task = require("lib.Ltaskmove")--task
 lstg.DoFile("lib/Lstage.lua")--stage关卡系统
