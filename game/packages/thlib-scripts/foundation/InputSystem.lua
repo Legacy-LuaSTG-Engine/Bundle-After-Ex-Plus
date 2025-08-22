@@ -1100,6 +1100,121 @@ local function mergeBooleanActions(source_actions, target_actions)
     end
 end
 
+---@param source_action foundation.InputSystem.ScalarAction
+---@param target_action foundation.InputSystem.ScalarAction
+local function mergeScalarAction(source_action, target_action)
+    ---@param binding foundation.InputSystem.ScalarBinding
+    local function isValidBinding(binding)
+        return type(binding) == "table"
+            and type(binding.type) == "string"
+            and (binding.type == "key" or binding.type == "axis")
+            and type(binding.key) == "number"
+            and type(binding.axis) == "number"
+    end
+    ---@param source_bindings foundation.InputSystem.ScalarBinding[]
+    ---@param target_bindings foundation.InputSystem.ScalarBinding[]
+    local function mergeBindings(source_bindings, target_bindings)
+        ---@type foundation.InputSystem.ScalarBinding[]
+        local bindings = {}
+        for _, source_binding in ipairs(source_bindings) do
+            if isValidBinding(source_binding) then
+                table.insert(bindings, source_binding)
+            end
+        end
+        if #bindings > 0 then
+            clearArray(target_bindings)
+            appendToArray(target_bindings, bindings)
+        end
+    end
+    if type(source_action.keyboard_bindings) == "table" then
+        mergeBindings(source_action.keyboard_bindings, target_action.keyboard_bindings)
+    end
+    if type(source_action.mouse_bindings) == "table" then
+        mergeBindings(source_action.mouse_bindings, target_action.mouse_bindings)
+    end
+    if type(source_action.controller_bindings) == "table" then
+        mergeBindings(source_action.controller_bindings, target_action.controller_bindings)
+    end
+    if type(source_action.hid_bindings) == "table" then
+        mergeBindings(source_action.hid_bindings, target_action.hid_bindings)
+    end
+end
+
+---@param source_actions table<string, foundation.InputSystem.ScalarAction>
+---@param target_actions table<string, foundation.InputSystem.ScalarAction>
+local function mergeScalarActions(source_actions, target_actions)
+    for _, source_action in pairs(source_actions) do
+        if type(source_action) == "table" then
+            if type(source_action.name) == "string" then
+                local target_action = target_actions[source_action.name]
+                if target_action then
+                    mergeScalarAction(source_action, target_action)
+                end
+            end
+        end
+    end
+end
+
+---@param source_action foundation.InputSystem.Vector2Action
+---@param target_action foundation.InputSystem.Vector2Action
+local function mergeVector2Action(source_action, target_action)
+    ---@param binding foundation.InputSystem.Vector2Binding
+    local function isValidBinding(binding)
+        return type(binding) == "table"
+            and type(binding.type) == "string"
+            and (binding.type == "key" or binding.type == "axis" or binding.type == "joystick")
+            and type(binding.joystick) == "number"
+            and type(binding.x_axis) == "number"
+            and type(binding.y_axis) == "number"
+            and type(binding.positive_x_key) == "number"
+            and type(binding.negative_x_key) == "number"
+            and type(binding.positive_y_key) == "number"
+            and type(binding.negative_y_key) == "number"
+    end
+    ---@param source_bindings foundation.InputSystem.Vector2Binding[]
+    ---@param target_bindings foundation.InputSystem.Vector2Binding[]
+    local function mergeBindings(source_bindings, target_bindings)
+        ---@type foundation.InputSystem.Vector2Binding[]
+        local bindings = {}
+        for _, source_binding in ipairs(source_bindings) do
+            if isValidBinding(source_binding) then
+                table.insert(bindings, source_binding)
+            end
+        end
+        if #bindings > 0 then
+            clearArray(target_bindings)
+            appendToArray(target_bindings, bindings)
+        end
+    end
+    if type(source_action.keyboard_bindings) == "table" then
+        mergeBindings(source_action.keyboard_bindings, target_action.keyboard_bindings)
+    end
+    if type(source_action.mouse_bindings) == "table" then
+        mergeBindings(source_action.mouse_bindings, target_action.mouse_bindings)
+    end
+    if type(source_action.controller_bindings) == "table" then
+        mergeBindings(source_action.controller_bindings, target_action.controller_bindings)
+    end
+    if type(source_action.hid_bindings) == "table" then
+        mergeBindings(source_action.hid_bindings, target_action.hid_bindings)
+    end
+end
+
+---@param source_actions table<string, foundation.InputSystem.Vector2Action>
+---@param target_actions table<string, foundation.InputSystem.Vector2Action>
+local function mergeVector2Actions(source_actions, target_actions)
+    for _, source_action in pairs(source_actions) do
+        if type(source_action) == "table" then
+            if type(source_action.name) == "string" then
+                local target_action = target_actions[source_action.name]
+                if target_action then
+                    mergeVector2Action(source_action, target_action)
+                end
+            end
+        end
+    end
+end
+
 ---@param input_action_set foundation.InputSystem.ActionSet
 local function mergeActionSet(input_action_set)
     if type(input_action_set) ~= "table" then
@@ -1114,6 +1229,8 @@ local function mergeActionSet(input_action_set)
     end
     if type(input_action_set.boolean_actions) == "table" then
         mergeBooleanActions(input_action_set.boolean_actions, target_action_set.boolean_actions)
+        mergeScalarActions(input_action_set.scalar_actions, target_action_set.scalar_actions)
+        mergeVector2Actions(input_action_set.vector2_actions, target_action_set.vector2_actions)
     end
 end
 
