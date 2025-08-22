@@ -41,6 +41,8 @@ local M = {}
 
 ---@class foundation.input.adapter.XInput.Key
 local Key = {
+    --- 已有按键
+
     --- 仅用于兼容
     Null = xinput.Null,
     --- 手柄方向键，上
@@ -71,21 +73,49 @@ local Key = {
     X = xinput.X,
     --- 手柄 Y 按键
     Y = xinput.Y,
-    --- 手柄左扳机（在左肩键旁边），有的手柄可能没有
-    LeftTrigger  = 0x0400,
-    --- 手柄右扳机（在右肩键旁边），有的手柄可能没有
-    RightTrigger = 0x0800,
 
+    --- 映射按键
+
+    --- 手柄左扳机按下（在左肩键旁边），有的手柄可能没有
+    LeftTrigger  = 0x0400,
+    --- 手柄右扳机按下（在右肩键旁边），有的手柄可能没有
+    RightTrigger = 0x0800,
+    --- 手柄左摇杆向右
     LeftThumbPositiveX = 0x10000,
+    --- 手柄左摇杆向前
     LeftThumbPositiveY = 0x20000,
+    --- 手柄右摇杆向右
     RightThumbPositiveX = 0x40000,
+    --- 手柄右摇杆向前
     RightThumbPositiveY = 0x80000,
+    --- 手柄左摇杆向左
     LeftThumbNegativeX = 0x100000,
+    --- 手柄左摇杆向后
     LeftThumbNegativeY = 0x200000,
+    --- 手柄右摇杆向左
     RightThumbNegativeX = 0x400000,
+    --- 手柄右摇杆向后
     RightThumbNegativeY = 0x800000,
 }
 M.Key = Key
+
+---@class foundation.input.adapter.XInput.Axis
+local Axis = {
+    --- 手柄左扳机（在左肩键旁边），有的手柄可能没有
+    LeftTrigger = 1,
+    --- 手柄右扳机（在右肩键旁边），有的手柄可能没有
+    RightTrigger = 2,
+}
+M.Axis = Axis
+
+---@class foundation.input.adapter.XInput.Joystick
+local Joystick = {
+    --- 手柄左摇杆
+    LeftThumb = 1,
+    --- 手柄右摇杆
+    RightThumb = 2,
+}
+M.Joystick = Joystick
 
 ---@alias foundation.input.adapter.XInput.KeyState table<number, boolean>
 

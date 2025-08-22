@@ -550,6 +550,10 @@ function ActionSet:getBooleanAction(name)
     return assert(self.boolean_actions[name], ("BooleanAction '%s' does not exists"):format(name))
 end
 
+function ActionSet:scalarActions()
+    return pairs(self.scalar_actions)
+end
+
 ---@param name string
 ---@return foundation.InputSystem.ScalarAction
 function ActionSet:addScalarAction(name)
@@ -838,28 +842,85 @@ local function updateDirectInput()
     end
 end
 
+---@param values table<string, boolean>
+---@param name string
+---@param value boolean
+local function orBooleanActionValue(values, name, value)
+    if type(values[name]) ~= "boolean" then
+        values[name] = false
+    end
+    values[name] = values[name] or value
+end
+
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action_set_values foundation.InputSystem.ActionSetValues
-local function updateActionSet(action_set, action_set_values)
+local function updateBooleanActions(action_set, action_set_values)
+    local values = action_set_values.boolean_action_values
     for name, action in action_set:booleanActions() do
         for _, binding in action:keyboardBindings() do
-            action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or Keyboard.GetKeyState(binding.key)
+            orBooleanActionValue(values, name, Keyboard.GetKeyState(binding.key))
         end
         for _, binding in action:mouseBindings() do
-            action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or Mouse.GetKeyState(binding.key)
+            orBooleanActionValue(values, name, Mouse.GetKeyState(binding.key))
         end
         for _, binding in action:controllerBindings() do
-            for _, map in ipairs(xinput_adaptor_map) do
-                action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or XInputAdaptor.getKeyState(map, binding.key)
+            for i, map in ipairs(xinput_adaptor_map) do
+                if XInput.isConnected(i) then
+                    orBooleanActionValue(values, name, XInputAdaptor.getKeyState(map, binding.key))
+                end
             end
         end
         for _, binding in action:hidBindings() do
             for _, map in ipairs(dinput_adaptor_map) do
-                action_set_values.boolean_action_values[name] = action_set_values.boolean_action_values[name] or DirectInputAdaptor.getKeyState(map, binding.key)
+                orBooleanActionValue(values, name, DirectInputAdaptor.getKeyState(map, binding.key))
             end
         end
     end
-    -- TODO: scalar actions
+end
+
+---@param values table<string, number>
+---@param name string
+---@param value number
+local function addScalarActionValue(values, name, value)
+    if type(values[name]) ~= "number" then
+        values[name] = 0
+    end
+    values[name] = math.max(0, math.min(values[name] + value, 1))
+end
+
+---@param action_set foundation.InputSystem.ActionSet
+---@param action_set_values foundation.InputSystem.ActionSetValues
+local function updateScalarActions(action_set, action_set_values)
+    -- 键盘没有标量输入组件，跳过（虽然市面上确实存在压感键盘……但应该没有什么软件会专门适配一款支持“轻推W向前”的键盘🤣）
+    -- 鼠标没有标量输入组件，跳过
+
+    for name, action in action_set:scalarActions() do
+        for _, binding in action:controllerBindings() do
+            for i = 1, 4 do
+                if XInput.isConnected(i) then
+                    if binding.type == "axis" then
+                        if binding.axis == XInputAdaptor.Axis.LeftTrigger then
+                            addScalarActionValue(action_set_values.scalar_action_values, name, XInput.getLeftTrigger(i))
+                        elseif binding.axis == XInputAdaptor.Axis.RightTrigger then
+                            addScalarActionValue(action_set_values.scalar_action_values, name, XInput.getRightTrigger(i))
+                        end
+                    elseif binding.type == "key" then
+                        if XInputAdaptor.getKeyState(xinput_adaptor_map[i], binding.key) then
+                            addScalarActionValue(action_set_values.scalar_action_values, name, 1) -- 按键按下映射为 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+---@param action_set foundation.InputSystem.ActionSet
+---@param action_set_values foundation.InputSystem.ActionSetValues
+local function updateActionSet(action_set, action_set_values)
+    updateBooleanActions(action_set, action_set_values)
+    updateScalarActions(action_set, action_set_values)
+    -- TODO: vector2 actions
 end
 
 function InputSystem.update()
