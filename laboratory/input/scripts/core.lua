@@ -16,6 +16,9 @@ action_set:addBooleanAction("up")
 action_set:addBooleanAction("down")
     :addKeyboardKeyBinding(Keyboard.Down)
     :addKeyboardKeyBinding(Keyboard.S)
+action_set:addBooleanAction("slow")
+    :addKeyboardKeyBinding(Keyboard.LeftShift)
+    :addKeyboardKeyBinding(Keyboard.RightShift)
 
 local x = 0
 local y = 0
@@ -24,6 +27,7 @@ local white_initialized = false
 function GameInit()
     Viewport.initialize()
     InputSystem.pushActionSet("menu")
+    InputSystem.loadSetting()
     InputSystem.saveSetting()
 
     lstg.CreateRenderTarget("rt:white", 16, 16, false)
