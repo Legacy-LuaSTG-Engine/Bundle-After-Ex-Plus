@@ -36,7 +36,7 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 辅助函数：数组和表操作
+--- 辅助函数：数学、数组和表操作
 --#region
 
 ---@generic T
@@ -134,6 +134,25 @@ local function copyTable(value)
         return result
     else
         error(("unsupported value type '%s'"):format(value_type))
+    end
+end
+
+---@param v number
+---@param min number
+---@param max number
+---@return number
+local function clamp(v, min, max)
+    return math.max(min, math.min(v, max))
+end
+
+---@param v number
+---@return number
+local function round(v)
+    local l, h = math.floor(v), math.ceil(v)
+    if v - l < h - v then
+        return l
+    else
+        return h
     end
 end
 
@@ -748,15 +767,81 @@ local function createActionSetValues()
     }
 end
 
+---@class foundation.InputSystem.QuantizedActionSetValues
+---@field last_scalar_action_values  table<string, number>
+---@field scalar_action_values       table<string, number>
+---@field last_vector2_action_values table<string, foundation.InputSystem.PolarVector2>
+---@field vector2_action_values      table<string, foundation.InputSystem.PolarVector2>
+
+---@return foundation.InputSystem.QuantizedActionSetValues
+local function createQuantizedActionSetValues()
+    return {
+        last_scalar_action_values = {},
+        scalar_action_values = {},
+        last_vector2_action_values = {},
+        vector2_action_values = {},
+    }
+end
+
 ---@type table<string, foundation.InputSystem.ActionSetValues>
 local raw_action_set_values = {}
+---@type table<string, foundation.InputSystem.QuantizedActionSetValues>
+local quantized_action_set_values = {}
 
 table.insert(on_action_set_added, function(action_set)
     raw_action_set_values[action_set.name] = createActionSetValues()
+    quantized_action_set_values[action_set.name] = createQuantizedActionSetValues()
 end)
 table.insert(on_action_set_removed, function(action_set)
     raw_action_set_values[action_set.name] = nil
+    quantized_action_set_values[action_set.name] = nil
 end)
+
+---@param v number
+---@return number
+local function quantizeScalar(v)
+    return clamp(round(v * 255), 0, 255)
+end
+
+---@param v number
+---@return number
+local function recoverScalar(v)
+    return v / 255.0
+end
+
+---@param v foundation.InputSystem.Vector2
+---@return foundation.InputSystem.PolarVector2
+local function quantizeVector2(v)
+    local mm = math.sqrt(v.x * v.x + v.y + v.y)
+    local aa = math.deg(math.atan2(v.y, v.x))
+    local m = clamp(round(mm * 100), 0, 100)
+    local a = clamp(round(aa) % 360, 0, 360)
+    return { m = m, a = a }
+end
+
+---@param v foundation.InputSystem.PolarVector2
+---@return foundation.InputSystem.Vector2
+local function recoverVector2(v)
+    local mm = v.m / 100.0
+    local aa = math.rad(v.a)
+    local x = mm * math.cos(aa)
+    local y = mm * math.sin(aa)
+    return { x = x, y = y }
+end
+
+function InputSystem.quantize()
+    for action_set_name, raw in pairs(raw_action_set_values) do
+        local quantized = quantized_action_set_values[action_set_name]
+        for k, v in pairs(raw.scalar_action_values) do
+            quantized.scalar_action_values[k] = quantizeScalar(v)
+            raw.scalar_action_values[k] = recoverScalar(quantized.scalar_action_values[k])
+        end
+        for k, v in pairs(raw.vector2_action_values) do
+            quantized.vector2_action_values[k] = quantizeVector2(v)
+            raw.vector2_action_values[k] = recoverVector2(v)
+        end
+    end
+end
 
 --#endregion
 --------------------------------------------------------------------------------
@@ -970,6 +1055,25 @@ local function clearActionSetValues(action_set_values, clear_last)
     end
 end
 
+---@param action_set_values foundation.InputSystem.QuantizedActionSetValues
+---@param clear_last boolean?
+local function clearQuantizedActionSetValues(action_set_values, clear_last)
+    if clear_last then
+        for k, _ in pairs(action_set_values.last_scalar_action_values) do
+            action_set_values.last_scalar_action_values[k] = 0
+        end
+        for k, _ in pairs(action_set_values.last_vector2_action_values) do
+            action_set_values.last_vector2_action_values[k] = { m = 0, a = 0 }
+        end
+    end
+    for k, _ in pairs(action_set_values.scalar_action_values) do
+        action_set_values.scalar_action_values[k] = 0
+    end
+    for k, _ in pairs(action_set_values.vector2_action_values) do
+        action_set_values.vector2_action_values[k] = { m = 0, a = 0 }
+    end
+end
+
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function copyLastActionSetValues(action_set_values)
     for k, v in pairs(action_set_values.boolean_action_values) do
@@ -983,9 +1087,22 @@ local function copyLastActionSetValues(action_set_values)
     end
 end
 
+---@param action_set_values foundation.InputSystem.QuantizedActionSetValues
+local function copyLastQuantizedActionSetValues(action_set_values)
+    for k, v in pairs(action_set_values.scalar_action_values) do
+        action_set_values.last_scalar_action_values[k] = v
+    end
+    for k, v in pairs(action_set_values.vector2_action_values) do
+        action_set_values.last_vector2_action_values[k] = { m = v.m, a = v.a }
+    end
+end
+
 function InputSystem.clear()
     for _, v in pairs(raw_action_set_values) do
         clearActionSetValues(v, true)
+    end
+    for _, v in pairs(quantized_action_set_values) do
+        clearQuantizedActionSetValues(v, true)
     end
 end
 
@@ -1252,16 +1369,23 @@ local function updateActionSet(action_set, action_set_values)
 end
 
 function InputSystem.update()
+    -- 旧状态
     for _, v in pairs(raw_action_set_values) do
         copyLastActionSetValues(v)
         clearActionSetValues(v)
     end
+    for _, v in pairs(quantized_action_set_values) do
+        copyLastQuantizedActionSetValues(v)
+        clearQuantizedActionSetValues(v)
+    end
+    -- 新状态
     updateXInput()
     updateDirectInput()
     validateSetting()
     for name, action_set in pairs(action_sets) do
         updateActionSet(action_set, raw_action_set_values[name])
     end
+    InputSystem.quantize()
 end
 
 --#endregion
@@ -1273,17 +1397,6 @@ local ACTION_SET_MARKER = string.byte("[")
 local BOOLEAN_ACTION_VALUES_MARKER = string.byte("?")
 local SCALAR_ACTION_VALUES_MARKER = string.byte("/")
 local VECTOR2_ACTION_VALUES_MARKER = string.byte("^")
-
----@param v number
----@return number
-local function round(v)
-    local l, h = math.floor(v), math.ceil(v)
-    if v - l < h - v then
-        return l
-    else
-        return h
-    end
-end
 
 ---@param bytes integer[]
 ---@param byte integer
@@ -1374,6 +1487,7 @@ function InputSystem.serialize(include_action_set_names)
     for action_set_name, action_set_values in pairs(raw_action_set_values) do
         if isArrayContains(include_action_set_names, action_set_name) then
             -- 动作集信息
+            local quantized = quantized_action_set_values[action_set_name]
             appendByte(bytes, ACTION_SET_MARKER)
             appendString(bytes, action_set_name)
             -- 布尔动作值
@@ -1384,19 +1498,16 @@ function InputSystem.serialize(include_action_set_names)
             end
             -- 标量动作值
             appendByte(bytes, SCALAR_ACTION_VALUES_MARKER)
-            for action_name, action_value in pairs(action_set_values.scalar_action_values) do
+            for action_name, action_value in pairs(quantized.scalar_action_values) do -- 已量化
                 appendString(bytes, action_name)
-                appendByte(bytes, round(action_value * 255))
+                appendByte(bytes, action_value) -- 已量化
             end
             -- 矢量动作值
             appendByte(bytes, VECTOR2_ACTION_VALUES_MARKER)
-            for action_name, action_value in pairs(action_set_values.vector2_action_values) do
+            for action_name, action_value in pairs(quantized.vector2_action_values) do -- 已量化
                 appendString(bytes, action_name)
-                local v = action_value
-                local l = math.sqrt(v.x * v.x + v.y + v.y)
-                local a = math.deg(math.atan2(v.y, v.x))
-                local b1 = round(l * 100)
-                local b2 = round(a) % 360
+                local b1 = action_value.m -- 已量化
+                local b2 = action_value.a -- 已量化
                 if b2 > 255 then
                     b1 = b1 + 128
                     b2 = b2 - 128
@@ -1491,6 +1602,7 @@ function InputSystem.deserialize(bytes)
         if not action_set_values then
             return false, ("ActionSet '%s' does not exists"):format(action_set_name)
         end
+        local quantized = quantized_action_set_values[action_set_name]
 
         -- 动作值
         while index <= length do
@@ -1521,27 +1633,23 @@ function InputSystem.deserialize(bytes)
                     action_set_values.boolean_action_values[action_name] = byteToBoolean(bytes[index])
                     index = index + 1
                 elseif marker == SCALAR_ACTION_VALUES_MARKER then
-                    action_set_values.scalar_action_values[action_name] = bytes[index] / 255.0
+                    local action_value = bytes[index] -- 已量化
+                    quantized.scalar_action_values[action_name] = action_value
+                    action_set_values.scalar_action_values[action_name] = recoverScalar(action_value)
                     index = index + 1
                 elseif marker == VECTOR2_ACTION_VALUES_MARKER then
-                    local b1 = bytes[index]
+                    local b1 = bytes[index] -- 已量化
                     index = index + 1
-                    local b2 = bytes[index]
+                    local b2 = bytes[index] -- 已量化
                     index = index + 1
                     if b1 >= 128 then
                         b1 = b1 - 128
                         b2 = b2 + 128
                     end
-                    local l = b1 / 100.0
-                    local a = math.rad(b2)
-                    local x = l * math.cos(a)
-                    local y = l * math.sin(a)
-                    if action_set_values.vector2_action_values[action_name] then
-                        action_set_values.vector2_action_values[action_name].x = x
-                        action_set_values.vector2_action_values[action_name].y = y
-                    else
-                        action_set_values.vector2_action_values[action_name] = { x = x, y = y }
-                    end
+                    ---@type foundation.InputSystem.PolarVector2
+                    local action_value = { m = b1, a = b2 }
+                    quantized.vector2_action_values[action_name] = action_value
+                    action_set_values.vector2_action_values[action_name] = recoverVector2(action_value)
                 end
             end
         end
