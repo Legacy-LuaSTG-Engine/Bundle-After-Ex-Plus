@@ -965,24 +965,27 @@ end
 --#region
 
 ---@param action_set_values foundation.InputSystem.ActionSetValues
-local function clearActionSetValues(action_set_values)
-    for k, _ in pairs(action_set_values.last_boolean_action_values) do
-        action_set_values.last_boolean_action_values[k] = false
+---@param clear_last boolean?
+local function clearActionSetValues(action_set_values, clear_last)
+    if clear_last then
+        for k, _ in pairs(action_set_values.last_boolean_action_values) do
+            action_set_values.last_boolean_action_values[k] = false
+        end
+        for k, _ in pairs(action_set_values.boolean_action_frames) do
+            action_set_values.boolean_action_frames[k] = 0 -- 这个也属于“过去”的状态
+        end
+        for k, _ in pairs(action_set_values.last_scalar_action_values) do
+            action_set_values.last_scalar_action_values[k] = 0
+        end
+        for k, _ in pairs(action_set_values.last_vector2_action_values) do
+            action_set_values.last_vector2_action_values[k] = { x = 0, y = 0 }
+        end
     end
     for k, _ in pairs(action_set_values.boolean_action_values) do
         action_set_values.boolean_action_values[k] = false
     end
-    for k, _ in pairs(action_set_values.boolean_action_frames) do
-        action_set_values.boolean_action_frames[k] = 0
-    end
-    for k, _ in pairs(action_set_values.last_scalar_action_values) do
-        action_set_values.last_scalar_action_values[k] = 0
-    end
     for k, _ in pairs(action_set_values.scalar_action_values) do
         action_set_values.scalar_action_values[k] = 0
-    end
-    for k, _ in pairs(action_set_values.last_vector2_action_values) do
-        action_set_values.last_vector2_action_values[k] = { x = 0, y = 0 }
     end
     for k, _ in pairs(action_set_values.vector2_action_values) do
         action_set_values.vector2_action_values[k] = { x = 0, y = 0 }
@@ -1004,9 +1007,9 @@ end
 
 function InputSystem.clear()
     for _, v in pairs(raw_action_set_values) do
-        clearActionSetValues(v)
+        clearActionSetValues(v, true)
     end
-    clearActionSetValues(merged_action_set_values)
+    clearActionSetValues(merged_action_set_values, true)
 end
 
 ---@param values table<string, boolean>
@@ -1365,20 +1368,20 @@ function InputSystem.isBooleanActionActivated(name, repeat_delay, repeat_interva
         assert(math.floor(repeat_interval) == repeat_interval, "repeat_interval must be a number (integer)")
     end
     local last, current, frames = getLastAndCurrentBooleanAction(name)
-    if current and repeat_delay and repeat_interval then
+    if (not last) and current then
+        return true
+    elseif current and repeat_delay and repeat_interval then
         if repeat_delay == 0 and repeat_interval == 0 then
             return true
-        end
-        if frames >= repeat_delay then
+        elseif frames >= repeat_delay then
             if repeat_interval == 0 then
                 return true
-            end
-            if ((frames - repeat_delay) % repeat_interval) == 0 then
+            elseif ((frames - repeat_delay) % repeat_interval) == 0 then
                 return true
             end
         end
     end
-    return (not last) and current
+    return false
 end
 
 --- 布尔动作是否在当前帧释放  

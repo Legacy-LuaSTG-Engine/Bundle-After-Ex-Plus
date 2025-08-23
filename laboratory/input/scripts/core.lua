@@ -19,9 +19,14 @@ action_set:addBooleanAction("down")
 action_set:addBooleanAction("slow")
     :addKeyboardKeyBinding(Keyboard.LeftShift)
     :addKeyboardKeyBinding(Keyboard.RightShift)
+action_set:addBooleanAction("size-smaller")
+    :addKeyboardKeyBinding(Keyboard.Minus)
+action_set:addBooleanAction("size-larger")
+    :addKeyboardKeyBinding(Keyboard.Plus)
 
 local x = 0
 local y = 0
+local size = 16
 local white_initialized = false
 
 function GameInit()
@@ -55,8 +60,18 @@ function FrameFunc()
     if dx ~= 0 and dy ~= 0 then
         v = 0.70710678118654752440084436210485
     end
-    x = x + v * 10 * dx
-    y = y + v * 10 * dy
+    local speed = 10
+    if InputSystem.getBooleanAction("slow") then
+        speed = 5
+    end
+    x = x + v * speed * dx
+    y = y + v * speed * dy
+    if InputSystem.isBooleanActionActivated("size-smaller", 60, 60) then
+        size = math.max(16, size - 16)
+    end
+    if InputSystem.isBooleanActionActivated("size-larger", 120, 60) then
+        size = size + 16
+    end
     return false
 end
 
@@ -69,6 +84,6 @@ function RenderFunc()
         lstg.PopRenderTarget()
     end
     Viewport.apply()
-    lstg.Render("white", x, y, 0, 1)
+    lstg.Render("white", x, y, 0, size / 16)
     lstg.EndScene()
 end
