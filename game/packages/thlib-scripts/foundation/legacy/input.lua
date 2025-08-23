@@ -223,6 +223,9 @@ end
 ---@class legacy.input
 local M = {}
 
+M.GAME_ACTION_SET_PREFIX = GAME_ACTION_SET_PREFIX
+M.MENU_ACTION_SET_PREFIX = MENU_ACTION_SET_PREFIX
+
 M.fillLegacyKeySetting = fillLegacyKeySetting
 M.transformLegacyMenuKey = transformLegacyMenuKey
 

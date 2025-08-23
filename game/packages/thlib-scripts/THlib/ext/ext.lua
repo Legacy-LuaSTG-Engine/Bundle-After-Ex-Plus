@@ -10,7 +10,6 @@ local gameEventDispatcher = lstg.globalEventDispatcher
 
 -- input system
 local input = require("foundation.input.core")
-local input_rep = require("foundation.input.replay")
 
 ----------------------------------------
 ---ext加强库
@@ -219,33 +218,31 @@ function ChangeGameStage()
     SaveScoreData()
 end
 
+local REPLAY_ACTION_SET_NAMES = { "game" }
+
 --- 获取输入
-local framedata = {}
 function GetInput()
     if stage.NextStageExist() then
         input.clear()
-        input_rep.clear()
         InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     end
     input.update()
     InputSystem.update()
 
     if ext.pause_menu:IsKilled() then
-        -- 不是录像且非暂停时更新按键状态
-        if not ext.replay.IsReplay() then
-            input_rep.update()
-        end
         if ext.replay.IsRecording() then
-            -- 录像模式下记录当前帧的按键
-            replayWriter:Record(input_rep.encodeToString())
+            -- 录制时记录输入状态
+            local serialized = InputSystem.serialize(REPLAY_ACTION_SET_NAMES)
+            replayWriter:Write(serialized)
         elseif ext.replay.IsReplay() then
-            -- 回放时载入按键状态
-            framedata = {}
-            if not replayReader:Next(framedata) then
+            -- 回放时恢复输入状态
+            local length = InputSystem.getSerializationLength(REPLAY_ACTION_SET_NAMES)
+            local serialized = {}
+            if replayReader:Read(serialized, length) then
+                InputSystem.deserialize(serialized)
+            else
                 ext.PushPauseMenuOrder("Replay Again")
                 ext.pause_menu:FlyIn()
-            else
-                input_rep.decodeFromString(framedata.keystate)
             end
         end
     end
@@ -253,11 +250,11 @@ end
 
 gameEventDispatcher:RegisterEvent("GameState.AfterObjRender", "render_replay_fps", 0, function ()
     if ext.replay.IsReplay() then
-        if framedata.extra and framedata.extra.fps then
-            SetViewMode("ui")
-            RenderTTF2("menuttf", string.format("Original FPS %0.1f", framedata.extra.fps), screen.width - 10, screen.width - 10, 30, 30, 1, Color(255, 255, 255, 255), "right", "vcenter")
-            SetViewMode("world")
-        end
+        --if framedata.extra and framedata.extra.fps then
+        --    SetViewMode("ui")
+        --    RenderTTF2("menuttf", string.format("Original FPS %0.1f", framedata.extra.fps), screen.width - 10, screen.width - 10, 30, 30, 1, Color(255, 255, 255, 255), "right", "vcenter")
+        --    SetViewMode("world")
+        --end
     end
 end)
 

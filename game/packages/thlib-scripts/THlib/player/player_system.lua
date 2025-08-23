@@ -1,9 +1,10 @@
+local InputSystem = require("foundation.InputSystem")
+local legacy_input = require("foundation.legacy.input")
+
 local player_lib = player_lib
 ---@class player.system
 ---@return player.system
 player_lib.system = plus.Class()
-
-local input_rep = require("foundation.input.replay")
 
 local defaultKeys = {
     "up", "down", "left", "right",
@@ -132,7 +133,7 @@ local defaultFrameEvent = {
                 --     v = v * SQRT2_2
                 -- end
 
-                dx, dy = input_rep.getVector2ActionValue("move")
+                dx, dy = InputSystem.getVector2Action(legacy_input.GAME_ACTION_SET_PREFIX .. "move")
                 local ang = atan2(dy, dx)
                 local r = math.sqrt(dx * dx + dy * dy)
 
