@@ -1559,7 +1559,7 @@ function lib.card.dialog:sentence(img, pos, text, t, hscale, vscale)
     task.Wait()
     t = t or (60 + #text * 5)
     for i = 1, t do
-        if (KeyIsPressed 'shoot' or self.dialog_displayer.jump_dialog > 60) and _dialog_can_skip then
+        if (KeyIsPressed("shoot") or self.dialog_displayer.jump_dialog > 60) and _dialog_can_skip then
             PlaySound('plst00', 0.35, 0, true)
             break
         end
@@ -1587,7 +1587,7 @@ function lib.card.dialog.dialog_displayer:frame()
         self.co = max(min(60, self.co + 1.5 * self.active), -60)
     end
     if player.dialog == true and self.active then
-        if KeyIsDown 'shoot' then
+        if KeyIsDown("shoot") then
             self.jump_dialog = self.jump_dialog + 1
         else
             self.jump_dialog = 0
