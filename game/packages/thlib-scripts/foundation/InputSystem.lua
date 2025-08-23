@@ -1455,6 +1455,8 @@ end
 
 local LOAD_ERROR_PREFIX = "an error occurred while loading the configuration:"
 
+-- TODO: mergeBooleanAction、mergeScalarAction、mergeVector2Action 需要打印校验日志
+
 ---@param source_action foundation.InputSystem.BooleanAction
 ---@param target_action foundation.InputSystem.BooleanAction
 local function mergeBooleanAction(source_action, target_action)
