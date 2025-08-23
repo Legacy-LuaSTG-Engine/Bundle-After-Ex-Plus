@@ -864,7 +864,7 @@ end
 ---@return boolean
 local function isControllerKeyDown(code)
     if other_setting.controller_index == 0 then
-        -- 从所有可能的控制器获取输入
+        -- 从第一个设备读取输入
         for i = 1, 4 do
             if XInput.isConnected(i) then
                 return XInputAdaptor.getKeyState(xinput_key_map[i], code)
@@ -881,8 +881,11 @@ end
 local function getControllerAxis(code)
     -- TODO: 如何将扳机映射到轴？扳机是 0.0 到 1.0，静息状态下是 0.0，需要偏移原点吗？
     if other_setting.controller_index == 0 then
-        -- 只从一个控制器读取输入
-        if code == XInputAdaptor.Axis.LeftThumbX then
+        if code == XInputAdaptor.Axis.LeftTrigger then
+            return XInput.getLeftTrigger()
+        elseif code == XInputAdaptor.Axis.RightTrigger then
+            return XInput.getRightTrigger()
+        elseif code == XInputAdaptor.Axis.LeftThumbX then
             return XInput.getLeftThumbX()
         elseif code == XInputAdaptor.Axis.LeftThumbY then
             return XInput.getLeftThumbY()
@@ -892,7 +895,11 @@ local function getControllerAxis(code)
             return XInput.getRightThumbY()
         end
     elseif XInput.isConnected(other_setting.controller_index) then
-        if code == XInputAdaptor.Axis.LeftThumbX then
+        if code == XInputAdaptor.Axis.LeftTrigger then
+            return XInput.getLeftTrigger(other_setting.controller_index)
+        elseif code == XInputAdaptor.Axis.RightTrigger then
+            return XInput.getRightTrigger(other_setting.controller_index)
+        elseif code == XInputAdaptor.Axis.LeftThumbX then
             return XInput.getLeftThumbX(other_setting.controller_index)
         elseif code == XInputAdaptor.Axis.LeftThumbY then
             return XInput.getLeftThumbY(other_setting.controller_index)
@@ -910,7 +917,6 @@ end
 ---@return number y
 local function getControllerJoystick(code)
     if other_setting.controller_index == 0 then
-        -- 只从一个控制器读取输入
         if code == XInputAdaptor.Joystick.LeftThumb then
             return XInput.getLeftThumbX(), XInput.getLeftThumbY()
         elseif code == XInputAdaptor.Joystick.RightThumb then
@@ -1064,29 +1070,48 @@ end
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function updateScalarActions(action_set, action_set_values)
-    -- 键盘没有标量输入组件，跳过（虽然市面上确实存在压感键盘……但应该没有什么软件会专门适配一款支持“轻推W向前”的键盘🤣）
-    -- 鼠标没有标量输入组件，跳过
-    -- DirectInput 不知道怎么处理，跳过🤣
-
+    -- 按键按下映射为 1
+    local KEY_DOWN_VALUE = 1
     local values = action_set_values.scalar_action_values
     for name, action in action_set:scalarActions() do
-        for _, binding in action:controllerBindings() do
-            for i = 1, 4 do
-                if XInput.isConnected(i) then
-                    if binding.type == "axis" then
-                        if binding.axis == XInputAdaptor.Axis.LeftTrigger then
-                            addScalarActionValue(values, name, XInput.getLeftTrigger(i))
-                        elseif binding.axis == XInputAdaptor.Axis.RightTrigger then
-                            addScalarActionValue(values, name, XInput.getRightTrigger(i))
-                        end
-                    elseif binding.type == "key" then
-                        if XInputAdaptor.getKeyState(xinput_key_map[i], binding.key) then
-                            addScalarActionValue(values, name, 1) -- 按键按下映射为 1
-                        end
-                    end
+        -- 键盘
+        for _, binding in action:keyboardBindings() do
+            if binding.type == "key" then
+                if Keyboard.GetKeyState(binding.key) then
+                    addScalarActionValue(values, name, KEY_DOWN_VALUE)
                 end
             end
         end
+        -- 鼠标
+        for _, binding in action:mouseBindings() do
+            if binding.type == "key" then
+                if Mouse.GetKeyState(binding.key) then
+                    addScalarActionValue(values, name, KEY_DOWN_VALUE)
+                end
+            end
+            -- TODO: 绘图板的笔压也许可以映射为标量输入
+        end
+        -- 手柄
+        for _, binding in action:controllerBindings() do
+            if binding.type == "key" then
+                if isControllerKeyDown(binding.key) then
+                    addScalarActionValue(values, name, KEY_DOWN_VALUE)
+                end
+            elseif binding.type == "axis" then
+                addScalarActionValue(values, name, getControllerAxis(binding.axis))
+            end
+        end
+        -- 其他 HID 设备
+        for _, binding in action:hidBindings() do
+            if binding.type == "key" then
+                if isHidKeyDown(binding.key) then
+                    addScalarActionValue(values, name, KEY_DOWN_VALUE)
+                end
+            end
+            -- TODO: 我要怎么弄？
+        end
+        -- 归一化标量
+        values[name] = math.max(0.0, math.min(values[name], 1.0))
     end
 end
 
