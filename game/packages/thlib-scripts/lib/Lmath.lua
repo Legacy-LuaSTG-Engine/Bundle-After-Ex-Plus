@@ -81,13 +81,18 @@ end
 --------------------------------------------------------------------------------
 --- 弹幕逻辑随机数发生器，用于支持 replay 系统
 
+---@type lstg.Rand
+---@diagnostic disable-next-line: lowercase-global
+ran = lstg.Rand() -- 2006 年的 WELL512 随机数发生器
+
 local ENABLE_NEW_RNG = false
 
 if ENABLE_NEW_RNG then
     -- 2019 年的新一代 xoshiro256** 随机数发生器
     local random = require("random")
-    ran = random.xoshiro512ss()
-else
-    -- 2006 年的 WELL512 随机数发生器
-    ran = lstg.Rand()
+    ---@type lstg.Rand
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    local rng = random.xoshiro512ss()
+    ---@diagnostic disable-next-line: lowercase-global
+    ran = rng
 end
