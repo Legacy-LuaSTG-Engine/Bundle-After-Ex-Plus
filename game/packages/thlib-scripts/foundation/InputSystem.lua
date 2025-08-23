@@ -732,6 +732,17 @@ function InputSystem.getActionSet(name)
     return assert(action_sets[name], ("ActionSet '%s' does not exists"):format(name))
 end
 
+---@param include_action_set_names string[]?
+---@param action_set_name string
+---@return boolean 
+local function isActionSetIncluded(include_action_set_names, action_set_name)
+    if include_action_set_names then
+        return isArrayContains(include_action_set_names, action_set_name)
+    else
+        return true
+    end
+end
+
 --#endregion
 --------------------------------------------------------------------------------
 --- 输入系统内部状态
@@ -829,18 +840,21 @@ local function recoverVector2(v)
     return { x = x, y = y }
 end
 
-function InputSystem.quantize()
+---@param include_action_set_names string[]?
+function InputSystem.quantize(include_action_set_names)
     for action_set_name, raw in pairs(raw_action_set_values) do
-        local quantized = quantized_action_set_values[action_set_name]
-        for k, v in pairs(raw.scalar_action_values) do
-            local q = quantizeScalar(v)
-            quantized.scalar_action_values[k] = q
-            raw.scalar_action_values[k] = recoverScalar(q)
-        end
-        for k, v in pairs(raw.vector2_action_values) do
-            local q = quantizeVector2(v)
-            quantized.vector2_action_values[k] = q
-            raw.vector2_action_values[k] = recoverVector2(q)
+        if isActionSetIncluded(include_action_set_names, action_set_name) then
+            local quantized = quantized_action_set_values[action_set_name]
+            for k, v in pairs(raw.scalar_action_values) do
+                local q = quantizeScalar(v)
+                quantized.scalar_action_values[k] = q
+                raw.scalar_action_values[k] = recoverScalar(q)
+            end
+            for k, v in pairs(raw.vector2_action_values) do
+                local q = quantizeVector2(v)
+                quantized.vector2_action_values[k] = q
+                raw.vector2_action_values[k] = recoverVector2(q)
+            end
         end
     end
 end
@@ -1370,24 +1384,31 @@ local function updateActionSet(action_set, action_set_values)
     updateVector2Actions(action_set, action_set_values)
 end
 
-function InputSystem.update()
+---@param include_action_set_names string[]?
+function InputSystem.update(include_action_set_names)
     -- 旧状态
-    for _, v in pairs(raw_action_set_values) do
-        copyLastActionSetValues(v)
-        clearActionSetValues(v)
+    for k, v in pairs(raw_action_set_values) do
+        if isActionSetIncluded(include_action_set_names, k) then
+            copyLastActionSetValues(v)
+            clearActionSetValues(v)
+        end
     end
-    for _, v in pairs(quantized_action_set_values) do
-        copyLastQuantizedActionSetValues(v)
-        clearQuantizedActionSetValues(v)
+    for k, v in pairs(quantized_action_set_values) do
+        if isActionSetIncluded(include_action_set_names, k) then
+            copyLastQuantizedActionSetValues(v)
+            clearQuantizedActionSetValues(v)
+        end
     end
     -- 新状态
     updateXInput()
     updateDirectInput()
     validateSetting()
     for name, action_set in pairs(action_sets) do
-        updateActionSet(action_set, raw_action_set_values[name])
+        if isActionSetIncluded(include_action_set_names, name) then
+            updateActionSet(action_set, raw_action_set_values[name])
+        end
     end
-    InputSystem.quantize()
+    InputSystem.quantize(include_action_set_names)
 end
 
 --#endregion

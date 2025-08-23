@@ -8,6 +8,9 @@ local IntersectionDetectionManager = require("foundation.IntersectionDetectionMa
 local InputSystem = require("foundation.InputSystem")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
+local REPLAY_ACTION_SET_NAMES = { "game" }
+local MENU_ACTION_SET_NAMES = { "menu" }
+
 ----------------------------------------
 ---ext加强库
 
@@ -215,8 +218,6 @@ function ChangeGameStage()
     SaveScoreData()
 end
 
-local REPLAY_ACTION_SET_NAMES = { "game" }
-
 --- 获取输入
 function GetInput()
     if stage.NextStageExist() then
@@ -405,7 +406,8 @@ function GameScene:onUpdate()
         --处理录像速度与正常更新逻辑
         DoFrameEx()
     else
-        GetInput()
+        -- 依然需要读取输入更新菜单动作
+        InputSystem.update(MENU_ACTION_SET_NAMES)
     end
     gameEventDispatcher:DispatchEvent("GameState.AfterDoFrame")
 end
