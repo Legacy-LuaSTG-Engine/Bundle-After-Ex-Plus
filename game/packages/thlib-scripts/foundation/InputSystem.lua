@@ -791,7 +791,7 @@ end
 --- 输入系统设置
 --#region
 
----@class foundation.InputSystem.Setting
+---@class foundation.InputSystem.OtherSetting
 local other_setting = {
     --- 0: Auto  
     --- 1-4: Xinput controllers 1 to 4  
@@ -1714,7 +1714,7 @@ local function mergeActionSet(name, source_action_set)
     end
 end
 
----@param source_other_setting foundation.InputSystem.Setting
+---@param source_other_setting foundation.InputSystem.OtherSetting
 local function mergeOtherSetting(source_other_setting)
     for k, v in pairs(other_setting) do
         if type(v) == type(source_other_setting[k]) then
@@ -1751,7 +1751,7 @@ function InputSystem.loadSetting(path)
         logError("%s action_sets must be a table", LOAD_ERROR_PREFIX)
     end
 
-    ---@type foundation.InputSystem.Setting?
+    ---@type foundation.InputSystem.OtherSetting?
     local data_setting = data.other_setting
     if type(data_setting) == "table" then
         mergeOtherSetting(data_setting)
