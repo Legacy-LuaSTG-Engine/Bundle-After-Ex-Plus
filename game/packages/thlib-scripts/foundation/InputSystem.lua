@@ -10,6 +10,8 @@ local DirectInputAdaptor = require("foundation.input.adapter.DirectInput")
 local LocalFileStorage = require("foundation.LocalFileStorage")
 local Files = require("foundation.Files")
 
+local SQRT2_2 = 0.7071067811865476
+
 --- 输入系统
 ---@class foundation.InputSystem
 local InputSystem = {}
@@ -470,11 +472,23 @@ local function createJoystickVector2Binding(joystick)
 end
 
 ---@class foundation.InputSystem.Vector2Action : foundation.InputSystem.Action
----@field keyboard_bindings   foundation.InputSystem.Vector2Binding[]
----@field mouse_bindings      foundation.InputSystem.Vector2Binding[]
----@field controller_bindings foundation.InputSystem.Vector2Binding[]
----@field hid_bindings        foundation.InputSystem.Vector2Binding[]
+---@field package keyboard_bindings   foundation.InputSystem.Vector2Binding[]
+---@field package mouse_bindings      foundation.InputSystem.Vector2Binding[]
+---@field package controller_bindings foundation.InputSystem.Vector2Binding[]
+---@field package hid_bindings        foundation.InputSystem.Vector2Binding[]
 local Vector2Action = {}
+
+function Vector2Action:keyboardBindings()
+    return ipairs(self.keyboard_bindings)
+end
+
+function Vector2Action:mouseBindings()
+    return ipairs(self.mouse_bindings)
+end
+
+function Vector2Action:controllerBindings()
+    return ipairs(self.controller_bindings)
+end
 
 ---@param joystick integer
 function Vector2Action:addControllerJoystickBinding(joystick)
@@ -492,6 +506,10 @@ function Vector2Action:removeControllerJoystickBinding(joystick)
     removeArrayValueIf(self.controller_bindings, function(value)
         return value.type == "joystick" and value.joystick == joystick
     end)
+end
+
+function Vector2Action:hidBindings()
+    return ipairs(self.hid_bindings)
 end
 
 ---@param name string
@@ -577,6 +595,10 @@ end
 function ActionSet:getScalarAction(name)
     assert(type(name) == "string", "name must be a string")
     return assert(self.scalar_actions[name], ("ScalarAction '%s' does not exists"):format(name))
+end
+
+function ActionSet:vector2Actions()
+    return pairs(self.vector2_actions)
 end
 
 ---@param name string
@@ -760,6 +782,12 @@ local setting = {
     hid_index = 0,
 }
 
+local function validateSetting()
+    if not (setting.controller_index == 0 or setting.controller_index == 1 or setting.controller_index == 2 or setting.controller_index == 3 or setting.controller_index == 4) then
+        error("the value of controller_index must be 0 or 1 or 2 or 3 or 4")
+    end
+end
+
 function InputSystem.getSetting()
     return setting
 end
@@ -785,16 +813,133 @@ end
 
 ---@type foundation.input.adapter.DirectInput.KeyState[]
 local dinput_adaptor_map = {}
+---@type table<integer, number>[]
+local dinput_axis_map = {}
 
 local function updateDirectInput()
     DirectInput.update()
     local count = DirectInput.count()
     for i = 1, count do
-        dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+        local axis_ranges = DirectInput.getAxisRange(i)
+        local raw_state = DirectInput.getRawState(i)
+        if axis_ranges and raw_state then
+            dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyState(axis_ranges, raw_state, 0.5)
+            dinput_axis_map[i] = DirectInputAdaptor.mapAxis(axis_ranges, raw_state)
+        else
+            dinput_adaptor_map[i] = {}
+            dinput_axis_map[i] = {}
+        end
     end
     for i = #dinput_adaptor_map, count + 1, -1 do
         dinput_adaptor_map[i] = nil
+        dinput_axis_map[i] = nil
     end
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- XInput 辅助函数，根据设置选择合适的设备读取输入
+--#region
+
+---@param code integer
+---@return boolean
+local function isControllerKeyDown(code)
+    if setting.controller_index == 0 then
+        -- 从所有可能的控制器获取输入
+        for i = 1, 4 do
+            if XInput.isConnected(i) then
+                return XInputAdaptor.getKeyState(xinput_adaptor_map[i], code)
+            end
+        end
+    elseif XInput.isConnected(setting.controller_index) then
+        return XInputAdaptor.getKeyState(xinput_adaptor_map[setting.controller_index], code)
+    end
+    return false
+end
+
+---@param code integer
+---@return number
+local function getControllerAxis(code)
+    -- TODO: 如何将扳机映射到轴？扳机是 0.0 到 1.0，静息状态下是 0.0，需要偏移原点吗？
+    if setting.controller_index == 0 then
+        -- 只从一个控制器读取输入
+        if code == XInputAdaptor.Axis.LeftThumbX then
+            return XInput.getLeftThumbX()
+        elseif code == XInputAdaptor.Axis.LeftThumbY then
+            return XInput.getLeftThumbY()
+        elseif code == XInputAdaptor.Axis.RightThumbX then
+            return XInput.getRightThumbX()
+        elseif code == XInputAdaptor.Axis.RightThumbY then
+            return XInput.getRightThumbY()
+        end
+    elseif XInput.isConnected(setting.controller_index) then
+        if code == XInputAdaptor.Axis.LeftThumbX then
+            return XInput.getLeftThumbX(setting.controller_index)
+        elseif code == XInputAdaptor.Axis.LeftThumbY then
+            return XInput.getLeftThumbY(setting.controller_index)
+        elseif code == XInputAdaptor.Axis.RightThumbX then
+            return XInput.getRightThumbX(setting.controller_index)
+        elseif code == XInputAdaptor.Axis.RightThumbY then
+            return XInput.getRightThumbY(setting.controller_index)
+        end
+    end
+    return 0
+end
+
+---@param code integer
+---@return number x
+---@return number y
+local function getControllerJoystick(code)
+    if setting.controller_index == 0 then
+        -- 只从一个控制器读取输入
+        if code == XInputAdaptor.Joystick.LeftThumb then
+            return XInput.getLeftThumbX(), XInput.getLeftThumbY()
+        elseif code == XInputAdaptor.Joystick.RightThumb then
+            return XInput.getRightThumbX(), XInput.getRightThumbY()
+        end
+    elseif XInput.isConnected(setting.controller_index) then
+        if code == XInputAdaptor.Joystick.LeftThumb then
+            return XInput.getLeftThumbX(setting.controller_index), XInput.getLeftThumbY(setting.controller_index)
+        elseif code == XInputAdaptor.Joystick.RightThumb then
+            return XInput.getRightThumbX(setting.controller_index), XInput.getRightThumbY(setting.controller_index)
+        end
+    end
+    return 0, 0
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- DirectInput 辅助函数，根据设置选择合适的设备读取输入
+--#region
+
+---@param code integer
+---@return boolean
+local function isHidKeyDown(code)
+    if setting.hid_index == 0 then
+        -- 从所有可能的设备获取输入
+        local state = false
+        for i = 1, #dinput_adaptor_map do
+            state = state or DirectInputAdaptor.getKeyState(dinput_adaptor_map[i], code)
+        end
+        return state
+    elseif setting.hid_index <= #dinput_adaptor_map then
+        return DirectInputAdaptor.getKeyState(dinput_adaptor_map[setting.hid_index], code)
+    end
+    return false
+end
+
+---@param code integer
+---@return number
+local function getHidAxis(code)
+    if setting.hid_index == 0 then
+        -- 只从一个设备读取输入
+        if #dinput_adaptor_map > 0 then
+            return dinput_axis_map[1][code] or 0
+        end
+    elseif setting.hid_index <= #dinput_adaptor_map then
+        return dinput_axis_map[setting.hid_index][code] or 0
+    end
+    return 0
 end
 
 --#endregion
@@ -869,16 +1014,10 @@ local function updateBooleanActions(action_set, action_set_values)
             orBooleanActionValue(values, name, Mouse.GetKeyState(binding.key))
         end
         for _, binding in action:controllerBindings() do
-            for i, map in ipairs(xinput_adaptor_map) do
-                if XInput.isConnected(i) then
-                    orBooleanActionValue(values, name, XInputAdaptor.getKeyState(map, binding.key))
-                end
-            end
+            orBooleanActionValue(values, name, isControllerKeyDown(binding.key))
         end
         for _, binding in action:hidBindings() do
-            for _, map in ipairs(dinput_adaptor_map) do
-                orBooleanActionValue(values, name, DirectInputAdaptor.getKeyState(map, binding.key))
-            end
+            orBooleanActionValue(values, name, isHidKeyDown(binding.key))
         end
     end
 end
@@ -922,12 +1061,148 @@ local function updateScalarActions(action_set, action_set_values)
     end
 end
 
+---@param values table<string, foundation.InputSystem.Vector2>
+---@param name string
+---@param x number
+---@param y number
+local function addVector2ActionValue(values, name, x, y)
+    if type(values[name]) ~= "table" then
+        values[name] = {
+            x = 0,
+            y = 0,
+        }
+    end
+    local vector2 = values[name]
+    if type(vector2.x) ~= "number" then
+        vector2.x = 0
+    end
+    if type(vector2.y) ~= "number" then
+        vector2.y = 0
+    end
+    vector2.x = vector2.x + x
+    vector2.y = vector2.y + y
+end
+
+---@param action_set foundation.InputSystem.ActionSet
+---@param action_set_values foundation.InputSystem.ActionSetValues
+local function updateVector2Actions(action_set, action_set_values)
+    local values = action_set_values.vector2_action_values
+    for name, action in action_set:vector2Actions() do
+        -- 键盘：通过四个按键映射到二维矢量的四个方向
+        for _, binding in action:keyboardBindings() do
+            if binding.type == "key" then
+                local dx = 0
+                local dy = 0
+                if Keyboard.GetKeyState(binding.negative_x_key) then
+                    dx = dx - 1
+                elseif Keyboard.GetKeyState(binding.positive_x_key) then
+                    dx = dx + 1
+                end
+                if Keyboard.GetKeyState(binding.negative_y_key) then
+                    dy = dy - 1
+                elseif Keyboard.GetKeyState(binding.positive_y_key) then
+                    dy = dy + 1
+                end
+                if dx ~= 0 and dy ~= 0 then
+                    dx = dx * SQRT2_2
+                    dy = dy * SQRT2_2
+                end
+                addVector2ActionValue(values, name, dx, dy)
+            end
+        end
+        -- 鼠标
+        for _, binding in action:mouseBindings() do
+            if binding.type == "key" then
+                local dx = 0
+                local dy = 0
+                if Mouse.GetKeyState(binding.negative_x_key) then
+                    dx = dx - 1
+                elseif Mouse.GetKeyState(binding.positive_x_key) then
+                    dx = dx + 1
+                end
+                if Mouse.GetKeyState(binding.negative_y_key) then
+                    dy = dy - 1
+                elseif Mouse.GetKeyState(binding.positive_y_key) then
+                    dy = dy + 1
+                end
+                if dx ~= 0 and dy ~= 0 then
+                    dx = dx * SQRT2_2
+                    dy = dy * SQRT2_2
+                end
+                addVector2ActionValue(values, name, dx, dy)
+            end
+            -- TODO: 鼠标的XY坐标和XY滚轮不属于归一化二维矢量输入组件，需要特殊处理
+        end
+        -- 手柄
+        for _, binding in action:controllerBindings() do
+            if binding.type == "key" then
+                local x = 0
+                local y = 0
+                if isControllerKeyDown(binding.negative_x_key) then
+                    x = x - 1
+                elseif isControllerKeyDown(binding.positive_x_key) then
+                    x = x + 1
+                end
+                if isControllerKeyDown(binding.negative_y_key) then
+                    y = y - 1
+                elseif isControllerKeyDown(binding.positive_y_key) then
+                    y = y + 1
+                end
+                if x ~= 0 and y ~= 0 then
+                    x = x * SQRT2_2
+                    y = y * SQRT2_2
+                end
+                addVector2ActionValue(values, name, x, y)
+            end
+            if binding.type == "axis" then
+                -- 思考：真的有人会用左摇杆的X轴控制左右，用右摇杆的Y轴控制前后吗？
+                -- 思考：会不会有人不小心把摇杆的X轴绑到Y轴上？
+                local x = getControllerAxis(binding.x_axis)
+                local y = getControllerAxis(binding.y_axis)
+                addVector2ActionValue(values, name, x, y)
+            end
+            if binding.type == "joystick" then
+                local x, y = getControllerJoystick(binding.joystick)
+                addVector2ActionValue(values, name, x, y)
+            end
+        end
+        -- 其他 HID 设备
+        for _, binding in action:hidBindings() do
+            if binding.type == "key" then
+                local x = 0
+                local y = 0
+                if isHidKeyDown(binding.negative_x_key) then
+                    x = x - 1
+                elseif isHidKeyDown(binding.positive_x_key) then
+                    x = x + 1
+                end
+                if isHidKeyDown(binding.negative_y_key) then
+                    y = y - 1
+                elseif isHidKeyDown(binding.positive_y_key) then
+                    y = y + 1
+                end
+                if x ~= 0 and y ~= 0 then
+                    x = x * SQRT2_2
+                    y = y * SQRT2_2
+                end
+                addVector2ActionValue(values, name, x, y)
+            end
+            if binding.type == "axis" then
+                local x = getControllerAxis(binding.x_axis)
+                local y = getControllerAxis(binding.y_axis)
+                addVector2ActionValue(values, name, x, y)
+            end
+            -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
+        end
+    end
+end
+
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function updateActionSet(action_set, action_set_values)
     updateBooleanActions(action_set, action_set_values)
     updateScalarActions(action_set, action_set_values)
-    -- TODO: vector2 actions
+    updateVector2Actions(action_set, action_set_values)
 end
 
 function InputSystem.update()
@@ -939,6 +1214,7 @@ function InputSystem.update()
     clearActionSetValues(merged_action_set_values)
     updateXInput()
     updateDirectInput()
+    validateSetting()
     for name, action_set in pairs(action_sets) do
         updateActionSet(action_set, raw_action_set_values[name])
     end

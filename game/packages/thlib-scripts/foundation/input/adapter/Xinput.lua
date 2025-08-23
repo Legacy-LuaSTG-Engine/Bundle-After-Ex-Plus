@@ -105,6 +105,14 @@ local Axis = {
     LeftTrigger = 1,
     --- 手柄右扳机（在右肩键旁边），有的手柄可能没有
     RightTrigger = 2,
+    --- 手柄左摇杆X轴
+    LeftThumbX = 4,
+    --- 手柄左摇杆Y轴
+    LeftThumbY = 8,
+    --- 手柄右摇杆X轴
+    RightThumbX = 16,
+    --- 手柄右摇杆Y轴
+    RightThumbY = 32,
 }
 M.Axis = Axis
 
