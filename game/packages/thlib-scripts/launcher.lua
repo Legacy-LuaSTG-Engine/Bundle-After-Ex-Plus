@@ -5,6 +5,8 @@
 
 --------------------------------------------------------------------------------
 
+local lstg = require("lstg")
+local Keyboard = lstg.Input.Keyboard
 local i18n = require("lib.i18n")
 local default_setting = require("foundation.legacy.default_setting")
 local SceneManager = require("foundation.SceneManager")
@@ -714,16 +716,22 @@ function InputSetting:init(exit_f)
             self.locked = true
             self._current_edit = idx
             task.New(self, function()
-                local Keyboard = lstg.Input.Keyboard
                 local last_key = nil
-                for i = 1, 240 do
-                    task.Wait(1)
-                    last_key = KeyboardAdaptor.isAnyKeyDown()
-                    if last_key ~= Keyboard.None then
+                while true do
+                    if KeyboardAdaptor.isAnyKeyDown() then
+                        task.Wait(1)
+                    else
                         break
                     end
                 end
-                if last_key ~= Keyboard.None then
+                for _ = 1, 240 do
+                    task.Wait(1)
+                    last_key = KeyboardAdaptor.isAnyKeyDown()
+                    if last_key then
+                        break
+                    end
+                end
+                if last_key then
                     last_setting[cfg[3]] = last_key
                     w_button.updateText()
                 end
