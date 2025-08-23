@@ -792,7 +792,7 @@ end
 --#region
 
 ---@class foundation.InputSystem.Setting
-local setting = {
+local other_setting = {
     --- 0: Auto  
     --- 1-4: Xinput controllers 1 to 4  
     controller_index = 0,
@@ -802,13 +802,13 @@ local setting = {
 }
 
 local function validateSetting()
-    if not (setting.controller_index == 0 or setting.controller_index == 1 or setting.controller_index == 2 or setting.controller_index == 3 or setting.controller_index == 4) then
+    if not (other_setting.controller_index == 0 or other_setting.controller_index == 1 or other_setting.controller_index == 2 or other_setting.controller_index == 3 or other_setting.controller_index == 4) then
         error("the value of controller_index must be 0 or 1 or 2 or 3 or 4")
     end
 end
 
 function InputSystem.getSetting()
-    return setting
+    return other_setting
 end
 
 --#endregion
@@ -863,15 +863,15 @@ end
 ---@param code integer
 ---@return boolean
 local function isControllerKeyDown(code)
-    if setting.controller_index == 0 then
+    if other_setting.controller_index == 0 then
         -- 从所有可能的控制器获取输入
         for i = 1, 4 do
             if XInput.isConnected(i) then
                 return XInputAdaptor.getKeyState(xinput_adaptor_map[i], code)
             end
         end
-    elseif XInput.isConnected(setting.controller_index) then
-        return XInputAdaptor.getKeyState(xinput_adaptor_map[setting.controller_index], code)
+    elseif XInput.isConnected(other_setting.controller_index) then
+        return XInputAdaptor.getKeyState(xinput_adaptor_map[other_setting.controller_index], code)
     end
     return false
 end
@@ -880,7 +880,7 @@ end
 ---@return number
 local function getControllerAxis(code)
     -- TODO: 如何将扳机映射到轴？扳机是 0.0 到 1.0，静息状态下是 0.0，需要偏移原点吗？
-    if setting.controller_index == 0 then
+    if other_setting.controller_index == 0 then
         -- 只从一个控制器读取输入
         if code == XInputAdaptor.Axis.LeftThumbX then
             return XInput.getLeftThumbX()
@@ -891,15 +891,15 @@ local function getControllerAxis(code)
         elseif code == XInputAdaptor.Axis.RightThumbY then
             return XInput.getRightThumbY()
         end
-    elseif XInput.isConnected(setting.controller_index) then
+    elseif XInput.isConnected(other_setting.controller_index) then
         if code == XInputAdaptor.Axis.LeftThumbX then
-            return XInput.getLeftThumbX(setting.controller_index)
+            return XInput.getLeftThumbX(other_setting.controller_index)
         elseif code == XInputAdaptor.Axis.LeftThumbY then
-            return XInput.getLeftThumbY(setting.controller_index)
+            return XInput.getLeftThumbY(other_setting.controller_index)
         elseif code == XInputAdaptor.Axis.RightThumbX then
-            return XInput.getRightThumbX(setting.controller_index)
+            return XInput.getRightThumbX(other_setting.controller_index)
         elseif code == XInputAdaptor.Axis.RightThumbY then
-            return XInput.getRightThumbY(setting.controller_index)
+            return XInput.getRightThumbY(other_setting.controller_index)
         end
     end
     return 0
@@ -909,18 +909,18 @@ end
 ---@return number x
 ---@return number y
 local function getControllerJoystick(code)
-    if setting.controller_index == 0 then
+    if other_setting.controller_index == 0 then
         -- 只从一个控制器读取输入
         if code == XInputAdaptor.Joystick.LeftThumb then
             return XInput.getLeftThumbX(), XInput.getLeftThumbY()
         elseif code == XInputAdaptor.Joystick.RightThumb then
             return XInput.getRightThumbX(), XInput.getRightThumbY()
         end
-    elseif XInput.isConnected(setting.controller_index) then
+    elseif XInput.isConnected(other_setting.controller_index) then
         if code == XInputAdaptor.Joystick.LeftThumb then
-            return XInput.getLeftThumbX(setting.controller_index), XInput.getLeftThumbY(setting.controller_index)
+            return XInput.getLeftThumbX(other_setting.controller_index), XInput.getLeftThumbY(other_setting.controller_index)
         elseif code == XInputAdaptor.Joystick.RightThumb then
-            return XInput.getRightThumbX(setting.controller_index), XInput.getRightThumbY(setting.controller_index)
+            return XInput.getRightThumbX(other_setting.controller_index), XInput.getRightThumbY(other_setting.controller_index)
         end
     end
     return 0, 0
@@ -934,15 +934,15 @@ end
 ---@param code integer
 ---@return boolean
 local function isHidKeyDown(code)
-    if setting.hid_index == 0 then
+    if other_setting.hid_index == 0 then
         -- 从所有可能的设备获取输入
         local state = false
         for i = 1, #dinput_adaptor_map do
             state = state or DirectInputAdaptor.getKeyState(dinput_adaptor_map[i], code)
         end
         return state
-    elseif setting.hid_index <= #dinput_adaptor_map then
-        return DirectInputAdaptor.getKeyState(dinput_adaptor_map[setting.hid_index], code)
+    elseif other_setting.hid_index <= #dinput_adaptor_map then
+        return DirectInputAdaptor.getKeyState(dinput_adaptor_map[other_setting.hid_index], code)
     end
     return false
 end
@@ -950,13 +950,13 @@ end
 ---@param code integer
 ---@return number
 local function getHidAxis(code)
-    if setting.hid_index == 0 then
+    if other_setting.hid_index == 0 then
         -- 只从一个设备读取输入
         if #dinput_adaptor_map > 0 then
             return dinput_axis_map[1][code] or 0
         end
-    elseif setting.hid_index <= #dinput_adaptor_map then
-        return dinput_axis_map[setting.hid_index][code] or 0
+    elseif other_setting.hid_index <= #dinput_adaptor_map then
+        return dinput_axis_map[other_setting.hid_index][code] or 0
     end
     return 0
 end
@@ -1449,7 +1449,7 @@ function InputSystem.saveSetting(path)
     path = path or getDefaultSettingPath()
     local data = {}
     data.action_sets = copyTable(action_sets)
-    data.setting = copyTable(setting)
+    data.other_setting = copyTable(other_setting)
     local r, err = Files.writeStringWithBackup(path, cjson_util.format_json(cjson.encode(data)))
     if not r then
         logError("an error occurred while saving the configuration: %s", tostring(err))
@@ -1690,11 +1690,11 @@ end
 
 ---@param source_other_setting foundation.InputSystem.Setting
 local function mergeOtherSetting(source_other_setting)
-    for k, v in pairs(setting) do
+    for k, v in pairs(other_setting) do
         if type(v) == type(source_other_setting[k]) then
-            setting[k] = source_other_setting[k]
+            other_setting[k] = source_other_setting[k]
         else
-            logError('%s setting["%s"] must be a %s', LOAD_ERROR_PREFIX, k, type(v))
+            logError('%s other_setting["%s"] must be a %s', LOAD_ERROR_PREFIX, k, type(v))
         end
     end
 end
@@ -1726,11 +1726,11 @@ function InputSystem.loadSetting(path)
     end
 
     ---@type foundation.InputSystem.Setting?
-    local data_setting = data.setting
+    local data_setting = data.other_setting
     if type(data_setting) == "table" then
         mergeOtherSetting(data_setting)
     elseif data_setting ~= nil then
-        logError("%s setting must be a table", LOAD_ERROR_PREFIX)
+        logError("%s other_setting must be a table", LOAD_ERROR_PREFIX)
     end
 end
 
