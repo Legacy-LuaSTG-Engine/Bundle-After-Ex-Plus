@@ -17,7 +17,26 @@ local SQRT2_2 = 0.7071067811865476
 local InputSystem = {}
 
 --------------------------------------------------------------------------------
---- 辅助函数
+--- 辅助函数：日志
+--#region
+
+local LOG_HEADER = "[foundation.InputSystem] "
+
+local function logInfo(fmt, ...)
+    lstg.Log(2, LOG_HEADER .. string.format(fmt, ...))
+end
+
+local function logWarn(fmt, ...)
+    lstg.Log(3, LOG_HEADER .. string.format(fmt, ...))
+end
+
+local function logError(fmt, ...)
+    lstg.Log(4, LOG_HEADER .. string.format(fmt, ...))
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 辅助函数：数组和表操作
 --#region
 
 ---@generic T
@@ -129,7 +148,7 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 布尔动作，用于按键组件，比如键盘按键
+--- 布尔动作：用于按键组件，比如键盘按键
 --#region
 
 ---@class foundation.InputSystem.BooleanBinding : foundation.InputSystem.Binding
@@ -263,7 +282,7 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 标量动作，用于单轴组件，比如手柄扳机
+--- 标量动作：用于单轴组件，比如手柄扳机
 --#region
 
 ---@class foundation.InputSystem.ScalarBinding : foundation.InputSystem.Binding
@@ -442,7 +461,7 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 二维矢量动作，用于双轴组件，比如手柄摇杆
+--- 二维矢量动作：用于双轴组件，比如手柄摇杆
 --#region
 
 ---@class foundation.InputSystem.Vector2Binding : foundation.InputSystem.Binding
@@ -1434,6 +1453,8 @@ function InputSystem.saveSetting(path)
     Files.writeStringWithBackup(path, cjson_util.format_json(cjson.encode(data)))
 end
 
+local LOAD_ERROR_PREFIX = "an error occurred while loading the configuration:"
+
 ---@param source_action foundation.InputSystem.BooleanAction
 ---@param target_action foundation.InputSystem.BooleanAction
 local function mergeBooleanAction(source_action, target_action)
@@ -1622,32 +1643,49 @@ local function mergeActionSet(input_action_set)
     end
 end
 
+---@param input_other_setting foundation.InputSystem.Setting
+local function mergeOtherSetting(input_other_setting)
+    for k, v in pairs(setting) do
+        if type(v) == type(input_other_setting[k]) then
+            setting[k] = input_other_setting[k]
+        else
+            logError('%s setting["%s"] must be a %s', LOAD_ERROR_PREFIX, k, type(v))
+        end
+    end
+end
+
 --- 不提供路径参数时，从默认位置读取
 ---@param path string?
 function InputSystem.loadSetting(path)
     path = path or getDefaultSettingPath()
-    local content = Files.readString(path)
+
+    local content, read_error = Files.readString(path)
+    if not content then
+        logError("read file '%s' failed: %s", path, tostring(read_error))
+        return
+    end
     local r, data = pcall(cjson.decode, content)
     if not r then
+        logError("decode '%s' failed: %s", path, tostring(data))
         return
     end
 
     ---@type table<string, foundation.InputSystem.ActionSet>?
     local data_action_sets = data.action_sets
-    ---@type foundation.InputSystem.Setting?
-    local data_setting = data.setting
-
     if type(data_action_sets) == "table" then
         for _, data_action_set in pairs(data_action_sets) do
             mergeActionSet(data_action_set)
         end
+    elseif data_action_sets ~= nil then
+        logError("%s action_sets must be a table", LOAD_ERROR_PREFIX)
     end
+
+    ---@type foundation.InputSystem.Setting?
+    local data_setting = data.setting
     if type(data_setting) == "table" then
-        for k, v in pairs(setting) do
-            if type(v) == type(data_setting[k]) then
-                setting[k] = data_setting[k]
-            end
-        end
+        mergeOtherSetting(data_setting)
+    elseif data_setting ~= nil then
+        logError("%s setting must be a table", LOAD_ERROR_PREFIX)
     end
 end
 
