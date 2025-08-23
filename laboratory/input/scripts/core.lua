@@ -31,7 +31,6 @@ local white_initialized = false
 
 function GameInit()
     Viewport.initialize()
-    InputSystem.pushActionSet("menu")
     InputSystem.loadSetting()
     InputSystem.saveSetting()
 
@@ -45,15 +44,15 @@ end
 function FrameFunc()
     InputSystem.update()
     local dx = 0
-    if InputSystem.getBooleanAction("left") then
+    if InputSystem.getBooleanAction("menu:left") then
         dx = dx - 1
-    elseif InputSystem.getBooleanAction("right") then
+    elseif InputSystem.getBooleanAction("menu:right") then
         dx = dx + 1
     end
     local dy = 0
-    if InputSystem.getBooleanAction("down") then
+    if InputSystem.getBooleanAction("menu:down") then
         dy = dy - 1
-    elseif InputSystem.getBooleanAction("up") then
+    elseif InputSystem.getBooleanAction("menu:up") then
         dy = dy + 1
     end
     local v = 1
@@ -61,15 +60,15 @@ function FrameFunc()
         v = 0.70710678118654752440084436210485
     end
     local speed = 10
-    if InputSystem.getBooleanAction("slow") then
+    if InputSystem.getBooleanAction("menu:slow") then
         speed = 5
     end
     x = x + v * speed * dx
     y = y + v * speed * dy
-    if InputSystem.isBooleanActionActivated("size-smaller", 60, 60) then
+    if InputSystem.isBooleanActionActivated("menu:size-smaller", 60, 60) then
         size = math.max(16, size - 16)
     end
-    if InputSystem.isBooleanActionActivated("size-larger", 120, 60) then
+    if InputSystem.isBooleanActionActivated("menu:size-larger", 120, 60) then
         size = size + 16
     end
     return false

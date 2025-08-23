@@ -708,27 +708,6 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 动作集切换
---#region
-
---- 当前的动作集栈，栈为空时表示不指定动作集并从所有动作集读取值
----@type string[]
-local action_set_name_stack = {}
-
----@param name string
-function InputSystem.pushActionSet(name)
-    assert(type(name) == "string", "name must be a string")
-    assert(action_sets[name], ("ActionSet '%s' does not exists"):format(name))
-    table.insert(action_set_name_stack, name)
-end
-
-function InputSystem.popActionSet()
-    assert(#action_set_name_stack > 0, "ActionSet stack is empty")
-    table.remove(action_set_name_stack)
-end
-
---#endregion
---------------------------------------------------------------------------------
 --- 输入系统内部状态
 --#region
 
@@ -771,20 +750,6 @@ end)
 table.insert(on_action_set_removed, function(action_set)
     raw_action_set_values[action_set.name] = nil
 end)
-
----@type foundation.InputSystem.ActionSetValues
-local merged_action_set_values = createActionSetValues()
-
----@return foundation.InputSystem.ActionSetValues
-local function getCurrentActionSetValues()
-    if #action_set_name_stack > 0 then
-        local action_set_values = raw_action_set_values[action_set_name_stack[#action_set_name_stack]]
-        if action_set_values then
-            return action_set_values
-        end
-    end
-    return merged_action_set_values
-end
 
 --#endregion
 --------------------------------------------------------------------------------
@@ -1015,7 +980,6 @@ function InputSystem.clear()
     for _, v in pairs(raw_action_set_values) do
         clearActionSetValues(v, true)
     end
-    clearActionSetValues(merged_action_set_values, true)
 end
 
 ---@param values table<string, boolean>
@@ -1281,8 +1245,6 @@ function InputSystem.update()
         copyLastActionSetValues(v)
         clearActionSetValues(v)
     end
-    copyLastActionSetValues(merged_action_set_values)
-    clearActionSetValues(merged_action_set_values)
     updateXInput()
     updateDirectInput()
     validateSetting()
@@ -1322,6 +1284,37 @@ local function toVector2(value)
     return { x = 0.0, y = 0.0 }
 end
 
+---@param action_locator string
+---@return string action_set_name
+---@return string action_name
+local function parseActionSetNameAndActionName(action_locator)
+    assert(type(action_locator) == "string", "action_locator must be a string")
+    local action_set_name, action_name = string.match(action_locator, "^(.-):(.*)$")
+    if type(action_set_name) ~= "string" or type(action_name) ~= "string" then
+        error(("invalid action_locator '%s', incorrect format"):format(action_locator))
+    end
+    ---@cast action_set_name -any, +string
+    ---@cast action_name -any, +string
+    if action_set_name:len() == 0 then
+        error(("invalid action_locator '%s', ActionSet name part is empty"):format(action_locator))
+    end
+    if action_name:len() == 0 then
+        error(("invalid action_locator '%s', Action name part is empty"):format(action_locator))
+    end
+    return action_set_name, action_name
+end
+
+---@param action_locator string
+---@return foundation.InputSystem.ActionSetValues action_set_values
+---@return string action_name
+local function findActionSetValuesAndActionName(action_locator)
+    local action_set_name, action_name = parseActionSetNameAndActionName(action_locator)
+    if not raw_action_set_values[action_set_name] then
+        error(("invalid action_locator '%s', ActionSet '%s' does not exists"):format(action_locator, action_set_name))
+    end
+    return raw_action_set_values[action_set_name], action_name
+end
+
 --#endregion
 --------------------------------------------------------------------------------
 --- 读取动作值
@@ -1331,29 +1324,29 @@ end
 --- 可能值有：  
 --- * `true`：激活  
 --- * `false`：未激活  
----@param name string
+---@param action_locator string
 ---@return boolean
-function InputSystem.getBooleanAction(name)
-    assert(type(name) == "string", "name must be a string")
-    return toBoolean(getCurrentActionSetValues().boolean_action_values[name])
+function InputSystem.getBooleanAction(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    return toBoolean(action_set_values.boolean_action_values[action_name])
 end
 
 --- 读取标量动作值  
 --- 标量值被映射到 0.0 到 1.0 的归一化实数  
----@param name string
+---@param action_locator string
 ---@return number
-function InputSystem.getScalarAction(name)
-    assert(type(name) == "string", "name must be a string")
-    return toScalar(getCurrentActionSetValues().scalar_action_values[name])
+function InputSystem.getScalarAction(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    return toScalar(action_set_values.scalar_action_values[action_name])
 end
 
 --- 读取二维矢量动作值  
 --- 二维矢量动作值被映射归一化矢量（长度范围 0.0 到 1.0）  
----@param name string
+---@param action_locator string
 ---@return number, number
-function InputSystem.getVector2Action(name)
-    assert(type(name) == "string", "name must be a string")
-    local value = toVector2(getCurrentActionSetValues().vector2_action_values[name])
+function InputSystem.getVector2Action(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    local value = toVector2(action_set_values.vector2_action_values[action_name])
     return value.x, value.y
 end
 
@@ -1362,15 +1355,15 @@ end
 --- 追踪动作值变化
 --#region
 
----@param name string
+---@param action_locator string
 ---@return boolean last
 ---@return boolean current
 ---@return integer frames
-local function getLastAndCurrentBooleanAction(name)
-    local action_set_values = getCurrentActionSetValues()
-    local last = toBoolean(action_set_values.last_boolean_action_values[name])
-    local current = toBoolean(action_set_values.boolean_action_values[name])
-    local frames = toScalar(action_set_values.boolean_action_frames[name])
+local function getLastAndCurrentBooleanAction(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    local last = toBoolean(action_set_values.last_boolean_action_values[action_name])
+    local current = toBoolean(action_set_values.boolean_action_values[action_name])
+    local frames = toScalar(action_set_values.boolean_action_frames[action_name])
     return last, current, frames
 end
 
@@ -1378,12 +1371,11 @@ end
 --- 填写后面两个参数后会启用重复触发器，
 --- repeat_delay 参数用于指定多少帧后开始执行，
 --- repeat_interval 参数用于指定执行间隔
----@param name string
+---@param action_locator string
 ---@param repeat_delay integer?
 ---@param repeat_interval integer?
 ---@return boolean
-function InputSystem.isBooleanActionActivated(name, repeat_delay, repeat_interval)
-    assert(type(name) == "string", "name must be a string")
+function InputSystem.isBooleanActionActivated(action_locator, repeat_delay, repeat_interval)
     if repeat_delay or repeat_interval then
         assert(type(repeat_delay) == "number", "repeat_delay must be a number (integer)")
         assert(type(repeat_interval) == "number", "repeat_interval must be a number (integer)")
@@ -1392,7 +1384,7 @@ function InputSystem.isBooleanActionActivated(name, repeat_delay, repeat_interva
         assert(math.floor(repeat_delay) == repeat_delay, "repeat_delay must be a number (integer)")
         assert(math.floor(repeat_interval) == repeat_interval, "repeat_interval must be a number (integer)")
     end
-    local last, current, frames = getLastAndCurrentBooleanAction(name)
+    local last, current, frames = getLastAndCurrentBooleanAction(action_locator)
     if (not last) and current then
         return true
     elseif current and repeat_delay and repeat_interval then
@@ -1410,11 +1402,10 @@ function InputSystem.isBooleanActionActivated(name, repeat_delay, repeat_interva
 end
 
 --- 布尔动作是否在当前帧释放  
----@param name string
+---@param action_locator string
 ---@return boolean
-function InputSystem.isBooleanActionDeactivated(name)
-    assert(type(name) == "string", "name must be a string")
-    local last, current = getLastAndCurrentBooleanAction(name)
+function InputSystem.isBooleanActionDeactivated(action_locator)
+    local last, current = getLastAndCurrentBooleanAction(action_locator)
     return last and (not current)
 end
 
@@ -1424,11 +1415,10 @@ end
 --- * `false` -> `true`: 1  
 --- * `true` -> `true`: 0  
 --- * `true` -> `false`: -1  
----@param name string
+---@param action_locator string
 ---@return number
-function InputSystem.getBooleanActionIncrement(name)
-    assert(type(name) == "string", "name must be a string")
-    local last, current = getLastAndCurrentBooleanAction(name)
+function InputSystem.getBooleanActionIncrement(action_locator)
+    local last, current = getLastAndCurrentBooleanAction(action_locator)
     if (not last) and current then
         return 1
     elseif last and (not current) then
@@ -1439,24 +1429,22 @@ function InputSystem.getBooleanActionIncrement(name)
 end
 
 --- 读取标量动作值的增量，负值代表减少  
----@param name string
+---@param action_locator string
 ---@return number
-function InputSystem.getScalarActionIncrement(name)
-    assert(type(name) == "string", "name must be a string")
-    local action_set_values = getCurrentActionSetValues()
-    local last = toScalar(action_set_values.last_scalar_action_values[name])
-    local current = toScalar(action_set_values.scalar_action_values[name])
+function InputSystem.getScalarActionIncrement(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    local last = toScalar(action_set_values.last_scalar_action_values[action_name])
+    local current = toScalar(action_set_values.scalar_action_values[action_name])
     return current - last
 end
 
 --- 读取二维矢量动作值的增量，负值代表减少  
----@param name string
+---@param action_locator string
 ---@return number, number
-function InputSystem.getVector2ActionIncrement(name)
-    assert(type(name) == "string", "name must be a string")
-    local action_set_values = getCurrentActionSetValues()
-    local last = toVector2(action_set_values.last_vector2_action_values[name])
-    local current = toVector2(action_set_values.vector2_action_values[name])
+function InputSystem.getVector2ActionIncrement(action_locator)
+    local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
+    local last = toVector2(action_set_values.last_vector2_action_values[action_name])
+    local current = toVector2(action_set_values.vector2_action_values[action_name])
     return current.x - last.x, current.y - last.y
 end
 

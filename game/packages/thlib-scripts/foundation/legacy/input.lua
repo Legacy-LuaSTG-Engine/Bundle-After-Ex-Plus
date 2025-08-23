@@ -11,6 +11,9 @@ local InputSystem = require("foundation.InputSystem")
 --------------------------------------------------------------------------------
 --- 兼容性 API
 
+local GAME_ACTION_SET_PREFIX = "game:"
+local MENU_ACTION_SET_PREFIX = "menu:"
+
 function GetInput()
     InputSystem.update()
 end
@@ -18,7 +21,7 @@ end
 ---@param key string
 ---@return boolean
 function KeyIsDown(key)
-    return InputSystem.getBooleanAction(key)
+    return InputSystem.getBooleanAction(GAME_ACTION_SET_PREFIX .. key)
 end
 
 KeyPress = KeyIsDown
@@ -26,7 +29,7 @@ KeyPress = KeyIsDown
 ---@param key string
 ---@return boolean
 function KeyIsPressed(key)
-    return InputSystem.isBooleanActionActivated(key)
+    return InputSystem.isBooleanActionActivated(GAME_ACTION_SET_PREFIX .. key)
 end
 
 KeyTrigger = KeyIsPressed
@@ -34,19 +37,13 @@ KeyTrigger = KeyIsPressed
 ---@param key string
 ---@return boolean
 function MenuKeyIsDown(key)
-    InputSystem.pushActionSet("menu") -- 确保使用的是菜单动作集
-    local result = InputSystem.getBooleanAction(key)
-    InputSystem.popActionSet()
-    return result
+    return InputSystem.getBooleanAction(MENU_ACTION_SET_PREFIX .. key)
 end
 
 ---@param key string
 ---@return boolean
 function MenuKeyIsPressed(key)
-    InputSystem.pushActionSet("menu") -- 确保使用的是菜单动作集
-    local result = InputSystem.isBooleanActionActivated(key)
-    InputSystem.popActionSet()
-    return result
+    return InputSystem.isBooleanActionActivated(MENU_ACTION_SET_PREFIX .. key, 40, 4) -- TODO: 允许修改该默认设置
 end
 
 --- 将按键二进制码转换为字面值，用于设置界面
