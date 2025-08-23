@@ -833,12 +833,14 @@ function InputSystem.quantize()
     for action_set_name, raw in pairs(raw_action_set_values) do
         local quantized = quantized_action_set_values[action_set_name]
         for k, v in pairs(raw.scalar_action_values) do
-            quantized.scalar_action_values[k] = quantizeScalar(v)
-            raw.scalar_action_values[k] = recoverScalar(quantized.scalar_action_values[k])
+            local q = quantizeScalar(v)
+            quantized.scalar_action_values[k] = q
+            raw.scalar_action_values[k] = recoverScalar(q)
         end
         for k, v in pairs(raw.vector2_action_values) do
-            quantized.vector2_action_values[k] = quantizeVector2(v)
-            raw.vector2_action_values[k] = recoverVector2(v)
+            local q = quantizeVector2(v)
+            quantized.vector2_action_values[k] = q
+            raw.vector2_action_values[k] = recoverVector2(q)
         end
     end
 end
