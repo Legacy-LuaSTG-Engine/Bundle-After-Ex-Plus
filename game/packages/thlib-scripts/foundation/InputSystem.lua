@@ -1498,7 +1498,7 @@ end
 ---@param source_actions table<string, foundation.InputSystem.BooleanAction>
 ---@param target_actions table<string, foundation.InputSystem.BooleanAction>
 local function mergeBooleanActions(action_set_name, source_actions, target_actions)
-    for _, source_action in pairs(source_actions) do
+    for name, source_action in pairs(source_actions) do
         if type(name) ~= "string" then
             logError('%s action_sets["%s"].boolean_actions[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, action_set_name, tostring(name), type(name))
         elseif type(source_action) ~= "table" then
@@ -1559,7 +1559,7 @@ end
 ---@param source_actions table<string, foundation.InputSystem.ScalarAction>
 ---@param target_actions table<string, foundation.InputSystem.ScalarAction>
 local function mergeScalarActions(action_set_name, source_actions, target_actions)
-    for _, source_action in pairs(source_actions) do
+    for name, source_action in pairs(source_actions) do
         if type(name) ~= "string" then
             logError('%s action_sets["%s"].scalar_actions[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, action_set_name, tostring(name), type(name))
         elseif type(source_action) ~= "table" then
