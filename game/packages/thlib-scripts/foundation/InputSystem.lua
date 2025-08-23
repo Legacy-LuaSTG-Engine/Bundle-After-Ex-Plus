@@ -327,18 +327,20 @@ function ScalarAction:keyboardBindings()
 end
 
 ---@param key integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addKeyboardKeyBinding(key)
     local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.keyboard_bindings, {
         type = "key",
         key = key,
         axis = 0,
     })
+    return self
 end
 
 ---@param key integer
@@ -353,18 +355,20 @@ function ScalarAction:mouseBindings()
 end
 
 ---@param key integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addMouseKeyBinding(key)
     local exists = isArrayContainsIf(self.mouse_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.mouse_bindings, {
         type = "key",
         key = key,
         axis = 0,
     })
+    return self
 end
 
 ---@param key integer
@@ -379,18 +383,20 @@ function ScalarAction:controllerBindings()
 end
 
 ---@param key integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addControllerKeyBinding(key)
     local exists = isArrayContainsIf(self.controller_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.controller_bindings, {
         type = "key",
         key = key,
         axis = 0,
     })
+    return self
 end
 
 ---@param key integer
@@ -401,18 +407,20 @@ function ScalarAction:removeControllerKeyBinding(key)
 end
 
 ---@param axis integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addControllerAxisBinding(axis)
     local exists = isArrayContainsIf(self.controller_bindings, function(value)
         return value.type == "axis" and value.axis == axis
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.controller_bindings, {
         type = "axis",
         key = axis,
         axis = 0,
     })
+    return self
 end
 
 ---@param axis integer
@@ -427,18 +435,20 @@ function ScalarAction:hidBindings()
 end
 
 ---@param key integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addHidKeyBinding(key)
     local exists = isArrayContainsIf(self.hid_bindings, function(value)
         return value.type == "key" and value.key == key
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.hid_bindings, {
         type = "key",
         key = key,
         axis = 0,
     })
+    return self
 end
 
 ---@param key integer
@@ -449,18 +459,20 @@ function ScalarAction:removeHidKeyBinding(key)
 end
 
 ---@param axis integer
+---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addHidAxisBinding(axis)
     local exists = isArrayContainsIf(self.hid_bindings, function(value)
         return value.type == "axis" and value.axis == axis
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.hid_bindings, {
         type = "axis",
         key = axis,
         axis = 0,
     })
+    return self
 end
 
 ---@param axis integer
@@ -499,6 +511,26 @@ end
 ---@field positive_y_key integer
 ---@field negative_y_key integer
 
+---@param positive_x_key integer
+---@param negative_x_key integer
+---@param positive_y_key integer
+---@param negative_y_key integer
+---@return foundation.InputSystem.Vector2Binding
+local function createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    ---@type foundation.InputSystem.Vector2Binding
+    local result = {
+        type = "joystick",
+        joystick = 0,
+        x_axis = 0,
+        y_axis = 0,
+        positive_x_key = positive_x_key,
+        negative_x_key = negative_x_key,
+        positive_y_key = positive_y_key,
+        negative_y_key = negative_y_key,
+    }
+    return result
+end
+
 ---@param joystick integer
 ---@return foundation.InputSystem.Vector2Binding
 local function createJoystickVector2Binding(joystick)
@@ -527,15 +559,79 @@ function Vector2Action:keyboardBindings()
     return ipairs(self.keyboard_bindings)
 end
 
+---@param positive_x_key integer
+---@param negative_x_key integer
+---@param positive_y_key integer
+---@param negative_y_key integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addKeyboardKeyBinding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
+        return value.type == "key"
+            and value.positive_x_key == positive_x_key
+            and value.negative_x_key == negative_x_key
+            and value.positive_y_key == positive_y_key
+            and value.negative_y_key == negative_y_key
+    end)
+    if exists then
+        return self
+    end
+    local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    table.insert(self.keyboard_bindings, binding)
+    return self
+end
+
 function Vector2Action:mouseBindings()
     return ipairs(self.mouse_bindings)
+end
+
+---@param positive_x_key integer
+---@param negative_x_key integer
+---@param positive_y_key integer
+---@param negative_y_key integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addMouseKeyBinding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    local exists = isArrayContainsIf(self.mouse_bindings, function(value)
+        return value.type == "key"
+            and value.positive_x_key == positive_x_key
+            and value.negative_x_key == negative_x_key
+            and value.positive_y_key == positive_y_key
+            and value.negative_y_key == negative_y_key
+    end)
+    if exists then
+        return self
+    end
+    local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    table.insert(self.mouse_bindings, binding)
+    return self
 end
 
 function Vector2Action:controllerBindings()
     return ipairs(self.controller_bindings)
 end
 
+---@param positive_x_key integer
+---@param negative_x_key integer
+---@param positive_y_key integer
+---@param negative_y_key integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addControllerKeyBinding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "key"
+            and value.positive_x_key == positive_x_key
+            and value.negative_x_key == negative_x_key
+            and value.positive_y_key == positive_y_key
+            and value.negative_y_key == negative_y_key
+    end)
+    if exists then
+        return self
+    end
+    local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    table.insert(self.controller_bindings, binding)
+    return self
+end
+
 ---@param joystick integer
+---@return foundation.InputSystem.Vector2Action
 function Vector2Action:addControllerJoystickBinding(joystick)
     local exists = isArrayContainsIf(self.controller_bindings, function(value)
         return value.type == "joystick" and value.joystick == joystick
@@ -544,6 +640,7 @@ function Vector2Action:addControllerJoystickBinding(joystick)
         return
     end
     table.insert(self.controller_bindings, createJoystickVector2Binding(joystick))
+    return self
 end
 
 ---@param joystick integer
@@ -555,6 +652,27 @@ end
 
 function Vector2Action:hidBindings()
     return ipairs(self.hid_bindings)
+end
+
+---@param positive_x_key integer
+---@param negative_x_key integer
+---@param positive_y_key integer
+---@param negative_y_key integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addHidKeyBinding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "key"
+            and value.positive_x_key == positive_x_key
+            and value.negative_x_key == negative_x_key
+            and value.positive_y_key == positive_y_key
+            and value.negative_y_key == negative_y_key
+    end)
+    if exists then
+        return self
+    end
+    local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
+    table.insert(self.hid_bindings, binding)
+    return self
 end
 
 ---@param name string

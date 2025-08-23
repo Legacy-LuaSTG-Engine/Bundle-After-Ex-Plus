@@ -84,7 +84,8 @@ local game_action_up = game_action_set:addBooleanAction("up")
 
 -- 玩家移动（矢量）
 
-local game_action_move = game_action_set:addVector2Action("move") -- TODO: 加上绑定
+local game_action_move = game_action_set:addVector2Action("move")
+    :addKeyboardKeyBinding(Keyboard.Right, Keyboard.Left, Keyboard.Up, Keyboard.Down)
 
 -- 功能键
 
