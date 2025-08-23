@@ -831,7 +831,7 @@ local function updateXInput()
 end
 
 ---@type foundation.input.adapter.DirectInput.KeyState[]
-local dinput_adaptor_map = {}
+local dinput_key_map = {}
 ---@type table<integer, number>[]
 local dinput_axis_map = {}
 
@@ -842,15 +842,15 @@ local function updateDirectInput()
         local axis_ranges = DirectInput.getAxisRange(i)
         local raw_state = DirectInput.getRawState(i)
         if axis_ranges and raw_state then
-            dinput_adaptor_map[i] = DirectInputAdaptor.mapKeyState(axis_ranges, raw_state, 0.5)
+            dinput_key_map[i] = DirectInputAdaptor.mapKeyState(axis_ranges, raw_state, 0.5)
             dinput_axis_map[i] = DirectInputAdaptor.mapAxis(axis_ranges, raw_state)
         else
-            dinput_adaptor_map[i] = {}
+            dinput_key_map[i] = {}
             dinput_axis_map[i] = {}
         end
     end
-    for i = #dinput_adaptor_map, count + 1, -1 do
-        dinput_adaptor_map[i] = nil
+    for i = #dinput_key_map, count + 1, -1 do
+        dinput_key_map[i] = nil
         dinput_axis_map[i] = nil
     end
 end
@@ -935,14 +935,12 @@ end
 ---@return boolean
 local function isHidKeyDown(code)
     if other_setting.hid_index == 0 then
-        -- 从所有可能的设备获取输入
-        local state = false
-        for i = 1, #dinput_adaptor_map do
-            state = state or DirectInputAdaptor.getKeyState(dinput_adaptor_map[i], code)
+        -- 从第一个设备读取输入
+        if #dinput_key_map > 0 then
+            return DirectInputAdaptor.getKeyState(dinput_key_map[1], code)
         end
-        return state
-    elseif other_setting.hid_index <= #dinput_adaptor_map then
-        return DirectInputAdaptor.getKeyState(dinput_adaptor_map[other_setting.hid_index], code)
+    elseif other_setting.hid_index <= #dinput_key_map then
+        return DirectInputAdaptor.getKeyState(dinput_key_map[other_setting.hid_index], code)
     end
     return false
 end
@@ -951,11 +949,11 @@ end
 ---@return number
 local function getHidAxis(code)
     if other_setting.hid_index == 0 then
-        -- 只从一个设备读取输入
-        if #dinput_adaptor_map > 0 then
+        -- 从第一个设备读取输入
+        if #dinput_key_map > 0 then
             return dinput_axis_map[1][code] or 0
         end
-    elseif other_setting.hid_index <= #dinput_adaptor_map then
+    elseif other_setting.hid_index <= #dinput_key_map then
         return dinput_axis_map[other_setting.hid_index][code] or 0
     end
     return 0
