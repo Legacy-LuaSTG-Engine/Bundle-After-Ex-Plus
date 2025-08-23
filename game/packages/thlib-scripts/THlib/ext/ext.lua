@@ -174,7 +174,6 @@ end
 
 --- 切关处理
 function ChangeGameStage()
-    InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     ResetWorld()
     ResetWorldOffset() -- by ETC，重置world偏移
     lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
@@ -223,11 +222,13 @@ end
 --- 获取输入
 local framedata = {}
 function GetInput()
-    if stage.next_stage then
+    if stage.NextStageExist() then
         input.clear()
         input_rep.clear()
+        InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     end
     input.update()
+    InputSystem.update()
 
     if ext.pause_menu:IsKilled() then
         -- 不是录像且非暂停时更新按键状态
@@ -352,12 +353,12 @@ function DoFrameEx()
         --播放录像时
         ext.replayTicker = ext.replayTicker + 1
         ext.slowTicker = ext.slowTicker + 1
-        if GetKeyState(setting.keysys.repfast) then
+        if MenuKeyIsDown("speed-up") then
             for _ = 1, 4 do
                 DoFrame()
                 ext.pause_menu_order = nil
             end
-        elseif GetKeyState(setting.keysys.repslow) then
+        elseif MenuKeyIsDown("slow-down") then
             if ext.replayTicker % 4 == 0 then
                 DoFrame()
                 ext.pause_menu_order = nil

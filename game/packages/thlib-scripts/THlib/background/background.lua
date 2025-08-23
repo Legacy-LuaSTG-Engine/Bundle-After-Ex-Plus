@@ -5,9 +5,6 @@
 ----------------------------------------
 ---background
 
-local input = require("foundation.input.core")
-local key_repeated_activate = input.isBooleanActionRepeatedActivate
-
 background = Class(object)
 
 function background:init(is_sc_bg)
@@ -47,14 +44,14 @@ function camera_setter:init()
 end
 
 function camera_setter:frame()
-    if key_repeated_activate("shoot") then
+    if MenuKeyIsPressed("confirm") then
         self.edit = true
         PlaySound('select00', 0.3)
         if not self.edit then
             self.posx = 1
         end
     end
-    if key_repeated_activate("spell") then
+    if MenuKeyIsPressed("cancel") then
         self.edit = false
         PlaySound('cancel00', 0.3)
     end
@@ -63,30 +60,30 @@ function camera_setter:frame()
     end
     if self.edit then
         local step = 0.1
-        if KeyIsDown 'slow' then
+        if MenuKeyIsDown("slow-down") then
             step = 0.01
         end
-        if key_repeated_activate("left") then
+        if MenuKeyIsPressed("left") then
             self.posx = self.posx - 1
             PlaySound('select00', 0.3)
         end
-        if key_repeated_activate("right") then
+        if MenuKeyIsPressed("right") then
             self.posx = self.posx + 1
             PlaySound('select00', 0.3)
         end
         self.posx = (self.posx - 1 + self.nitem[self.pos]) % self.nitem[self.pos] + 1
         if self.pos <= 3 or self.pos == 5 then
             local item = lstg.view3d[self.text[self.pos]]
-            if key_repeated_activate("up") then
+            if MenuKeyIsPressed("up") then
                 item[self.posx] = item[self.posx] + step
                 PlaySound('select00', 0.3)
             end
-            if key_repeated_activate("down") then
+            if MenuKeyIsPressed("down") then
                 item[self.posx] = item[self.posx] - step
                 PlaySound('select00', 0.3)
             end
         elseif self.pos == 6 then
-            if key_repeated_activate("up") then
+            if MenuKeyIsPressed("up") then
                 lstg.view3d.fog[self.posx] = lstg.view3d.fog[self.posx] + step
                 PlaySound('select00', 0.3)
                 if lstg.view3d.fog[1] < -0.0001 then
@@ -97,7 +94,7 @@ function camera_setter:frame()
                     end
                 end
             end
-            if key_repeated_activate("down") then
+            if MenuKeyIsPressed("down") then
                 lstg.view3d.fog[self.posx] = lstg.view3d.fog[self.posx] - step
                 if lstg.view3d.fog[1] < -1.0001 then
                     lstg.view3d.fog[1] = -2
@@ -116,44 +113,44 @@ function camera_setter:frame()
             local c = {}
             local alpha
             local step = 10
-            if KeyIsDown 'slow' then
+            if MenuKeyIsDown("slow-down") then
                 step = 1
             end
             alpha, c[1], c[2], c[3] = lstg.view3d.fog[3]:ARGB()
-            if key_repeated_activate("up") then
+            if MenuKeyIsPressed("up") then
                 c[self.posx] = c[self.posx] + step
                 PlaySound('select00', 0.3)
             end
-            if key_repeated_activate("down") then
+            if MenuKeyIsPressed("down") then
                 c[self.posx] = c[self.posx] - step
                 PlaySound('select00', 0.3)
             end
             c[self.posx] = max(0, min(c[self.posx], 255))
             lstg.view3d.fog[3] = Color(alpha, unpack(c))
         elseif self.pos == 4 then
-            if key_repeated_activate("up") then
+            if MenuKeyIsPressed("up") then
                 lstg.view3d.fovy = lstg.view3d.fovy + step
                 PlaySound('select00', 0.3)
             end
-            if key_repeated_activate("down") then
+            if MenuKeyIsPressed("down") then
                 lstg.view3d.fovy = lstg.view3d.fovy - step
                 PlaySound('select00', 0.3)
             end
         end
     else
-        if key_repeated_activate("up") then
+        if MenuKeyIsPressed("up") then
             self.pos = self.pos - 1
             self.pos_changed = ui.menu.shake_time
             PlaySound('select00', 0.3)
         end
-        if key_repeated_activate("down") then
+        if MenuKeyIsPressed("down") then
             self.pos = self.pos + 1
             self.pos_changed = ui.menu.shake_time
             PlaySound('select00', 0.3)
         end
         self.pos = (self.pos + 6) % 7 + 1
     end
-    if KeyIsPressed 'special' then
+    if MenuKeyIsPressed("special") then
         Print("--set camera")
         Print(string.format("Set3D('eye',%.2f,%.2f,%.2f)", unpack(lstg.view3d.eye)))
         Print(string.format("Set3D('at',%.2f,%.2f,%.2f)", unpack(lstg.view3d.at)))
