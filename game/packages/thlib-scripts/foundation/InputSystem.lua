@@ -1188,8 +1188,8 @@ local function updateVector2Actions(action_set, action_set_values)
                 addVector2ActionValue(values, name, x, y)
             end
             if binding.type == "axis" then
-                local x = getControllerAxis(binding.x_axis)
-                local y = getControllerAxis(binding.y_axis)
+                local x = getHidAxis(binding.x_axis)
+                local y = getHidAxis(binding.y_axis)
                 addVector2ActionValue(values, name, x, y)
             end
             -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
