@@ -1075,7 +1075,9 @@ local function updateScalarActions(action_set, action_set_values)
             -- TODO: 我要怎么弄？
         end
         -- 归一化标量
-        values[name] = math.max(0.0, math.min(values[name], 1.0))
+        if values[name] then
+            values[name] = math.max(0.0, math.min(values[name], 1.0))
+        end
     end
 end
 
@@ -1228,7 +1230,9 @@ local function updateVector2Actions(action_set, action_set_values)
             -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
         end
         -- 归一化向量
-        normalizeVector2(values[name])
+        if values[name] then
+            normalizeVector2(values[name])
+        end
     end
 end
 
