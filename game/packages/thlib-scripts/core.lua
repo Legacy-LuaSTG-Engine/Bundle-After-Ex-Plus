@@ -8,9 +8,7 @@
 
 require("gconfig") -- 全局配置信息
 require("gconfig_auto") -- 全局配置信息（由打包器自动生成）
-
 lstg.DoFile("lib/Lapi.lua")--将 lstg 库的方法导入到全局（很神秘的设计）
-lstg.DoFile("lib/Lkeycode.lua")-- 按键常量
 require("foundation.legacy.userdata")
 require("foundation.legacy.setting")
 require("foundation.legacy.scoredata")

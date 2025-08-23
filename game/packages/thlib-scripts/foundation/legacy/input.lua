@@ -11,6 +11,8 @@ local InputSystem = require("foundation.InputSystem")
 --------------------------------------------------------------------------------
 --- 兼容性 API
 
+KEY = require("foundation.legacy.KEY")
+
 local GAME_ACTION_SET_PREFIX = "game:"
 local MENU_ACTION_SET_PREFIX = "menu:"
 

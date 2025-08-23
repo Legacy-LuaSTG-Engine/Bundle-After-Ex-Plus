@@ -714,15 +714,16 @@ function InputSetting:init(exit_f)
             self.locked = true
             self._current_edit = idx
             task.New(self, function()
-                local last_key = KEY.NULL
+                local Keyboard = lstg.Input.Keyboard
+                local last_key = Keyboard.None
                 for i = 1, 240 do
                     task.Wait(1)
                     last_key = lstg.GetLastKey()
-                    if last_key ~= KEY.NULL then
+                    if last_key ~= Keyboard.None then
                         break
                     end
                 end
-                if last_key ~= KEY.NULL then
+                if last_key ~= Keyboard.None then
                     last_setting[cfg[3]] = last_key
                     w_button.updateText()
                 end

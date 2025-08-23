@@ -1,4 +1,7 @@
-KEY={NULL=0x00}
+---@class legacy.KEY
+local KEY = {}
+
+KEY.NULL=0x00
 
 KEY.LBUTTON=0x01
 KEY.RBUTTON=0x02
