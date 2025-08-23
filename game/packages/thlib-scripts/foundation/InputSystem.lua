@@ -1006,6 +1006,7 @@ end
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function updateBooleanActions(action_set, action_set_values)
     local values = action_set_values.boolean_action_values
+    local frames = action_set_values.boolean_action_frames
     for name, action in action_set:booleanActions() do
         for _, binding in action:keyboardBindings() do
             orBooleanActionValue(values, name, Keyboard.GetKeyState(binding.key))
@@ -1018,6 +1019,14 @@ local function updateBooleanActions(action_set, action_set_values)
         end
         for _, binding in action:hidBindings() do
             orBooleanActionValue(values, name, isHidKeyDown(binding.key))
+        end
+        if type(frames[name]) ~= "number" then
+            frames[name] = -1
+        end
+        if values[name] then
+            frames[name] = frames[name] + 1
+        else
+            frames[name] = -1
         end
     end
 end
@@ -1309,12 +1318,15 @@ end
 --#region
 
 ---@param name string
----@return boolean, boolean, integer
+---@return boolean last
+---@return boolean current
+---@return integer frames
 local function getLastAndCurrentBooleanAction(name)
     local action_set_values = getCurrentActionSetValues()
     local last = toBoolean(action_set_values.last_boolean_action_values[name])
     local current = toBoolean(action_set_values.boolean_action_values[name])
-    return last, current, action_set_values.boolean_action_frames[name] or 0
+    local frames = toScalar(action_set_values.boolean_action_frames[name])
+    return last, current, frames
 end
 
 --- 布尔动作是否在当前帧激活  
@@ -1332,8 +1344,23 @@ function InputSystem.isBooleanActionActivated(name, repeat_delay, repeat_interva
         assert(type(repeat_interval) == "number", "repeat_interval must be a number (integer)")
         assert(repeat_delay >= 0, "repeat_delay must be greater than or equal to 0")
         assert(repeat_interval >= 0, "repeat_interval must be greater than or equal to 0")
+        assert(math.floor(repeat_delay) == repeat_delay, "repeat_delay must be a number (integer)")
+        assert(math.floor(repeat_interval) == repeat_interval, "repeat_interval must be a number (integer)")
     end
-    local last, current = getLastAndCurrentBooleanAction(name)
+    local last, current, frames = getLastAndCurrentBooleanAction(name)
+    if current and repeat_delay and repeat_interval then
+        if repeat_delay == 0 and repeat_interval == 0 then
+            return true
+        end
+        if frames >= repeat_delay then
+            if repeat_interval == 0 then
+                return true
+            end
+            if ((frames - repeat_delay) % repeat_interval) == 0 then
+                return true
+            end
+        end
+    end
     return (not last) and current
 end
 
