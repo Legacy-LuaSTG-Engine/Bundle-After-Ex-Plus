@@ -120,19 +120,3 @@ function MenuKeyIsPressed(key)
     key = transformLegacyMenuKey(key)
     return InputSystem.isBooleanActionActivated(MENU_ACTION_SET_PREFIX .. key, 40, 4) -- TODO: 允许修改该默认设置
 end
-
---- 将按键二进制码转换为字面值，用于设置界面
-function KeyCodeToName()
-    local key2name = {}
-    -- 按键code（参见launch和微软文档）作为索引，名称为值
-    for k, v in pairs(Keyboard) do
-        if type(v) == "number" then
-            key2name[v] = k
-        end
-    end
-    -- 没有名字的就给个默认名字
-    for i = 0, 255 do
-        key2name[i] = key2name[i] or ("Key%d"):format(i)
-    end
-    return key2name
-end
