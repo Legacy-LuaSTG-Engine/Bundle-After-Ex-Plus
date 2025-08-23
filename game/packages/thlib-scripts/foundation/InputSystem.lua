@@ -1494,17 +1494,23 @@ local function mergeBooleanAction(source_action, target_action)
     end
 end
 
+---@param action_set_name string
 ---@param source_actions table<string, foundation.InputSystem.BooleanAction>
 ---@param target_actions table<string, foundation.InputSystem.BooleanAction>
-local function mergeBooleanActions(source_actions, target_actions)
+local function mergeBooleanActions(action_set_name, source_actions, target_actions)
     for _, source_action in pairs(source_actions) do
-        if type(source_action) == "table" then
-            if type(source_action.name) == "string" then
-                local target_action = target_actions[source_action.name]
-                if target_action then
-                    mergeBooleanAction(source_action, target_action)
-                end
-            end
+        if type(name) ~= "string" then
+            logError('%s action_sets["%s"].boolean_actions[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, action_set_name, tostring(name), type(name))
+        elseif type(source_action) ~= "table" then
+            logError('%s action_sets["%s"].boolean_actions["%s"] must be a table', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif type(source_action.name) ~= "string" then
+            logError('%s action_sets["%s"].boolean_actions["%s"].name must be a string', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif name ~= source_action.name then
+            logError('%s action_sets["%s"].boolean_actions["%s"] <-- key must equals to action_sets["%s"].boolean_actions["%s"].name', LOAD_ERROR_PREFIX, action_set_name, name, action_set_name, name)
+        elseif not target_actions[source_action.name] then
+            logError("%s ActionSet '%s': BooleanAction '%s' does not exists", LOAD_ERROR_PREFIX, action_set_name, source_action.name)
+        else
+            mergeBooleanAction(source_action, target_actions[source_action.name])
         end
     end
 end
@@ -1549,17 +1555,23 @@ local function mergeScalarAction(source_action, target_action)
     end
 end
 
+---@param action_set_name string
 ---@param source_actions table<string, foundation.InputSystem.ScalarAction>
 ---@param target_actions table<string, foundation.InputSystem.ScalarAction>
-local function mergeScalarActions(source_actions, target_actions)
+local function mergeScalarActions(action_set_name, source_actions, target_actions)
     for _, source_action in pairs(source_actions) do
-        if type(source_action) == "table" then
-            if type(source_action.name) == "string" then
-                local target_action = target_actions[source_action.name]
-                if target_action then
-                    mergeScalarAction(source_action, target_action)
-                end
-            end
+        if type(name) ~= "string" then
+            logError('%s action_sets["%s"].scalar_actions[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, action_set_name, tostring(name), type(name))
+        elseif type(source_action) ~= "table" then
+            logError('%s action_sets["%s"].scalar_actions["%s"] must be a table', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif type(source_action.name) ~= "string" then
+            logError('%s action_sets["%s"].scalar_actions["%s"].name must be a string', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif name ~= source_action.name then
+            logError('%s action_sets["%s"].scalar_actions["%s"] <-- key must equals to action_sets["%s"].scalar_actions["%s"].name', LOAD_ERROR_PREFIX, action_set_name, name, action_set_name, name)
+        elseif not target_actions[source_action.name] then
+            logError("%s ActionSet '%s': ScalarAction '%s' does not exists", LOAD_ERROR_PREFIX, action_set_name, source_action.name)
+        else
+            mergeScalarAction(source_action, target_actions[source_action.name])
         end
     end
 end
@@ -1609,45 +1621,73 @@ local function mergeVector2Action(source_action, target_action)
     end
 end
 
+---@param action_set_name string
 ---@param source_actions table<string, foundation.InputSystem.Vector2Action>
 ---@param target_actions table<string, foundation.InputSystem.Vector2Action>
-local function mergeVector2Actions(source_actions, target_actions)
-    for _, source_action in pairs(source_actions) do
-        if type(source_action) == "table" then
-            if type(source_action.name) == "string" then
-                local target_action = target_actions[source_action.name]
-                if target_action then
-                    mergeVector2Action(source_action, target_action)
-                end
-            end
+local function mergeVector2Actions(action_set_name, source_actions, target_actions)
+    for name, source_action in pairs(source_actions) do
+        if type(name) ~= "string" then
+            logError('%s action_sets["%s"].vector2_actions[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, action_set_name, tostring(name), type(name))
+        elseif type(source_action) ~= "table" then
+            logError('%s action_sets["%s"].vector2_actions["%s"] must be a table', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif type(source_action.name) ~= "string" then
+            logError('%s action_sets["%s"].vector2_actions["%s"].name must be a string', LOAD_ERROR_PREFIX, action_set_name, name)
+        elseif name ~= source_action.name then
+            logError('%s action_sets["%s"].vector2_actions["%s"] <-- key must equals to action_sets["%s"].vector2_actions["%s"].name', LOAD_ERROR_PREFIX, action_set_name, name, action_set_name, name)
+        elseif not target_actions[source_action.name] then
+            logError("%s ActionSet '%s': Vector2Action '%s' does not exists", LOAD_ERROR_PREFIX, action_set_name, source_action.name)
+        else
+            mergeVector2Action(source_action, target_actions[source_action.name])
         end
     end
 end
 
----@param input_action_set foundation.InputSystem.ActionSet
-local function mergeActionSet(input_action_set)
-    if type(input_action_set) ~= "table" then
+---@param name string
+---@param source_action_set foundation.InputSystem.ActionSet
+local function mergeActionSet(name, source_action_set)
+    if type(name) ~= "string" then
+        logError('%s action_sets[%s (type: %s)] <-- key must be a string', LOAD_ERROR_PREFIX, tostring(name), type(name))
         return
     end
-    if type(input_action_set.name) ~= "string" then
+    if type(source_action_set) ~= "table" then
+        logError('%s action_sets["%s"] must be a table', LOAD_ERROR_PREFIX, name)
         return
     end
-    local target_action_set = action_sets[input_action_set.name]
+    if type(source_action_set.name) ~= "string" then
+        logError('%s action_sets["%s"].name must be a string', LOAD_ERROR_PREFIX, name)
+        return
+    end
+    if name ~= source_action_set.name then
+        logError('%s action_sets["%s"] <-- key must equals to action_sets["%s"].name', LOAD_ERROR_PREFIX, name, name)
+        return
+    end
+    local target_action_set = action_sets[source_action_set.name]
     if not target_action_set then
+        logError("%s ActionSet '%s' does not exists", LOAD_ERROR_PREFIX, name)
         return
     end
-    if type(input_action_set.boolean_actions) == "table" then
-        mergeBooleanActions(input_action_set.boolean_actions, target_action_set.boolean_actions)
-        mergeScalarActions(input_action_set.scalar_actions, target_action_set.scalar_actions)
-        mergeVector2Actions(input_action_set.vector2_actions, target_action_set.vector2_actions)
+    if type(source_action_set.boolean_actions) == "table" then
+        mergeBooleanActions(target_action_set.name, source_action_set.boolean_actions, target_action_set.boolean_actions)
+    elseif source_action_set.boolean_actions ~= nil then
+        logError('%s action_sets["%s"].boolean_actions must be a table', LOAD_ERROR_PREFIX, name)
+    end
+    if type(source_action_set.scalar_actions) == "table" then
+        mergeScalarActions(target_action_set.name, source_action_set.scalar_actions, target_action_set.scalar_actions)
+    elseif source_action_set.scalar_actions ~= nil then
+        logError('%s action_sets["%s"].scalar_actions must be a table', LOAD_ERROR_PREFIX, name)
+    end
+    if type(source_action_set.vector2_actions) == "table" then
+        mergeVector2Actions(target_action_set.name, source_action_set.vector2_actions, target_action_set.vector2_actions)
+    elseif source_action_set.vector2_actions ~= nil then
+        logError('%s action_sets["%s"].vector2_actions must be a table', LOAD_ERROR_PREFIX, name)
     end
 end
 
----@param input_other_setting foundation.InputSystem.Setting
-local function mergeOtherSetting(input_other_setting)
+---@param source_other_setting foundation.InputSystem.Setting
+local function mergeOtherSetting(source_other_setting)
     for k, v in pairs(setting) do
-        if type(v) == type(input_other_setting[k]) then
-            setting[k] = input_other_setting[k]
+        if type(v) == type(source_other_setting[k]) then
+            setting[k] = source_other_setting[k]
         else
             logError('%s setting["%s"] must be a %s', LOAD_ERROR_PREFIX, k, type(v))
         end
@@ -1673,8 +1713,8 @@ function InputSystem.loadSetting(path)
     ---@type table<string, foundation.InputSystem.ActionSet>?
     local data_action_sets = data.action_sets
     if type(data_action_sets) == "table" then
-        for _, data_action_set in pairs(data_action_sets) do
-            mergeActionSet(data_action_set)
+        for name, data_action_set in pairs(data_action_sets) do
+            mergeActionSet(name, data_action_set)
         end
     elseif data_action_sets ~= nil then
         logError("%s action_sets must be a table", LOAD_ERROR_PREFIX)
