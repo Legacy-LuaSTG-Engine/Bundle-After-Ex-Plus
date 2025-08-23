@@ -78,8 +78,6 @@ function M.Set(stage_name)
     assert(type(stage_name) == "string", "stage name must be a string")
     M.next_stage = M.stages[stage_name]
     assert(M.next_stage, "stage does not exist")
-    -- TODO: 这个是干什么的？
-    KeyStatePre = {}
 end
 
 function M.NextStageExist()

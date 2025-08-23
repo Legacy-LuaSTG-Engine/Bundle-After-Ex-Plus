@@ -11,10 +11,9 @@ local InputSystem = require("foundation.InputSystem")
 --------------------------------------------------------------------------------
 --- 兼容性 API
 
-KeyStatePre = nil
-KeyState = nil
-
-function GetInput() end
+function GetInput()
+    InputSystem.update()
+end
 
 ---@param key string
 ---@return boolean

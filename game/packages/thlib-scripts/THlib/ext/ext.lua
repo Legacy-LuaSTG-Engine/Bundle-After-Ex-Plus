@@ -5,6 +5,7 @@
 
 local SceneManager = require("foundation.SceneManager")
 local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
+local InputSystem = require("foundation.InputSystem")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
 -- input system
@@ -173,6 +174,7 @@ end
 
 --- 切关处理
 function ChangeGameStage()
+    InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     ResetWorld()
     ResetWorldOffset() -- by ETC，重置world偏移
     lstg.ResetLstgtmpvar() -- 重置lstg.tmpvar
