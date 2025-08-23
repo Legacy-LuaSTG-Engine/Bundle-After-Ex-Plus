@@ -1083,6 +1083,14 @@ local function addVector2ActionValue(values, name, x, y)
     vector2.y = vector2.y + y
 end
 
+---@param v foundation.InputSystem.Vector2
+local function normalizeVector2(v)
+    local l = math.max(0.0, math.min(math.sqrt(v.x * v.x + v.y * v.y), 1.0))
+    local a = math.atan2(v.y, v.x)
+    v.x = l * math.cos(a)
+    v.y = l * math.sin(a)
+end
+
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action_set_values foundation.InputSystem.ActionSetValues
 local function updateVector2Actions(action_set, action_set_values)
@@ -1194,6 +1202,8 @@ local function updateVector2Actions(action_set, action_set_values)
             end
             -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
         end
+        -- 归一化向量
+        normalizeVector2(values[name])
     end
 end
 
