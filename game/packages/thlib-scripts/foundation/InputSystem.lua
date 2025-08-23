@@ -817,15 +817,15 @@ end
 --#region
 
 ---@type foundation.input.adapter.XInput.KeyState[]
-local xinput_adaptor_map = {}
+local xinput_key_map = {}
 
 local function updateXInput()
     XInput.update()
     for i = 1, 4 do
         if XInput.isConnected(i) then
-            xinput_adaptor_map[i] = XInputAdaptor.mapKeyStateFromIndex(i, 0.5)
+            xinput_key_map[i] = XInputAdaptor.mapKeyStateFromIndex(i, 0.5)
         else
-            xinput_adaptor_map[i] = {}
+            xinput_key_map[i] = {}
         end
     end
 end
@@ -867,11 +867,11 @@ local function isControllerKeyDown(code)
         -- 从所有可能的控制器获取输入
         for i = 1, 4 do
             if XInput.isConnected(i) then
-                return XInputAdaptor.getKeyState(xinput_adaptor_map[i], code)
+                return XInputAdaptor.getKeyState(xinput_key_map[i], code)
             end
         end
     elseif XInput.isConnected(other_setting.controller_index) then
-        return XInputAdaptor.getKeyState(xinput_adaptor_map[other_setting.controller_index], code)
+        return XInputAdaptor.getKeyState(xinput_key_map[other_setting.controller_index], code)
     end
     return false
 end
@@ -1077,7 +1077,7 @@ local function updateScalarActions(action_set, action_set_values)
                             addScalarActionValue(values, name, XInput.getRightTrigger(i))
                         end
                     elseif binding.type == "key" then
-                        if XInputAdaptor.getKeyState(xinput_adaptor_map[i], binding.key) then
+                        if XInputAdaptor.getKeyState(xinput_key_map[i], binding.key) then
                             addScalarActionValue(values, name, 1) -- 按键按下映射为 1
                         end
                     end
