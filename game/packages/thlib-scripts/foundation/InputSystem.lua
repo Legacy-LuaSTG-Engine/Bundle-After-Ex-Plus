@@ -1085,6 +1085,13 @@ end
 
 ---@param v foundation.InputSystem.Vector2
 local function normalizeVector2(v)
+    -- 通常情况下从手柄/其他HID设备读取的轴数值不会用超过32位整数的精度储存
+    -- 假设极端情况下有某些轴的值由32位无符号整数表示
+    -- 1 / 2^32 = 0.00000000023283064365386962890625
+    -- 我们就取 0.0000000001 作为下限，低于该阈值就可以跳过计算，避免 atan2 计算出 nan
+    if math.abs(v.x) < 0.0000000001 and math.abs(v.y) < 0.0000000001 then
+        return
+    end
     local l = math.max(0.0, math.min(math.sqrt(v.x * v.x + v.y * v.y), 1.0))
     local a = math.atan2(v.y, v.x)
     v.x = l * math.cos(a)
