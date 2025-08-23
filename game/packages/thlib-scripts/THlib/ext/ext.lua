@@ -8,9 +8,6 @@ local IntersectionDetectionManager = require("foundation.IntersectionDetectionMa
 local InputSystem = require("foundation.InputSystem")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
--- input system
-local input = require("foundation.input.core")
-
 ----------------------------------------
 ---ext加强库
 
@@ -223,10 +220,8 @@ local REPLAY_ACTION_SET_NAMES = { "game" }
 --- 获取输入
 function GetInput()
     if stage.NextStageExist() then
-        input.clear()
         InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     end
-    input.update()
     InputSystem.update()
 
     if ext.pause_menu:IsKilled() then
