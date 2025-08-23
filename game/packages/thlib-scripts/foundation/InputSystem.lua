@@ -1450,7 +1450,10 @@ function InputSystem.saveSetting(path)
     local data = {}
     data.action_sets = copyTable(action_sets)
     data.setting = copyTable(setting)
-    Files.writeStringWithBackup(path, cjson_util.format_json(cjson.encode(data)))
+    local r, err = Files.writeStringWithBackup(path, cjson_util.format_json(cjson.encode(data)))
+    if not r then
+        logError("an error occurred while saving the configuration: %s", tostring(err))
+    end
 end
 
 local LOAD_ERROR_PREFIX = "an error occurred while loading the configuration:"
