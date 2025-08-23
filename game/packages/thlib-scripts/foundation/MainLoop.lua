@@ -25,7 +25,6 @@ function RenderFunc()
     SceneManager.render()
     debugger.draw()
     lstg.EndScene()
-    -- TODO: 整理一下这里的代码
     -- 截图
     if MenuKeyIsPressed("snapshot") then
         LocalFileStorage.snapshot()
