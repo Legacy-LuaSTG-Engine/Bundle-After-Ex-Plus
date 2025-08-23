@@ -8,6 +8,7 @@
 local i18n = require("lib.i18n")
 local default_setting = require("foundation.legacy.default_setting")
 local SceneManager = require("foundation.SceneManager")
+local KeyboardAdaptor = require("foundation.KeyboardAdaptor")
 
 local i18n_str = i18n.string
 
@@ -700,7 +701,6 @@ function InputSetting:init(exit_f)
     self._back.width = _width / 4
     self._back.height = _w_height
 
-    local key_code_to_name = KeyCodeToName()
     for i, v in ipairs(keys) do
         local idx = i
         local cfg = v
@@ -708,17 +708,17 @@ function InputSetting:init(exit_f)
         local w_button = subui.widget.Button("", function() end)
         function w_button.updateText()
             local vkey = last_setting[cfg[3]]
-            w_button.text = key_code_to_name[vkey]
+            w_button.text = KeyboardAdaptor.getKeyName[vkey]
         end
         w_button.callback = function()
             self.locked = true
             self._current_edit = idx
             task.New(self, function()
                 local Keyboard = lstg.Input.Keyboard
-                local last_key = Keyboard.None
+                local last_key = nil
                 for i = 1, 240 do
                     task.Wait(1)
-                    last_key = lstg.GetLastKey()
+                    last_key = KeyboardAdaptor.isAnyKeyDown()
                     if last_key ~= Keyboard.None then
                         break
                     end
