@@ -100,6 +100,13 @@ end
 
 ---@generic T
 ---@param array T[]
+---@param element T
+local function appendOneToArray(array, element)
+    array[#array + 1] = element
+end
+
+---@generic T
+---@param array T[]
 ---@param elements T[]
 local function appendToArray(array, elements)
     local n = #array
@@ -1255,6 +1262,292 @@ function InputSystem.update()
     for name, action_set in pairs(action_sets) do
         updateActionSet(action_set, raw_action_set_values[name])
     end
+end
+
+--#endregion
+--------------------------------------------------------------------------------
+--- 内部状态序列化、反序列化
+--#region
+
+local ACTION_SET_MARKER = string.byte("[")
+local BOOLEAN_ACTION_VALUES_MARKER = string.byte("?")
+local SCALAR_ACTION_VALUES_MARKER = string.byte("/")
+local VECTOR2_ACTION_VALUES_MARKER = string.byte("^")
+
+---@param v number
+---@return number
+local function round(v)
+    local l, h = math.floor(v), math.ceil(v)
+    if v - l < h - v then
+        return l
+    else
+        return h
+    end
+end
+
+---@param bytes integer[]
+---@param byte integer
+local function appendByte(bytes, byte)
+    if byte < 0 or byte > 255 or round(byte) ~= byte then
+        error(("invalid byte value '%s'"):format(tostring(byte)))
+    end
+    bytes[#bytes + 1] = byte
+end
+
+---@param bytes integer[]
+---@param args integer[]
+local function appendBytes(bytes, args)
+    local n = #bytes
+    for i = 1, #args do
+        local byte = args[i]
+        if byte < 0 or byte > 255 or round(byte) ~= byte then
+            error(("invalid byte value '%s'"):format(tostring(byte)))
+        end
+        bytes[n + i] = byte
+    end
+end
+
+---@param bytes integer[]
+---@param str string
+local function appendString(bytes, str)
+    local len = str:len()
+    if len > 255 then
+        error(("length of str '%s' greater than 255"):format(str)) -- TODO: 校验应该移动到创建时
+    end
+    appendByte(bytes, len)
+    appendBytes(bytes, { str:byte(1, len) })
+end
+
+---@param v any
+---@return integer
+local function booleanToByte(v)
+    if v then
+        return 1
+    else
+        return 0
+    end
+end
+
+---@param b integer
+---@return boolean
+local function byteToBoolean(b)
+    return b ~= 0
+end
+
+---@param include_action_set_names string[]
+---@return integer
+function InputSystem.getSerializationLength(include_action_set_names)
+    local length = 0
+    for action_set_name, action_set_values in pairs(raw_action_set_values) do
+        if isArrayContains(include_action_set_names, action_set_name) then
+            -- 动作集信息
+            length = length + 1 -- ACTION_SET_MARKER
+            length = length + 1 + action_set_name:len()
+            -- 布尔动作值
+            length = length + 1 -- BOOLEAN_ACTION_VALUES_MARKER
+            for action_name, _ in pairs(action_set_values.boolean_action_values) do
+                length = length + 1 + action_name:len()
+                length = length + 1 -- boolean value
+            end
+            -- 标量动作值
+            length = length + 1 -- SCALAR_ACTION_VALUES_MARKER
+            for action_name, _ in pairs(action_set_values.scalar_action_values) do
+                length = length + 1 + action_name:len()
+                length = length + 1 -- scalar value
+            end
+            -- 矢量动作值
+            length = length + 1 -- VECTOR2_ACTION_VALUES_MARKER
+            for action_name, _ in pairs(action_set_values.vector2_action_values) do
+                length = length + 1 + action_name:len()
+                length = length + 2 -- polar vector2 value
+            end
+        end
+    end
+    return length
+end
+
+---@param include_action_set_names string[]
+---@return integer[]
+function InputSystem.serialize(include_action_set_names)
+    ---@type integer[]
+    local bytes = {}
+    for action_set_name, action_set_values in pairs(raw_action_set_values) do
+        if isArrayContains(include_action_set_names, action_set_name) then
+            -- 动作集信息
+            appendByte(bytes, ACTION_SET_MARKER)
+            appendString(bytes, action_set_name)
+            -- 布尔动作值
+            appendByte(bytes, BOOLEAN_ACTION_VALUES_MARKER)
+            for action_name, action_value in pairs(action_set_values.boolean_action_values) do
+                appendString(bytes, action_name)
+                appendByte(bytes, booleanToByte(action_value))
+            end
+            -- 标量动作值
+            appendByte(bytes, SCALAR_ACTION_VALUES_MARKER)
+            for action_name, action_value in pairs(action_set_values.scalar_action_values) do
+                appendString(bytes, action_name)
+                appendByte(bytes, round(action_value * 255))
+            end
+            -- 矢量动作值
+            appendByte(bytes, VECTOR2_ACTION_VALUES_MARKER)
+            for action_name, action_value in pairs(action_set_values.vector2_action_values) do
+                appendString(bytes, action_name)
+                local v = action_value
+                local l = math.sqrt(v.x * v.x + v.y + v.y)
+                local a = math.deg(math.atan2(v.y, v.x))
+                local b1 = round(l * 100)
+                local b2 = round(a) % 360
+                if b2 > 255 then
+                    b1 = b1 + 128
+                    b2 = b2 - 128
+                end
+                appendByte(bytes, b1)
+                appendByte(bytes, b2)
+            end
+        end
+    end
+    return bytes
+end
+
+---@param bytes integer[]
+---@param index integer
+---@param str_id string
+---@return string? string
+---@return string? message
+local function scanString(bytes, index, str_id)
+    local length = #bytes
+    -- string length
+    if index > length then
+        return nil, ("expected string length (%s name), but reached the end of the byte array"):format(str_id)
+    end
+    local string_length = bytes[index]
+    index = index + 1
+    -- string
+    if (index + string_length - 1) > length then
+        return nil, ("expected string (%s name length = %d), but reached the end of the byte array"):format(str_id, string_length)
+    end
+    local buffer = {}
+    for i = 1, string_length do
+        buffer[i] = string.char(bytes[index])
+        index = index + 1
+    end
+    return table.concat(buffer), nil
+end
+
+---@param marker integer
+---@return string
+local function getStrIdByMarker(marker)
+    if marker == ACTION_SET_MARKER then
+        return "ActionSet"
+    elseif marker == BOOLEAN_ACTION_VALUES_MARKER then
+        return "BooleanAction"
+    elseif marker == SCALAR_ACTION_VALUES_MARKER then
+        return "ScalarAction"
+    elseif marker == VECTOR2_ACTION_VALUES_MARKER then
+        return "Vector2Action"
+    else
+        return "<?>"
+    end
+end
+
+---@param marker integer
+---@return boolean
+local function isActionMarker(marker)
+    return marker == BOOLEAN_ACTION_VALUES_MARKER
+        or marker == SCALAR_ACTION_VALUES_MARKER
+        or marker == VECTOR2_ACTION_VALUES_MARKER
+end
+
+---@param marker integer
+---@return boolean
+local function isAnyMarker(marker)
+    return isActionMarker(marker)
+        or marker == ACTION_SET_MARKER
+end
+
+---@param bytes integer[]
+---@return boolean result
+---@return string? message
+function InputSystem.deserialize(bytes)
+    local length = #bytes
+    local index = 1
+    while index <= length do
+        -- 动作集标记
+        if bytes[index] ~= ACTION_SET_MARKER then
+            return false, ("expected ActionSet marker, but got %d"):format(bytes[index])
+        end
+        index = index + 1
+
+        -- 动作集名称
+        local action_set_name, e_action_set_name = scanString(bytes, index, "ActionSet")
+        if not action_set_name then
+            return false, e_action_set_name
+        end
+        ---@cast action_set_name string
+        index = index + 1 + action_set_name:len()
+
+        -- 动作集
+        local action_set_values = raw_action_set_values[action_set_name]
+        if not action_set_values then
+            return false, ("ActionSet '%s' does not exists"):format(action_set_name)
+        end
+
+        -- 动作值
+        while index <= length do
+            -- 动作值标记
+            local marker = bytes[index]
+            if marker == ACTION_SET_MARKER then
+                break
+            end
+            if not isActionMarker(marker) then
+                return false, ("expected Action marker, but got %d"):format(bytes[index])
+            end
+            index = index + 1
+            -- 动作值
+            while index <= length do
+                -- 先检查一下是不是
+                if isAnyMarker(bytes[index]) then
+                    break
+                end
+                -- 名称
+                local action_name, e_action_name = scanString(bytes, index, getStrIdByMarker(marker))
+                if not action_name then
+                    return false, e_action_name
+                end
+                ---@cast action_name string
+                index = index + 1 + action_name:len()
+                -- 值
+                if marker == BOOLEAN_ACTION_VALUES_MARKER then
+                    action_set_values.boolean_action_values[action_name] = byteToBoolean(bytes[index])
+                    index = index + 1
+                elseif marker == SCALAR_ACTION_VALUES_MARKER then
+                    action_set_values.scalar_action_values[action_name] = bytes[index] / 255.0
+                    index = index + 1
+                elseif marker == VECTOR2_ACTION_VALUES_MARKER then
+                    local b1 = bytes[index]
+                    index = index + 1
+                    local b2 = bytes[index]
+                    index = index + 1
+                    if b1 >= 128 then
+                        b1 = b1 - 128
+                        b2 = b2 + 128
+                    end
+                    local l = b1 / 100.0
+                    local a = math.rad(b2)
+                    local x = l * math.cos(a)
+                    local y = l * math.sin(a)
+                    if action_set_values.vector2_action_values[action_name] then
+                        action_set_values.vector2_action_values[action_name].x = x
+                        action_set_values.vector2_action_values[action_name].y = y
+                    else
+                        action_set_values.vector2_action_values[action_name] = { x = x, y = y }
+                    end
+                end
+            end
+        end
+    end
+
+    return true
 end
 
 --#endregion
