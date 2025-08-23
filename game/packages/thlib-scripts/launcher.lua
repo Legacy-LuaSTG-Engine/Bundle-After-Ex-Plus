@@ -708,7 +708,7 @@ function InputSetting:init(exit_f)
         local w_button = subui.widget.Button("", function() end)
         function w_button.updateText()
             local vkey = last_setting[cfg[3]]
-            w_button.text = KeyboardAdaptor.getKeyName[vkey]
+            w_button.text = KeyboardAdaptor.getKeyName(vkey)
         end
         w_button.callback = function()
             self.locked = true
