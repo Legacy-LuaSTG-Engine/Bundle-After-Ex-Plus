@@ -519,7 +519,7 @@ end
 local function createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
     ---@type foundation.InputSystem.Vector2Binding
     local result = {
-        type = "joystick",
+        type = "key",
         joystick = 0,
         x_axis = 0,
         y_axis = 0,
@@ -637,7 +637,7 @@ function Vector2Action:addControllerJoystickBinding(joystick)
         return value.type == "joystick" and value.joystick == joystick
     end)
     if exists then
-        return
+        return self
     end
     table.insert(self.controller_bindings, createJoystickVector2Binding(joystick))
     return self
