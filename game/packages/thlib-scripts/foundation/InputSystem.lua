@@ -1316,8 +1316,17 @@ local other_setting = {
 }
 
 local function validateSetting()
-    if not (other_setting.controller_index == 0 or other_setting.controller_index == 1 or other_setting.controller_index == 2 or other_setting.controller_index == 3 or other_setting.controller_index == 4) then
-        error("the value of controller_index must be 0 or 1 or 2 or 3 or 4")
+    if round(other_setting.controller_index) ~= other_setting.controller_index then
+        error("the value of controller_index must a integral number")
+    end
+    if other_setting.controller_index < 0 or other_setting.controller_index > 4 then
+        error("the value of controller_index must be 0 (auto) or 1 or 2 or 3 or 4")
+    end
+    if round(other_setting.hid_index) ~= other_setting.hid_index then
+        error("the value of hid_index must a integral number")
+    end
+    if other_setting.hid_index < 0 then
+        error("the value of hid_index must be greater than or equal to 0")
     end
 end
 
