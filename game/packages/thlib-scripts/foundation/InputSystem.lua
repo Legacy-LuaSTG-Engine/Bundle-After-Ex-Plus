@@ -182,6 +182,21 @@ end
 ---@class foundation.InputSystem.Binding
 ---@field type foundation.InputSystem.PhysicalBindingType
 
+local NAME_ERROR_MESSAGE = "name can only contain uppercase letters A to Z, lowercase letters a to z, numbers 0 to 9, underscores _, and hyphens -, but got '%s'"
+
+---@param name string
+local function checkActionSetNameOrActionName(name)
+    if name:len() == 0 then
+        error("name cannot be empty")
+    end
+    if name:len() > 255 then
+        error(("length of name '%s' greater than 255"):format(name))
+    end
+    if not string.match(name, "^([0-9A-Za-z_%-]+)$") then
+        error(NAME_ERROR_MESSAGE:format(name))
+    end
+end
+
 --#endregion
 --------------------------------------------------------------------------------
 --- 布尔动作：用于按键组件，比如键盘按键
@@ -890,6 +905,7 @@ end
 ---@return foundation.InputSystem.BooleanAction
 function ActionSet:addBooleanAction(name)
     assert(type(name) == "string", "name must be a string")
+    checkActionSetNameOrActionName(name)
     if self.boolean_actions[name] then
         return self.boolean_actions[name]
     end
@@ -934,6 +950,7 @@ end
 ---@return foundation.InputSystem.ScalarAction
 function ActionSet:addScalarAction(name)
     assert(type(name) == "string", "name must be a string")
+    checkActionSetNameOrActionName(name)
     if self.scalar_actions[name] then
         return self.scalar_actions[name]
     end
@@ -978,6 +995,7 @@ end
 ---@return foundation.InputSystem.Vector2Action
 function ActionSet:addVector2Action(name)
     assert(type(name) == "string", "name must be a string")
+    checkActionSetNameOrActionName(name)
     if self.vector2_actions[name] then
         return self.vector2_actions[name]
     end
@@ -1047,6 +1065,7 @@ local on_action_set_removed = {} -- internal hook
 ---@return foundation.InputSystem.ActionSet
 function InputSystem.addActionSet(name)
     assert(type(name) == "string", "name must be a string")
+    checkActionSetNameOrActionName(name)
     if action_sets[name] then
         return action_sets[name]
     end
@@ -1065,8 +1084,8 @@ function InputSystem.removeActionSet(name)
         for _, callback in ipairs(on_action_set_removed) do
             callback(action_sets[name])
         end
+        action_sets[name] = nil
     end
-    action_sets[name] = nil
 end
 
 ---@param name string
@@ -1829,9 +1848,6 @@ end
 ---@param str string
 local function appendString(bytes, str)
     local len = str:len()
-    if len > 255 then
-        error(("length of str '%s' greater than 255"):format(str)) -- TODO: 校验应该移动到创建时
-    end
     appendByte(bytes, len)
     appendBytes(bytes, { str:byte(1, len) })
 end
