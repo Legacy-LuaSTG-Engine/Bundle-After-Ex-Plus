@@ -1346,6 +1346,8 @@ local dinput_key_map = {}
 local dinput_axis_map = {}
 
 local function updateDirectInput()
+    -- 注意：DirectInput 刷新设备的成本非常高
+    -- 建议：在设置界面增加一个刷新设备的按钮，由用户手动刷新
     DirectInput.update()
     local count = DirectInput.count()
     for i = 1, count do
