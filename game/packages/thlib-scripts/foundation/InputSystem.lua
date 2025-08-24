@@ -1095,6 +1095,10 @@ function InputSystem.getActionSet(name)
     return assert(action_sets[name], ("ActionSet '%s' does not exists"):format(name))
 end
 
+--- 第一个参数是可选的过滤器，如果不传该参数，表示不进行过滤  
+---@see foundation.InputSystem.update
+---@see foundation.InputSystem.quantize
+---@see foundation.InputSystem.SerializeContext.initialize
 ---@param include_action_set_names string[]?
 ---@param action_set_name string
 ---@return boolean 
