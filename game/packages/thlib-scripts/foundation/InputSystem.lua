@@ -593,6 +593,24 @@ local function createKeyVector2Binding(positive_x_key, negative_x_key, positive_
     return result
 end
 
+---@param x_axis integer
+---@param y_axis integer
+---@return foundation.InputSystem.Vector2Binding
+local function createAxisVector2Binding(x_axis, y_axis)
+    ---@type foundation.InputSystem.Vector2Binding
+    local result = {
+        type = "axis",
+        joystick = 0,
+        x_axis = x_axis,
+        y_axis = y_axis,
+        positive_x_key = 0,
+        negative_x_key = 0,
+        positive_y_key = 0,
+        negative_y_key = 0,
+    }
+    return result
+end
+
 ---@param joystick integer
 ---@return foundation.InputSystem.Vector2Binding
 local function createJoystickVector2Binding(joystick)
@@ -720,6 +738,20 @@ function Vector2Action:addControllerKeyBinding(positive_x_key, negative_x_key, p
     return self
 end
 
+---@param x_axis integer
+---@param y_axis integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addControllerAxisBinding(x_axis, y_axis)
+    local exists = isArrayContainsIf(self.controller_bindings, function(value)
+        return value.type == "axis" and value.x_axis == x_axis and value.y_axis == y_axis
+    end)
+    if exists then
+        return self
+    end
+    table.insert(self.controller_bindings, createAxisVector2Binding(x_axis, y_axis))
+    return self
+end
+
 ---@param joystick integer
 ---@return foundation.InputSystem.Vector2Action
 function Vector2Action:addControllerJoystickBinding(joystick)
@@ -768,6 +800,33 @@ function Vector2Action:addHidKeyBinding(positive_x_key, negative_x_key, positive
     end
     local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
     table.insert(self.hid_bindings, binding)
+    return self
+end
+
+---@param x_axis integer
+---@param y_axis integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addHidAxisBinding(x_axis, y_axis)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "axis" and value.x_axis == x_axis and value.y_axis == y_axis
+    end)
+    if exists then
+        return self
+    end
+    table.insert(self.hid_bindings, createAxisVector2Binding(x_axis, y_axis))
+    return self
+end
+
+---@param joystick integer
+---@return foundation.InputSystem.Vector2Action
+function Vector2Action:addHidJoystickBinding(joystick)
+    local exists = isArrayContainsIf(self.hid_bindings, function(value)
+        return value.type == "joystick" and value.joystick == joystick
+    end)
+    if exists then
+        return self
+    end
+    table.insert(self.hid_bindings, createJoystickVector2Binding(joystick))
     return self
 end
 
