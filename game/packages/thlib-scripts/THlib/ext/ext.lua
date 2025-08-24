@@ -235,7 +235,10 @@ function GetInput()
             local length = InputSystem.getSerializationLength(REPLAY_ACTION_SET_NAMES)
             local serialized = {}
             if replayReader:Read(serialized, length) then
-                InputSystem.deserialize(serialized)
+                local ret, msg = InputSystem.deserialize(serialized)
+                if not ret then
+                    lstg.Log(4, "[foundation.InputSystem] deserialize failed: " .. tostring(msg))
+                end
             else
                 ext.PushPauseMenuOrder("Replay Again")
                 ext.pause_menu:FlyIn()
