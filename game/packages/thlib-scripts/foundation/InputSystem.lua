@@ -2070,7 +2070,11 @@ end
 ---@param value boolean?
 ---@return boolean
 local function toBoolean(value)
-    return not (not value)
+    if value then
+        return true
+    else
+        return false
+    end
 end
 
 ---@param value number?
@@ -2083,14 +2087,15 @@ local function toScalar(value)
 end
 
 ---@param value foundation.InputSystem.Vector2?
----@return foundation.InputSystem.Vector2
+---@return number x
+---@return number y
 local function toVector2(value)
     if type(value) == "table" then
         if type(value.x) == "number" and type(value.y) == "number" then
-            return value
+            return value.x, value.y
         end
     end
-    return { x = 0.0, y = 0.0 }
+    return 0.0, 0.0
 end
 
 ---@param action_locator string
@@ -2152,11 +2157,11 @@ end
 --- 读取二维矢量动作值  
 --- 二维矢量动作值被映射归一化矢量（长度范围 0.0 到 1.0）  
 ---@param action_locator string
----@return number, number
+---@return number x
+---@return number y
 function InputSystem.getVector2Action(action_locator)
     local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
-    local value = toVector2(action_set_values.vector2_action_values[action_name])
-    return value.x, value.y
+    return toVector2(action_set_values.vector2_action_values[action_name])
 end
 
 --#endregion
@@ -2252,9 +2257,9 @@ end
 ---@return number, number
 function InputSystem.getVector2ActionIncrement(action_locator)
     local action_set_values, action_name = findActionSetValuesAndActionName(action_locator)
-    local last = toVector2(action_set_values.last_vector2_action_values[action_name])
-    local current = toVector2(action_set_values.vector2_action_values[action_name])
-    return current.x - last.x, current.y - last.y
+    local last_x, last_y = toVector2(action_set_values.last_vector2_action_values[action_name])
+    local current_x, current_y = toVector2(action_set_values.vector2_action_values[action_name])
+    return current_x - last_x, current_y - last_y
 end
 
 --#endregion
