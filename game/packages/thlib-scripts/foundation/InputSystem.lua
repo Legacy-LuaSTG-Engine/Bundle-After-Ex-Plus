@@ -1840,8 +1840,8 @@ local function parseActionSetNameAndActionName(action_locator)
     if type(action_set_name) ~= "string" or type(action_name) ~= "string" then
         error(("invalid action_locator '%s', incorrect format"):format(action_locator))
     end
-    ---@cast action_set_name -any, +string
-    ---@cast action_name -any, +string
+    ---@cast action_set_name string
+    ---@cast action_name string
     if action_set_name:len() == 0 then
         error(("invalid action_locator '%s', ActionSet name part is empty"):format(action_locator))
     end
