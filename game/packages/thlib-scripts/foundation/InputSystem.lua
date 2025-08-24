@@ -181,10 +181,10 @@ end
 ---@field key integer
 
 ---@class foundation.InputSystem.BooleanAction : foundation.InputSystem.Action
----@field keyboard_bindings   foundation.InputSystem.BooleanBinding[]
----@field mouse_bindings      foundation.InputSystem.BooleanBinding[]
----@field controller_bindings foundation.InputSystem.BooleanBinding[]
----@field hid_bindings        foundation.InputSystem.BooleanBinding[]
+---@field package keyboard_bindings   foundation.InputSystem.BooleanBinding[]
+---@field package mouse_bindings      foundation.InputSystem.BooleanBinding[]
+---@field package controller_bindings foundation.InputSystem.BooleanBinding[]
+---@field package hid_bindings        foundation.InputSystem.BooleanBinding[]
 local BooleanAction = {}
 
 function BooleanAction:keyboardBindings()
@@ -316,10 +316,10 @@ end
 ---@field axis integer
 
 ---@class foundation.InputSystem.ScalarAction : foundation.InputSystem.Action
----@field keyboard_bindings   foundation.InputSystem.ScalarBinding[]
----@field mouse_bindings      foundation.InputSystem.ScalarBinding[]
----@field controller_bindings foundation.InputSystem.ScalarBinding[]
----@field hid_bindings        foundation.InputSystem.ScalarBinding[]
+---@field package keyboard_bindings   foundation.InputSystem.ScalarBinding[]
+---@field package mouse_bindings      foundation.InputSystem.ScalarBinding[]
+---@field package controller_bindings foundation.InputSystem.ScalarBinding[]
+---@field package hid_bindings        foundation.InputSystem.ScalarBinding[]
 local ScalarAction = {}
 
 function ScalarAction:keyboardBindings()
@@ -696,10 +696,10 @@ end
 --#region
 
 ---@class foundation.InputSystem.ActionSet
----@field name            string
----@field boolean_actions table<string, foundation.InputSystem.BooleanAction>
----@field scalar_actions  table<string, foundation.InputSystem.ScalarAction>
----@field vector2_actions table<string, foundation.InputSystem.Vector2Action>
+---@field         name            string
+---@field package boolean_actions table<string, foundation.InputSystem.BooleanAction>
+---@field package scalar_actions  table<string, foundation.InputSystem.ScalarAction>
+---@field package vector2_actions table<string, foundation.InputSystem.Vector2Action>
 local ActionSet = {}
 
 function ActionSet:booleanActions()
@@ -1526,6 +1526,7 @@ function InputSystem.update(include_action_set_names)
             updateActionSet(action_set, raw_action_set_values[name])
         end
     end
+    -- 量化
     InputSystem.quantize(include_action_set_names)
 end
 
