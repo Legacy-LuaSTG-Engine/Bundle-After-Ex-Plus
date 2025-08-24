@@ -697,6 +697,7 @@ end
 
 ---@class foundation.InputSystem.ActionSet
 ---@field         name            string
+---@field private action_names    table<string, foundation.InputSystem.ActionType>
 ---@field package boolean_actions table<string, foundation.InputSystem.BooleanAction>
 ---@field package scalar_actions  table<string, foundation.InputSystem.ScalarAction>
 ---@field package vector2_actions table<string, foundation.InputSystem.Vector2Action>
@@ -713,7 +714,11 @@ function ActionSet:addBooleanAction(name)
     if self.boolean_actions[name] then
         return self.boolean_actions[name]
     end
+    if self.action_names[name] then
+        error(("Action name '%s' already exists (type: %s)"):format(name, self.action_names[name]))
+    end
     local action = BooleanAction.create(name)
+    self.action_names[name] = "boolean"
     self.boolean_actions[name] = action
     return action
 end
@@ -721,6 +726,9 @@ end
 ---@param name string
 function ActionSet:removeBooleanAction(name)
     assert(type(name) == "string", "name must be a string")
+    if self.action_names[name] == "boolean" then
+        self.action_names[name] = nil
+    end
     self.boolean_actions[name] = nil
 end
 
@@ -742,7 +750,11 @@ function ActionSet:addScalarAction(name)
     if self.scalar_actions[name] then
         return self.scalar_actions[name]
     end
+    if self.action_names[name] then
+        error(("Action name '%s' already exists (type: %s)"):format(name, self.action_names[name]))
+    end
     local action = ScalarAction.create(name)
+    self.action_names[name] = "scalar"
     self.scalar_actions[name] = action
     return action
 end
@@ -750,6 +762,9 @@ end
 ---@param name string
 function ActionSet:removeScalarAction(name)
     assert(type(name) == "string", "name must be a string")
+    if self.action_names[name] == "scalar" then
+        self.action_names[name] = nil
+    end
     self.scalar_actions[name] = nil
 end
 
@@ -771,7 +786,11 @@ function ActionSet:addVector2Action(name)
     if self.vector2_actions[name] then
         return self.vector2_actions[name]
     end
+    if self.action_names[name] then
+        error(("Action name '%s' already exists (type: %s)"):format(name, self.action_names[name]))
+    end
     local action = Vector2Action.create(name)
+    self.action_names[name] = "vector2"
     self.vector2_actions[name] = action
     return action
 end
@@ -779,6 +798,9 @@ end
 ---@param name string
 function ActionSet:removeVector2Action(name)
     assert(type(name) == "string", "name must be a string")
+    if self.action_names[name] == "vector2" then
+        self.action_names[name] = nil
+    end
     self.vector2_actions[name] = nil
 end
 
@@ -795,6 +817,7 @@ function ActionSet.create(name)
     ---@type foundation.InputSystem.ActionSet
     local instance = {
         name = name,
+        action_names = {},
         boolean_actions = {},
         scalar_actions = {},
         vector2_actions = {},
