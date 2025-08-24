@@ -218,6 +218,8 @@ function ChangeGameStage()
     SaveScoreData()
 end
 
+ext.input_serialize_context = InputSystem.createSerializeContext()
+
 --- 获取输入
 function GetInput()
     if stage.NextStageExist() then
@@ -228,16 +230,22 @@ function GetInput()
     if ext.pause_menu:IsKilled() then
         if ext.replay.IsRecording() then
             -- 录制时记录输入状态
-            local serialized = InputSystem.serialize(REPLAY_ACTION_SET_NAMES)
-            replayWriter:Write(serialized)
+            if not ext.input_serialize_context.initialized then
+                ext.input_serialize_context:initialize(REPLAY_ACTION_SET_NAMES)
+            end
+            local packet = ext.input_serialize_context:serialize()
+            replayWriter:Write(packet)
         elseif ext.replay.IsReplay() then
             -- 回放时恢复输入状态
-            local length = InputSystem.getSerializationLength(REPLAY_ACTION_SET_NAMES)
-            local serialized = {}
-            if replayReader:Read(serialized, length) then
-                local ret, msg = InputSystem.deserialize(serialized)
+            if not ext.input_serialize_context.initialized then
+                ext.input_serialize_context:initialize(REPLAY_ACTION_SET_NAMES)
+            end
+            local length = ext.input_serialize_context:getPacketSize()
+            local packet = {}
+            if replayReader:Read(packet, length) then
+                local ret, msg = ext.input_serialize_context:deserialize(packet)
                 if not ret then
-                    lstg.Log(4, "[foundation.InputSystem] deserialize failed: " .. tostring(msg))
+                    lstg.Log(4, "[foundation.InputSystem] SerializeContext deserialize failed: " .. tostring(msg))
                 end
             else
                 ext.PushPauseMenuOrder("Replay Again")

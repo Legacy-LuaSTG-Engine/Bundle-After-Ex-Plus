@@ -2080,6 +2080,363 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 内部状态序列化、反序列化上下文
+--#region
+
+local SERIALIZE_CONTEXT_VERBOSE_LOG = false
+
+--#region BitPacker
+
+local BIT_VALUES = { 1, 2, 4, 8, 16, 32, 64, 128 }
+
+---@class foundation.InputSystem.BitPacker
+---@field private write     fun(byte:integer)
+---@field private bits      boolean[]
+---@field private bit_count integer
+local BitPacker = {}
+
+function BitPacker:reset()
+    for i = 1, 8 do
+        self.bits[i] = false
+    end
+    self.bit_count = 0
+end
+
+---@param bit boolean
+function BitPacker:push(bit)
+    if SERIALIZE_CONTEXT_VERBOSE_LOG then
+        logInfo("BitPacker push %s", tostring(bit))
+    end
+    self.bit_count = self.bit_count + 1
+    self.bits[self.bit_count] = not (not bit)
+    self:flush(true)
+end
+
+---@param only_full boolean?
+function BitPacker:flush(only_full)
+    if self.bit_count < 0 or self.bit_count > 8 then
+        error("invalid internal state")
+    end
+    if self.bit_count == 0 then
+        return
+    end
+    if (only_full and self.bit_count == 8) or (not only_full) then
+        local byte = 0
+        for i = 1, 8 do
+            if self.bits[i] then
+                self.bits[i] = false
+                byte = byte + BIT_VALUES[i]
+            end
+        end
+        self.bit_count = 0
+        self.write(byte)
+        if SERIALIZE_CONTEXT_VERBOSE_LOG then
+            logInfo("BitPacker write %d", byte)
+        end
+    end
+end
+
+---@param write fun(byte:integer)
+---@return foundation.InputSystem.BitPacker
+function BitPacker.create(write)
+    ---@type foundation.InputSystem.BitPacker
+    local packer = {
+        write = write,
+        bits = { false, false, false, false, false, false, false, false },
+        bit_count = 0,
+        reset = BitPacker.reset,
+        push = BitPacker.push,
+        flush = BitPacker.flush,
+    }
+    return packer
+end
+
+--#endregion
+
+--#region BitUnpacker
+
+---@class foundation.InputSystem.BitUnpacker
+---@field private read      fun():integer
+---@field private bits      boolean[]
+---@field private bit_count integer
+local BitUnpacker = {}
+
+function BitUnpacker:reset()
+    for i = 1, 8 do
+        self.bits[i] = false
+    end
+    self.bit_count = 0
+end
+
+---@return boolean bit
+function BitUnpacker:pop()
+    self:fetch()
+    local bit = self.bits[8 - (self.bit_count - 1)]
+    self.bit_count = self.bit_count - 1
+    if SERIALIZE_CONTEXT_VERBOSE_LOG then
+        logInfo("BitUnpacker pop %s", tostring(bit))
+    end
+    return bit
+end
+
+function BitUnpacker:fetch()
+    if self.bit_count < 0 or self.bit_count > 8 then
+        error("invalid internal state")
+    end
+    if self.bit_count == 0 then
+        local byte = self.read()
+        if SERIALIZE_CONTEXT_VERBOSE_LOG then
+            logInfo("BitUnpacker read %d", byte)
+        end
+        for i = 8, 1, -1 do
+            if byte >= BIT_VALUES[i] then
+                byte = byte - BIT_VALUES[i]
+                self.bits[i] = true
+            else
+                self.bits[i] = false
+            end
+        end
+        self.bit_count = 8
+    end
+end
+
+---@param read fun():integer
+---@return foundation.InputSystem.BitUnpacker
+function BitUnpacker.create(read)
+    ---@type foundation.InputSystem.BitUnpacker
+    local unpacker = {
+        read = read,
+        bits = { false, false, false, false, false, false, false, false },
+        bit_count = 0,
+        reset = BitUnpacker.reset,
+        pop = BitUnpacker.pop,
+        fetch = BitUnpacker.fetch,
+    }
+    return unpacker
+end
+
+--#endregion
+
+--#region SerializeContext
+
+---@class foundation.InputSystem.SerializeContext.ActionSet
+---@field package name                 string
+---@field package boolean_action_names string[]
+---@field package scalar_action_names  string[]
+---@field package vector2_action_names string[]
+
+---@class foundation.InputSystem.SerializeContext
+---@field private include_action_set_names string[]?
+---@field         initialized              boolean
+---@field private packet_size              integer
+---@field private action_sets              foundation.InputSystem.SerializeContext.ActionSet[]
+local SerializeContext = {}
+
+function SerializeContext:uninitialize()
+    self.include_action_set_names = nil
+    self.initialized = false
+    self.packet_size = 0
+    self.action_sets = {}
+end
+
+---@param include_action_set_names string[]?
+function SerializeContext:initialize(include_action_set_names)
+    self.include_action_set_names = include_action_set_names
+    self.initialized = false
+    self.packet_size = 0
+    self.action_sets = {}
+
+    for action_set_name, action_set in pairs(action_sets) do
+        if isActionSetIncluded(self.include_action_set_names, action_set_name) then
+            ---@type foundation.InputSystem.SerializeContext.ActionSet
+            local s_action_set = {
+                name = action_set_name,
+                boolean_action_names = {},
+                scalar_action_names = {},
+                vector2_action_names = {},
+            }
+            for action_name, _ in action_set:booleanActions() do
+                table.insert(s_action_set.boolean_action_names, action_name)
+            end
+            table.sort(s_action_set.boolean_action_names, function(a, b)
+                return a < b
+            end)
+            for action_name, _ in action_set:scalarActions() do
+                table.insert(s_action_set.scalar_action_names, action_name)
+            end
+            table.sort(s_action_set.scalar_action_names, function(a, b)
+                return a < b
+            end)
+            for action_name, _ in action_set:vector2Actions() do
+                table.insert(s_action_set.vector2_action_names, action_name)
+            end
+            table.sort(s_action_set.vector2_action_names, function(a, b)
+                return a < b
+            end)
+            if (#s_action_set.boolean_action_names + #s_action_set.scalar_action_names + #s_action_set.vector2_action_names) > 0 then
+                self.packet_size = self.packet_size + math.ceil(#s_action_set.boolean_action_names / 8) -- 打包为字节
+                self.packet_size = self.packet_size + #s_action_set.scalar_action_names -- 已量化
+                self.packet_size = self.packet_size + 2 * #s_action_set.vector2_action_names -- 已量化
+                table.insert(self.action_sets, s_action_set)
+            end
+        end
+    end
+    table.sort(self.action_sets, function(a, b)
+        return a.name < b.name
+    end)
+
+    self.initialized = true
+end
+
+---@return integer[] bytes
+function SerializeContext:serializeMetadata()
+    assert(self.initialized, "SerializeContext not initialized")
+    ---@type integer[] bytes
+    local bytes = {}
+    for _, action_set in ipairs(self.action_sets) do
+        -- 动作集信息
+        appendByte(bytes, ACTION_SET_MARKER)
+        appendString(bytes, action_set.name)
+        -- 布尔动作值
+        appendByte(bytes, BOOLEAN_ACTION_VALUES_MARKER)
+        for _, action_name in pairs(action_set.boolean_action_names) do
+            appendString(bytes, action_name)
+        end
+        -- 标量动作值
+        appendByte(bytes, SCALAR_ACTION_VALUES_MARKER)
+        for _, action_name in pairs(action_set.scalar_action_names) do
+            appendString(bytes, action_name)
+        end
+        -- 矢量动作值
+        appendByte(bytes, VECTOR2_ACTION_VALUES_MARKER)
+        for _, action_name in pairs(action_set.vector2_action_names) do
+            appendString(bytes, action_name)
+        end
+    end
+    return bytes
+end
+
+---@return integer size_in_bytes
+function SerializeContext:getPacketSize()
+    assert(self.initialized, "SerializeContext not initialized")
+    return self.packet_size
+end
+
+---@return integer[] bytes
+function SerializeContext:serialize()
+    assert(self.initialized, "SerializeContext not initialized")
+    ---@type integer[] bytes
+    local bytes = {}
+    local bit_packer = BitPacker.create(function(byte)
+        bytes[#bytes + 1] = byte
+    end)
+    for _, action_set in ipairs(self.action_sets) do
+        -- 动作集信息
+        local raw = assert(raw_action_set_values[action_set.name], "ActionSetValues does not exists")
+        local quantized = assert(quantized_action_set_values[action_set.name], "QuantizedActionSetValues does not exists")
+        -- 布尔动作值
+        bit_packer:reset()
+        for _, action_name in pairs(action_set.boolean_action_names) do
+            bit_packer:push(raw.boolean_action_values[action_name])
+        end
+        bit_packer:flush()
+        -- 标量动作值
+        for _, action_name in pairs(action_set.scalar_action_names) do
+            appendByte(bytes, quantized.scalar_action_values[action_name]) -- 已量化
+            if SERIALIZE_CONTEXT_VERBOSE_LOG then
+                logInfo("serialize / %d", quantized.scalar_action_values[action_name])
+            end
+        end
+        -- 矢量动作值
+        for _, action_name in pairs(action_set.vector2_action_names) do
+            local b1 = quantized.vector2_action_values[action_name].m -- 已量化
+            local b2 = quantized.vector2_action_values[action_name].a -- 已量化
+            if b2 > 255 then
+                b1 = b1 + 128
+                b2 = b2 - 128
+            end
+            appendByte(bytes, b1)
+            appendByte(bytes, b2)
+            if SERIALIZE_CONTEXT_VERBOSE_LOG then
+                logInfo("serialize ^ %d %d", b1, b2)
+            end
+        end
+    end
+    return bytes
+end
+
+---@param bytes integer[]
+---@return boolean result
+---@return string? message
+function SerializeContext:deserialize(bytes)
+    assert(self.initialized, "SerializeContext not initialized")
+    assert(type(bytes) == "table", "bytes must be a table (byte array)")
+    if #bytes < self.packet_size then
+        return false, "index out of bound"
+    end
+    local index = 1
+    local bit_unpacker = BitUnpacker.create(function()
+        local byte = bytes[index]
+        index = index + 1
+        return byte
+    end)
+    for _, action_set in ipairs(self.action_sets) do
+        -- 动作集信息
+        local raw = assert(raw_action_set_values[action_set.name], "ActionSetValues does not exists")
+        local quantized = assert(quantized_action_set_values[action_set.name], "QuantizedActionSetValues does not exists")
+        -- 布尔动作值
+        bit_unpacker:reset()
+        for _, action_name in pairs(action_set.boolean_action_names) do
+            raw.boolean_action_values[action_name] = bit_unpacker:pop()
+        end
+        -- 标量动作值
+        for _, action_name in pairs(action_set.scalar_action_names) do
+            local action_value = bytes[index] -- 已量化
+            index = index + 1
+            quantized.scalar_action_values[action_name] = action_value
+            raw.scalar_action_values[action_name] = recoverScalar(action_value)
+            if SERIALIZE_CONTEXT_VERBOSE_LOG then
+                logInfo("deserialize / %d", action_value)
+            end
+        end
+        -- 矢量动作值
+        for _, action_name in pairs(action_set.vector2_action_names) do
+            local b1 = bytes[index] -- 已量化
+            index = index + 1
+            local b2 = bytes[index] -- 已量化
+            index = index + 1
+            if b1 >= 128 then
+                b1 = b1 - 128
+                b2 = b2 + 128
+            end
+            quantized.vector2_action_values[action_name].m = b1
+            quantized.vector2_action_values[action_name].a = b2
+            recoverVector2(quantized.vector2_action_values[action_name], raw.vector2_action_values[action_name])
+            if SERIALIZE_CONTEXT_VERBOSE_LOG then
+                logInfo("deserialize ^ %d %d", b1, b2)
+            end
+        end
+    end
+    return true
+end
+
+---@return foundation.InputSystem.SerializeContext
+function InputSystem.createSerializeContext()
+    ---@type foundation.InputSystem.SerializeContext
+    local context = {
+        include_action_set_names = nil,
+        initialized = false,
+        packet_size = 0,
+        action_sets = {},
+    }
+    setmetatable(context, { __index = SerializeContext })
+    return context
+end
+
+--#endregion
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 读取动作值辅助函数
 --#region
 

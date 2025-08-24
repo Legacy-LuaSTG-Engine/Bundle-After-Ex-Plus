@@ -51,6 +51,10 @@ local records = {}
 local record_index = 0
 local serde_names = { "player" }
 
+local serialize_context = InputSystem.createSerializeContext()
+serialize_context:initialize(serde_names)
+local USING_SERIALIZE_CONTEXT = true
+
 function FrameFunc()
     InputSystem.update()
     if play_mode == "record" then
@@ -78,13 +82,24 @@ function FrameFunc()
         end
     end
     if play_mode == "record" then
-        local record = InputSystem.serialize(serde_names)
+        local record
+        print("serialize -- ", record_index)
+        if USING_SERIALIZE_CONTEXT then
+            record = serialize_context:serialize()
+        else
+            record = InputSystem.serialize(serde_names)
+        end
         records[record_index] = record
         record_index = record_index + 1
     elseif play_mode == "playback" then
-        local record = records[record_index]
+        print("deserialize -- ", record_index)
+        local record = assert(records[record_index])
         record_index = record_index + 1
-        InputSystem.deserialize(record)
+        if USING_SERIALIZE_CONTEXT then
+            serialize_context:deserialize(record)
+        else
+            InputSystem.deserialize(record)
+        end
     end
 
     local dx = 0

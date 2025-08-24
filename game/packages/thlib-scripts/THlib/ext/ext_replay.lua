@@ -185,6 +185,8 @@ function stage.Set(stageName, mode, path)
             frameData = replayWriter,
             stageExtendInfo = Serialize(lstg.var)--by OLC
         }
+        -- 重置输入序列化上下文
+        ext.input_serialize_context:uninitialize()
 
         -- 转场
         --lstg.var.stage_name = stageName
@@ -216,6 +218,8 @@ function stage.Set(stageName, mode, path)
         --加载数据
         local nextRecordStage = replayInfo.stages[replayStageIdx]
         replayReader = plus.ReplayFrameReader(path, nextRecordStage.frameDataPosition, nextRecordStage.frameCount)
+        -- 重置输入序列化上下文
+        ext.input_serialize_context:uninitialize()
 
         --加载数据
         --lstg.var = DeSerialize(nextRecordStage.stageExtendInfo)--不能这么加载，因为场景里还有东西，在下一帧加载
