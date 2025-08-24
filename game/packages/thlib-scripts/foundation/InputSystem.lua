@@ -78,6 +78,16 @@ end
 
 ---@generic T
 ---@param array T[]
+---@param index integer
+local function safeRemoveArrayValueAt(array, index)
+    assert(type(index) == "number", "index must be a number")
+    assert(math.floor(index) == index, "index must be a integral number")
+    assert(index >= 1 and index <= #array, "index out of bound")
+    table.remove(array, index)
+end
+
+---@generic T
+---@param array T[]
 ---@param comparator fun(value: T):boolean
 local function removeArrayValueIf(array, comparator)
     for i = #array, 1, -1 do
@@ -206,11 +216,9 @@ function BooleanAction:addKeyboardKeyBinding(key)
     return self
 end
 
----@param key integer
-function BooleanAction:removeKeyboardKeyBinding(key)
-    removeArrayValueIf(self.keyboard_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function BooleanAction:removeKeyboardBinding(index)
+    safeRemoveArrayValueAt(self.keyboard_bindings, index)
 end
 
 function BooleanAction:mouseBindings()
@@ -232,11 +240,9 @@ function BooleanAction:addMouseKeyBinding(key)
     return self
 end
 
----@param key integer
-function BooleanAction:removeMouseKeyBinding(key)
-    removeArrayValueIf(self.mouse_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function BooleanAction:removeMouseBinding(index)
+    safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
 
 function BooleanAction:controllerBindings()
@@ -258,11 +264,9 @@ function BooleanAction:addControllerKeyBinding(key)
     return self
 end
 
----@param key integer
-function BooleanAction:removeControllerKeyBinding(key)
-    removeArrayValueIf(self.controller_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function BooleanAction:removeControllerBinding(index)
+    safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
 function BooleanAction:hidBindings()
@@ -284,11 +288,9 @@ function BooleanAction:addHidKeyBinding(key)
     return self
 end
 
----@param key integer
-function BooleanAction:removeHidKeyBinding(key)
-    removeArrayValueIf(self.hid_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function BooleanAction:removeHidBinding(index)
+    safeRemoveArrayValueAt(self.hid_bindings, index)
 end
 
 ---@param name string
@@ -343,11 +345,9 @@ function ScalarAction:addKeyboardKeyBinding(key)
     return self
 end
 
----@param key integer
-function ScalarAction:removeKeyboardKeyBinding(key)
-    removeArrayValueIf(self.keyboard_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function ScalarAction:removeKeyboardBinding(index)
+    safeRemoveArrayValueAt(self.keyboard_bindings, index)
 end
 
 function ScalarAction:mouseBindings()
@@ -371,11 +371,9 @@ function ScalarAction:addMouseKeyBinding(key)
     return self
 end
 
----@param key integer
-function ScalarAction:removeMouseKeyBinding(key)
-    removeArrayValueIf(self.mouse_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
+---@param index integer
+function ScalarAction:removeMouseBinding(index)
+    safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
 
 function ScalarAction:controllerBindings()
@@ -399,13 +397,6 @@ function ScalarAction:addControllerKeyBinding(key)
     return self
 end
 
----@param key integer
-function ScalarAction:removeControllerKeyBinding(key)
-    removeArrayValueIf(self.controller_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
-end
-
 ---@param axis integer
 ---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addControllerAxisBinding(axis)
@@ -423,11 +414,9 @@ function ScalarAction:addControllerAxisBinding(axis)
     return self
 end
 
----@param axis integer
-function ScalarAction:removeControllerAxisBinding(axis)
-    removeArrayValueIf(self.controller_bindings, function(value)
-        return value.type == "axis" and value.axis == axis
-    end)
+---@param index integer
+function ScalarAction:removeControllerBinding(index)
+    safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
 function ScalarAction:hidBindings()
@@ -451,13 +440,6 @@ function ScalarAction:addHidKeyBinding(key)
     return self
 end
 
----@param key integer
-function ScalarAction:removeHidKeyBinding(key)
-    removeArrayValueIf(self.hid_bindings, function(value)
-        return value.type == "key" and value.key == key
-    end)
-end
-
 ---@param axis integer
 ---@return foundation.InputSystem.ScalarAction
 function ScalarAction:addHidAxisBinding(axis)
@@ -475,11 +457,9 @@ function ScalarAction:addHidAxisBinding(axis)
     return self
 end
 
----@param axis integer
-function ScalarAction:removeHidAxisBinding(axis)
-    removeArrayValueIf(self.hid_bindings, function(value)
-        return value.type == "axis" and value.axis == axis
-    end)
+---@param index integer
+function ScalarAction:removeHidBinding(index)
+    safeRemoveArrayValueAt(self.hid_bindings, index)
 end
 
 ---@param name string
@@ -580,6 +560,11 @@ function Vector2Action:addKeyboardKeyBinding(positive_x_key, negative_x_key, pos
     return self
 end
 
+---@param index integer
+function Vector2Action:removeKeyboardBinding(index)
+    safeRemoveArrayValueAt(self.keyboard_bindings, index)
+end
+
 function Vector2Action:mouseBindings()
     return ipairs(self.mouse_bindings)
 end
@@ -603,6 +588,11 @@ function Vector2Action:addMouseKeyBinding(positive_x_key, negative_x_key, positi
     local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
     table.insert(self.mouse_bindings, binding)
     return self
+end
+
+---@param index integer
+function Vector2Action:removeMouseBinding(index)
+    safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
 
 function Vector2Action:controllerBindings()
@@ -643,11 +633,9 @@ function Vector2Action:addControllerJoystickBinding(joystick)
     return self
 end
 
----@param joystick integer
-function Vector2Action:removeControllerJoystickBinding(joystick)
-    removeArrayValueIf(self.controller_bindings, function(value)
-        return value.type == "joystick" and value.joystick == joystick
-    end)
+---@param index integer
+function Vector2Action:removeControllerBinding(index)
+    safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
 function Vector2Action:hidBindings()
@@ -673,6 +661,11 @@ function Vector2Action:addHidKeyBinding(positive_x_key, negative_x_key, positive
     local binding = createKeyVector2Binding(positive_x_key, negative_x_key, positive_y_key, negative_y_key)
     table.insert(self.hid_bindings, binding)
     return self
+end
+
+---@param index integer
+function Vector2Action:removeHidBinding(index)
+    safeRemoveArrayValueAt(self.hid_bindings, index)
 end
 
 ---@param name string
