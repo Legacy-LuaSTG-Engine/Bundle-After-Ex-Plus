@@ -868,6 +868,12 @@ end
 --- 动作集
 --#region
 
+---@type fun(action_set:foundation.InputSystem.ActionSet, action:foundation.InputSystem.Action)[]
+local on_action_added = {} -- internal hook
+
+---@type fun(action_set:foundation.InputSystem.ActionSet, action:foundation.InputSystem.Action)[]
+local on_action_removed = {} -- internal hook
+
 ---@class foundation.InputSystem.ActionSet
 ---@field         name            string
 ---@field private action_names    table<string, foundation.InputSystem.ActionType>
@@ -893,6 +899,9 @@ function ActionSet:addBooleanAction(name)
     local action = BooleanAction.create(name)
     self.action_names[name] = "boolean"
     self.boolean_actions[name] = action
+    for _, callback in ipairs(on_action_added) do
+        callback(self, action)
+    end
     return action
 end
 
@@ -902,7 +911,12 @@ function ActionSet:removeBooleanAction(name)
     if self.action_names[name] == "boolean" then
         self.action_names[name] = nil
     end
-    self.boolean_actions[name] = nil
+    if self.boolean_actions[name] then
+        for _, callback in ipairs(on_action_removed) do
+            callback(self, self.boolean_actions[name])
+        end
+        self.boolean_actions[name] = nil
+    end
 end
 
 ---@param name string
@@ -929,6 +943,9 @@ function ActionSet:addScalarAction(name)
     local action = ScalarAction.create(name)
     self.action_names[name] = "scalar"
     self.scalar_actions[name] = action
+    for _, callback in ipairs(on_action_added) do
+        callback(self, action)
+    end
     return action
 end
 
@@ -938,7 +955,12 @@ function ActionSet:removeScalarAction(name)
     if self.action_names[name] == "scalar" then
         self.action_names[name] = nil
     end
-    self.scalar_actions[name] = nil
+    if self.scalar_actions[name] then
+        for _, callback in ipairs(on_action_removed) do
+            callback(self, self.scalar_actions[name])
+        end
+        self.scalar_actions[name] = nil
+    end
 end
 
 ---@param name string
@@ -965,6 +987,9 @@ function ActionSet:addVector2Action(name)
     local action = Vector2Action.create(name)
     self.action_names[name] = "vector2"
     self.vector2_actions[name] = action
+    for _, callback in ipairs(on_action_added) do
+        callback(self, action)
+    end
     return action
 end
 
@@ -974,7 +999,12 @@ function ActionSet:removeVector2Action(name)
     if self.action_names[name] == "vector2" then
         self.action_names[name] = nil
     end
-    self.vector2_actions[name] = nil
+    if self.vector2_actions[name] then
+        for _, callback in ipairs(on_action_removed) do
+            callback(self, self.vector2_actions[name])
+        end
+        self.vector2_actions[name] = nil
+    end
 end
 
 ---@param name string
@@ -1113,14 +1143,75 @@ local raw_action_set_values = {}
 ---@type table<string, foundation.InputSystem.QuantizedActionSetValues>
 local quantized_action_set_values = {}
 
-table.insert(on_action_set_added, function(action_set)
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+---@param action foundation.InputSystem.Action
+local function initializeActionSetActionValues(action_set, action)
+    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+    local quantized = assert(quantized_action_set_values[action_set.name], ("QuantizedActionSetValues '%s' does not exists"):format(action_set.name))
+    if action.type == "boolean" then
+        action_set_values.last_boolean_action_values[action.name] = false
+        action_set_values.boolean_action_values[action.name] = false
+        action_set_values.boolean_action_frames[action.name] = -1
+    elseif action.type == "scalar" then
+        action_set_values.last_scalar_action_values[action.name] = 0
+        action_set_values.scalar_action_values[action.name] = 0
+        quantized.last_scalar_action_values[action.name] = 0
+        quantized.scalar_action_values[action.name] = 0
+    elseif action.type == "vector2" then
+        action_set_values.last_vector2_action_values[action.name] = { x = 0, y = 0 }
+        action_set_values.vector2_action_values[action.name] = { x = 0, y = 0 }
+        quantized.last_vector2_action_values[action.name] = { m = 0, a = 0 }
+        quantized.vector2_action_values[action.name] = { m = 0, a = 0 }
+    else
+        error(("unknown Action type '%s'"):format(action.type))
+    end
+end
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+---@param action foundation.InputSystem.Action
+local function uninitializeActionSetActionValues(action_set, action)
+    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+    local quantized = assert(quantized_action_set_values[action_set.name], ("QuantizedActionSetValues '%s' does not exists"):format(action_set.name))
+    if action.type == "boolean" then
+        action_set_values.last_boolean_action_values[action.name] = nil
+        action_set_values.boolean_action_values[action.name] = nil
+        action_set_values.boolean_action_frames[action.name] = nil
+    elseif action.type == "scalar" then
+        action_set_values.last_scalar_action_values[action.name] = nil
+        action_set_values.scalar_action_values[action.name] = nil
+        quantized.last_scalar_action_values[action.name] = nil
+        quantized.scalar_action_values[action.name] = nil
+    elseif action.type == "vector2" then
+        action_set_values.last_vector2_action_values[action.name] = nil
+        action_set_values.vector2_action_values[action.name] = nil
+        quantized.last_vector2_action_values[action.name] = nil
+        quantized.vector2_action_values[action.name] = nil
+    else
+        error(("unknown Action type '%s'"):format(action.type))
+    end
+end
+
+table.insert(on_action_added, initializeActionSetActionValues) -- internal HOOK
+table.insert(on_action_removed, uninitializeActionSetActionValues) -- internal HOOK
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+local function initializeActionSetValues(action_set)
     raw_action_set_values[action_set.name] = createActionSetValues()
     quantized_action_set_values[action_set.name] = createQuantizedActionSetValues()
-end)
-table.insert(on_action_set_removed, function(action_set)
+end
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+local function uninitializeActionSetValues(action_set)
     raw_action_set_values[action_set.name] = nil
     quantized_action_set_values[action_set.name] = nil
-end)
+end
+
+table.insert(on_action_set_added, initializeActionSetValues) -- internal HOOK
+table.insert(on_action_set_removed, uninitializeActionSetValues) -- internal HOOK
 
 ---@param v number
 ---@return number
@@ -1135,23 +1226,37 @@ local function recoverScalar(v)
 end
 
 ---@param v foundation.InputSystem.Vector2
+---@param pv foundation.InputSystem.PolarVector2?
 ---@return foundation.InputSystem.PolarVector2
-local function quantizeVector2(v)
+local function quantizeVector2(v, pv)
     local mm = math.sqrt(v.x * v.x + v.y + v.y)
     local aa = math.deg(math.atan2(v.y, v.x))
     local m = clamp(round(mm * 100), 0, 100)
     local a = clamp(round(aa) % 360, 0, 360)
-    return { m = m, a = a }
+    if pv then
+        pv.m = m
+        pv.a = a
+        return pv
+    else
+        return { m = m, a = a }
+    end
 end
 
----@param v foundation.InputSystem.PolarVector2
+---@param pv foundation.InputSystem.PolarVector2
+---@param v foundation.InputSystem.Vector2?
 ---@return foundation.InputSystem.Vector2
-local function recoverVector2(v)
-    local mm = v.m / 100.0
-    local aa = math.rad(v.a)
+local function recoverVector2(pv, v)
+    local mm = pv.m / 100.0
+    local aa = math.rad(pv.a)
     local x = mm * math.cos(aa)
     local y = mm * math.sin(aa)
-    return { x = x, y = y }
+    if v then
+        v.x = x
+        v.y = y
+        return v
+    else
+        return { x = x, y = y }
+    end
 end
 
 ---@param include_action_set_names string[]?
@@ -1165,9 +1270,8 @@ function InputSystem.quantize(include_action_set_names)
                 raw.scalar_action_values[k] = recoverScalar(q)
             end
             for k, v in pairs(raw.vector2_action_values) do
-                local q = quantizeVector2(v)
-                quantized.vector2_action_values[k] = q
-                raw.vector2_action_values[k] = recoverVector2(q)
+                quantizeVector2(v, quantized.vector2_action_values[k])
+                recoverVector2(quantized.vector2_action_values[k], raw.vector2_action_values[k])
             end
         end
     end
@@ -1371,7 +1475,8 @@ local function clearActionSetValues(action_set_values, clear_last)
             action_set_values.last_scalar_action_values[k] = 0
         end
         for k, _ in pairs(action_set_values.last_vector2_action_values) do
-            action_set_values.last_vector2_action_values[k] = { x = 0, y = 0 }
+            action_set_values.last_vector2_action_values[k].x = 0
+            action_set_values.last_vector2_action_values[k].y = 0
         end
     end
     for k, _ in pairs(action_set_values.boolean_action_values) do
@@ -1381,7 +1486,8 @@ local function clearActionSetValues(action_set_values, clear_last)
         action_set_values.scalar_action_values[k] = 0
     end
     for k, _ in pairs(action_set_values.vector2_action_values) do
-        action_set_values.vector2_action_values[k] = { x = 0, y = 0 }
+        action_set_values.vector2_action_values[k].x = 0
+        action_set_values.vector2_action_values[k].y = 0
     end
 end
 
@@ -1393,14 +1499,16 @@ local function clearQuantizedActionSetValues(action_set_values, clear_last)
             action_set_values.last_scalar_action_values[k] = 0
         end
         for k, _ in pairs(action_set_values.last_vector2_action_values) do
-            action_set_values.last_vector2_action_values[k] = { m = 0, a = 0 }
+            action_set_values.last_vector2_action_values[k].m = 0
+            action_set_values.last_vector2_action_values[k].a = 0
         end
     end
     for k, _ in pairs(action_set_values.scalar_action_values) do
         action_set_values.scalar_action_values[k] = 0
     end
     for k, _ in pairs(action_set_values.vector2_action_values) do
-        action_set_values.vector2_action_values[k] = { m = 0, a = 0 }
+        action_set_values.vector2_action_values[k].m = 0
+        action_set_values.vector2_action_values[k].a = 0
     end
 end
 
@@ -1413,7 +1521,8 @@ local function copyLastActionSetValues(action_set_values)
         action_set_values.last_scalar_action_values[k] = v
     end
     for k, v in pairs(action_set_values.vector2_action_values) do
-        action_set_values.last_vector2_action_values[k] = { x = v.x, y = v.y }
+        action_set_values.last_vector2_action_values[k].x = v.x
+        action_set_values.last_vector2_action_values[k].y = v.y
     end
 end
 
@@ -1423,7 +1532,8 @@ local function copyLastQuantizedActionSetValues(action_set_values)
         action_set_values.last_scalar_action_values[k] = v
     end
     for k, v in pairs(action_set_values.vector2_action_values) do
-        action_set_values.last_vector2_action_values[k] = { m = v.m, a = v.a }
+        action_set_values.last_vector2_action_values[k].m = v.m
+        action_set_values.last_vector2_action_values[k].a = v.a
     end
 end
 
@@ -1440,9 +1550,6 @@ end
 ---@param name string
 ---@param value boolean
 local function orBooleanActionValue(values, name, value)
-    if type(values[name]) ~= "boolean" then
-        values[name] = false
-    end
     values[name] = values[name] or value
 end
 
@@ -1452,21 +1559,23 @@ local function updateBooleanActions(action_set, action_set_values)
     local values = action_set_values.boolean_action_values
     local frames = action_set_values.boolean_action_frames
     for name, action in action_set:booleanActions() do
+        -- 键盘
         for _, binding in action:keyboardBindings() do
             orBooleanActionValue(values, name, Keyboard.GetKeyState(binding.key))
         end
+        -- 鼠标
         for _, binding in action:mouseBindings() do
             orBooleanActionValue(values, name, Mouse.GetKeyState(binding.key))
         end
+        -- 手柄
         for _, binding in action:controllerBindings() do
             orBooleanActionValue(values, name, isControllerKeyDown(binding.key))
         end
+        -- 其他 HID 设备
         for _, binding in action:hidBindings() do
             orBooleanActionValue(values, name, isHidKeyDown(binding.key))
         end
-        if type(frames[name]) ~= "number" then
-            frames[name] = -1
-        end
+        -- 更新激活计时器
         if values[name] then
             frames[name] = frames[name] + 1
         else
@@ -1479,10 +1588,7 @@ end
 ---@param name string
 ---@param value number
 local function addScalarActionValue(values, name, value)
-    if type(values[name]) ~= "number" then
-        values[name] = 0
-    end
-    values[name] = math.max(0, math.min(values[name] + value, 1))
+    values[name] = values[name] + value
 end
 
 ---@param action_set foundation.InputSystem.ActionSet
@@ -1529,9 +1635,7 @@ local function updateScalarActions(action_set, action_set_values)
             -- TODO: 我要怎么弄？
         end
         -- 归一化标量
-        if values[name] then
-            values[name] = math.max(0.0, math.min(values[name], 1.0))
-        end
+        values[name] = clamp(values[name], 0.0, 1.0)
     end
 end
 
@@ -1540,36 +1644,45 @@ end
 ---@param x number
 ---@param y number
 local function addVector2ActionValue(values, name, x, y)
-    if type(values[name]) ~= "table" then
-        values[name] = {
-            x = 0,
-            y = 0,
-        }
-    end
     local vector2 = values[name]
-    if type(vector2.x) ~= "number" then
-        vector2.x = 0
-    end
-    if type(vector2.y) ~= "number" then
-        vector2.y = 0
-    end
     vector2.x = vector2.x + x
     vector2.y = vector2.y + y
 end
 
+---@param positive_x any
+---@param negative_x any
+---@param positive_y any
+---@param negative_y any
+---@return number x
+---@return number y
+local function keyStateToVector2(positive_x, negative_x, positive_y, negative_y)
+    local x = 0
+    local y = 0
+    if negative_x then
+        x = x - 1
+    elseif positive_x then
+        x = x + 1
+    end
+    if negative_y then
+        y = y - 1
+    elseif positive_y then
+        y = y + 1
+    end
+    if x ~= 0 and y ~= 0 then
+        x = x * SQRT2_2
+        y = y * SQRT2_2
+    end
+    return x, y
+end
+
 ---@param v foundation.InputSystem.Vector2
 local function normalizeVector2(v)
-    -- 通常情况下从手柄/其他HID设备读取的轴数值不会用超过32位整数的精度储存
-    -- 假设极端情况下有某些轴的值由32位无符号整数表示
-    -- 1 / 2^32 = 0.00000000023283064365386962890625
-    -- 我们就取 0.0000000001 作为下限，低于该阈值就可以跳过计算，避免 atan2 计算出 nan
-    if math.abs(v.x) < 0.0000000001 and math.abs(v.y) < 0.0000000001 then
-        return
+    local l = math.sqrt(v.x * v.x + v.y * v.y)
+    if l > 1.0 then
+        local a = math.atan2(v.y, v.x)
+        v.x = math.cos(a)
+        v.y = math.sin(a)
     end
-    local l = math.max(0.0, math.min(math.sqrt(v.x * v.x + v.y * v.y), 1.0))
-    local a = math.atan2(v.y, v.x)
-    v.x = l * math.cos(a)
-    v.y = l * math.sin(a)
 end
 
 ---@param action_set foundation.InputSystem.ActionSet
@@ -1580,67 +1693,34 @@ local function updateVector2Actions(action_set, action_set_values)
         -- 键盘：通过四个按键映射到二维矢量的四个方向
         for _, binding in action:keyboardBindings() do
             if binding.type == "key" then
-                local dx = 0
-                local dy = 0
-                if Keyboard.GetKeyState(binding.negative_x_key) then
-                    dx = dx - 1
-                elseif Keyboard.GetKeyState(binding.positive_x_key) then
-                    dx = dx + 1
-                end
-                if Keyboard.GetKeyState(binding.negative_y_key) then
-                    dy = dy - 1
-                elseif Keyboard.GetKeyState(binding.positive_y_key) then
-                    dy = dy + 1
-                end
-                if dx ~= 0 and dy ~= 0 then
-                    dx = dx * SQRT2_2
-                    dy = dy * SQRT2_2
-                end
-                addVector2ActionValue(values, name, dx, dy)
+                local x, y = keyStateToVector2(
+                    Keyboard.GetKeyState(binding.positive_x_key),
+                    Keyboard.GetKeyState(binding.negative_x_key),
+                    Keyboard.GetKeyState(binding.positive_y_key),
+                    Keyboard.GetKeyState(binding.negative_y_key))
+                addVector2ActionValue(values, name, x, y)
             end
         end
         -- 鼠标
         for _, binding in action:mouseBindings() do
             if binding.type == "key" then
-                local dx = 0
-                local dy = 0
-                if Mouse.GetKeyState(binding.negative_x_key) then
-                    dx = dx - 1
-                elseif Mouse.GetKeyState(binding.positive_x_key) then
-                    dx = dx + 1
-                end
-                if Mouse.GetKeyState(binding.negative_y_key) then
-                    dy = dy - 1
-                elseif Mouse.GetKeyState(binding.positive_y_key) then
-                    dy = dy + 1
-                end
-                if dx ~= 0 and dy ~= 0 then
-                    dx = dx * SQRT2_2
-                    dy = dy * SQRT2_2
-                end
-                addVector2ActionValue(values, name, dx, dy)
+                local x, y = keyStateToVector2(
+                    Mouse.GetKeyState(binding.positive_x_key),
+                    Mouse.GetKeyState(binding.negative_x_key),
+                    Mouse.GetKeyState(binding.positive_y_key),
+                    Mouse.GetKeyState(binding.negative_y_key))
+                addVector2ActionValue(values, name, x, y)
             end
             -- TODO: 鼠标的XY坐标和XY滚轮不属于归一化二维矢量输入组件，需要特殊处理
         end
         -- 手柄
         for _, binding in action:controllerBindings() do
             if binding.type == "key" then
-                local x = 0
-                local y = 0
-                if isControllerKeyDown(binding.negative_x_key) then
-                    x = x - 1
-                elseif isControllerKeyDown(binding.positive_x_key) then
-                    x = x + 1
-                end
-                if isControllerKeyDown(binding.negative_y_key) then
-                    y = y - 1
-                elseif isControllerKeyDown(binding.positive_y_key) then
-                    y = y + 1
-                end
-                if x ~= 0 and y ~= 0 then
-                    x = x * SQRT2_2
-                    y = y * SQRT2_2
-                end
+                local x, y = keyStateToVector2(
+                    isControllerKeyDown(binding.positive_x_key),
+                    isControllerKeyDown(binding.negative_x_key),
+                    isControllerKeyDown(binding.positive_y_key),
+                    isControllerKeyDown(binding.negative_y_key))
                 addVector2ActionValue(values, name, x, y)
             end
             if binding.type == "axis" then
@@ -1658,22 +1738,11 @@ local function updateVector2Actions(action_set, action_set_values)
         -- 其他 HID 设备
         for _, binding in action:hidBindings() do
             if binding.type == "key" then
-                local x = 0
-                local y = 0
-                if isHidKeyDown(binding.negative_x_key) then
-                    x = x - 1
-                elseif isHidKeyDown(binding.positive_x_key) then
-                    x = x + 1
-                end
-                if isHidKeyDown(binding.negative_y_key) then
-                    y = y - 1
-                elseif isHidKeyDown(binding.positive_y_key) then
-                    y = y + 1
-                end
-                if x ~= 0 and y ~= 0 then
-                    x = x * SQRT2_2
-                    y = y * SQRT2_2
-                end
+                local x, y = keyStateToVector2(
+                    isHidKeyDown(binding.positive_x_key),
+                    isHidKeyDown(binding.negative_x_key),
+                    isHidKeyDown(binding.positive_y_key),
+                    isHidKeyDown(binding.negative_y_key))
                 addVector2ActionValue(values, name, x, y)
             end
             if binding.type == "axis" then
@@ -1684,9 +1753,7 @@ local function updateVector2Actions(action_set, action_set_values)
             -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
         end
         -- 归一化向量
-        if values[name] then
-            normalizeVector2(values[name])
-        end
+        normalizeVector2(values[name])
     end
 end
 
@@ -1984,10 +2051,9 @@ function InputSystem.deserialize(bytes)
                         b1 = b1 - 128
                         b2 = b2 + 128
                     end
-                    ---@type foundation.InputSystem.PolarVector2
-                    local action_value = { m = b1, a = b2 }
-                    quantized.vector2_action_values[action_name] = action_value
-                    action_set_values.vector2_action_values[action_name] = recoverVector2(action_value)
+                    quantized.vector2_action_values[action_name].m = b1
+                    quantized.vector2_action_values[action_name].a = b2
+                    recoverVector2(quantized.vector2_action_values[action_name], action_set_values.vector2_action_values[action_name])
                 end
             end
         end
