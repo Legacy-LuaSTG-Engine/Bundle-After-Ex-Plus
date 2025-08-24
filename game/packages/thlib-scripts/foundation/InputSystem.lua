@@ -197,11 +197,14 @@ end
 ---@field package hid_bindings        foundation.InputSystem.BooleanBinding[]
 local BooleanAction = {}
 
+--#region Keyboard
+
 function BooleanAction:keyboardBindings()
     return ipairs(self.keyboard_bindings)
 end
 
 ---@param key integer
+---@return foundation.InputSystem.BooleanAction
 function BooleanAction:addKeyboardKeyBinding(key)
     local exists = isArrayContainsIf(self.keyboard_bindings, function(value)
         return value.type == "key" and value.key == key
@@ -221,11 +224,20 @@ function BooleanAction:removeKeyboardBinding(index)
     safeRemoveArrayValueAt(self.keyboard_bindings, index)
 end
 
+function BooleanAction:clearKeyboardBindings()
+    clearArray(self.keyboard_bindings)
+end
+
+--#endregion
+
+--#region Mouse
+
 function BooleanAction:mouseBindings()
     return ipairs(self.mouse_bindings)
 end
 
 ---@param key integer
+---@return foundation.InputSystem.BooleanAction
 function BooleanAction:addMouseKeyBinding(key)
     local exists = isArrayContainsIf(self.mouse_bindings, function(value)
         return value.key == key
@@ -245,11 +257,20 @@ function BooleanAction:removeMouseBinding(index)
     safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
 
+function BooleanAction:clearMouseBindings()
+    clearArray(self.mouse_bindings)
+end
+
+--#endregion
+
+--#region Controller
+
 function BooleanAction:controllerBindings()
     return ipairs(self.controller_bindings)
 end
 
 ---@param key integer
+---@return foundation.InputSystem.BooleanAction
 function BooleanAction:addControllerKeyBinding(key)
     local exists = isArrayContainsIf(self.controller_bindings, function(value)
         return value.type == "key" and value.key == key
@@ -269,11 +290,20 @@ function BooleanAction:removeControllerBinding(index)
     safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
+function BooleanAction:clearControllerBindings()
+    clearArray(self.controller_bindings)
+end
+
+--#endregion
+
+--#region HID
+
 function BooleanAction:hidBindings()
     return ipairs(self.hid_bindings)
 end
 
 ---@param key integer
+---@return foundation.InputSystem.BooleanAction
 function BooleanAction:addHidKeyBinding(key)
     local exists = isArrayContainsIf(self.hid_bindings, function(value)
         return value.type == "key" and value.key == key
@@ -291,6 +321,19 @@ end
 ---@param index integer
 function BooleanAction:removeHidBinding(index)
     safeRemoveArrayValueAt(self.hid_bindings, index)
+end
+
+function BooleanAction:clearHidBindings()
+    clearArray(self.hid_bindings)
+end
+
+--#endregion
+
+function BooleanAction:clearBindings()
+    self:clearKeyboardBindings()
+    self:clearMouseBindings()
+    self:clearControllerBindings()
+    self:clearHidBindings()
 end
 
 ---@param name string
@@ -324,6 +367,8 @@ end
 ---@field package hid_bindings        foundation.InputSystem.ScalarBinding[]
 local ScalarAction = {}
 
+--#region Keyboard
+
 function ScalarAction:keyboardBindings()
     return ipairs(self.keyboard_bindings)
 end
@@ -350,6 +395,14 @@ function ScalarAction:removeKeyboardBinding(index)
     safeRemoveArrayValueAt(self.keyboard_bindings, index)
 end
 
+function ScalarAction:clearKeyboardBindings()
+    clearArray(self.keyboard_bindings)
+end
+
+--#endregion
+
+--#region Mouse
+
 function ScalarAction:mouseBindings()
     return ipairs(self.mouse_bindings)
 end
@@ -375,6 +428,14 @@ end
 function ScalarAction:removeMouseBinding(index)
     safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
+
+function ScalarAction:clearMouseBindings()
+    clearArray(self.mouse_bindings)
+end
+
+--#endregion
+
+--#region Controller
 
 function ScalarAction:controllerBindings()
     return ipairs(self.controller_bindings)
@@ -419,6 +480,14 @@ function ScalarAction:removeControllerBinding(index)
     safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
+function ScalarAction:clearControllerBindings()
+    clearArray(self.controller_bindings)
+end
+
+--#endregion
+
+--#region HID
+
 function ScalarAction:hidBindings()
     return ipairs(self.hid_bindings)
 end
@@ -460,6 +529,19 @@ end
 ---@param index integer
 function ScalarAction:removeHidBinding(index)
     safeRemoveArrayValueAt(self.hid_bindings, index)
+end
+
+function ScalarAction:clearHidBindings()
+    clearArray(self.hid_bindings)
+end
+
+--#endregion
+
+function ScalarAction:clearBindings()
+    self:clearKeyboardBindings()
+    self:clearMouseBindings()
+    self:clearControllerBindings()
+    self:clearHidBindings()
 end
 
 ---@param name string
@@ -535,6 +617,8 @@ end
 ---@field package hid_bindings        foundation.InputSystem.Vector2Binding[]
 local Vector2Action = {}
 
+--#region Keyboard
+
 function Vector2Action:keyboardBindings()
     return ipairs(self.keyboard_bindings)
 end
@@ -565,6 +649,14 @@ function Vector2Action:removeKeyboardBinding(index)
     safeRemoveArrayValueAt(self.keyboard_bindings, index)
 end
 
+function Vector2Action:clearKeyboardBindings()
+    clearArray(self.keyboard_bindings)
+end
+
+--#endregion
+
+--#region Mouse
+
 function Vector2Action:mouseBindings()
     return ipairs(self.mouse_bindings)
 end
@@ -594,6 +686,14 @@ end
 function Vector2Action:removeMouseBinding(index)
     safeRemoveArrayValueAt(self.mouse_bindings, index)
 end
+
+function Vector2Action:clearMouseBindings()
+    clearArray(self.mouse_bindings)
+end
+
+--#endregion
+
+--#region Controller
 
 function Vector2Action:controllerBindings()
     return ipairs(self.controller_bindings)
@@ -638,6 +738,14 @@ function Vector2Action:removeControllerBinding(index)
     safeRemoveArrayValueAt(self.controller_bindings, index)
 end
 
+function Vector2Action:clearControllerBindings()
+    clearArray(self.controller_bindings)
+end
+
+--#endregion
+
+--#region HID
+
 function Vector2Action:hidBindings()
     return ipairs(self.hid_bindings)
 end
@@ -666,6 +774,19 @@ end
 ---@param index integer
 function Vector2Action:removeHidBinding(index)
     safeRemoveArrayValueAt(self.hid_bindings, index)
+end
+
+function Vector2Action:clearHidBindings()
+    clearArray(self.hid_bindings)
+end
+
+--#endregion
+
+function Vector2Action:clearBindings()
+    self:clearKeyboardBindings()
+    self:clearMouseBindings()
+    self:clearControllerBindings()
+    self:clearHidBindings()
 end
 
 ---@param name string
