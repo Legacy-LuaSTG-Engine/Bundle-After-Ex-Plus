@@ -1,7 +1,18 @@
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
+local Mouse = lstg.Input.Mouse
 local InputSystem = require("foundation.InputSystem")
 local Viewport = require("laboratory.input.Viewport")
+
+---@class laboratory.input.ViewportMouseInputSource : foundation.InputSystem.Vector2InputSource
+local ViewportMouseInputSource = {}
+function ViewportMouseInputSource:getType()
+    return "vector2"
+end
+function ViewportMouseInputSource:getValue()
+    return Mouse.GetPosition()
+end
+InputSystem.registerInputSource("viewport-mouse", ViewportMouseInputSource)
 
 local action_set = InputSystem.addActionSet("player")
 action_set:addBooleanAction("left")
@@ -25,6 +36,8 @@ action_set:addVector2Action("fps-move")
 local action_set_menu = InputSystem.addActionSet("menu")
 action_set_menu:addBooleanAction("record")
     :addKeyboardKeyBinding(Keyboard.R)
+action_set_menu:addVector2Action("pointer", true)
+    :addInputSource("viewport-mouse")
 
 local x = 0
 local y = 0
@@ -145,6 +158,8 @@ function RenderFunc()
     end
     Viewport.apply()
     lstg.Render("white", x, y, 0, size / 16)
+    local px, py = InputSystem.getVector2Action("menu:pointer")
+    lstg.Render("white", px, py, 45, size / 16)
     local text = ("%03d -- %s"):format(record_index, play_mode)
     lstg.RenderTTF("sans", text, 10, 10, Viewport.height - 10, Viewport.height - 10, 0 + 0, lstg.Color(255, 255, 255, 255), 2)
     lstg.EndScene()
