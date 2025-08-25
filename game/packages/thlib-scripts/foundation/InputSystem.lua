@@ -210,6 +210,7 @@ end
 ---@field package mouse_bindings      foundation.InputSystem.BooleanBinding[]
 ---@field package controller_bindings foundation.InputSystem.BooleanBinding[]
 ---@field package hid_bindings        foundation.InputSystem.BooleanBinding[]
+---@field package input_sources       string[]
 local BooleanAction = {}
 
 --#region Keyboard
@@ -351,6 +352,31 @@ function BooleanAction:clearBindings()
     self:clearHidBindings()
 end
 
+--#region InputSource
+
+function BooleanAction:inputSources()
+    return ipairs(self.input_sources)
+end
+
+---@param name string
+function BooleanAction:addInputSource(name)
+    if isArrayContains(self.input_sources, name) then
+        return
+    end
+    table.insert(self.input_sources, name)
+end
+
+---@param name string
+function BooleanAction:removeInputSource(name)
+    removeArrayValue(self.input_sources, name)
+end
+
+function BooleanAction:clearInputSources()
+    clearArray(self.input_sources)
+end
+
+--#endregion
+
 ---@param name string
 ---@return foundation.InputSystem.BooleanAction
 function BooleanAction.create(name)
@@ -362,6 +388,7 @@ function BooleanAction.create(name)
         mouse_bindings = {},
         controller_bindings = {},
         hid_bindings = {},
+        input_sources = {},
     }
     setmetatable(instance, { __index = BooleanAction })
     return instance
@@ -382,6 +409,7 @@ end
 ---@field package mouse_bindings      foundation.InputSystem.ScalarBinding[]
 ---@field package controller_bindings foundation.InputSystem.ScalarBinding[]
 ---@field package hid_bindings        foundation.InputSystem.ScalarBinding[]
+---@field package input_sources       string[]
 local ScalarAction = {}
 
 function ScalarAction:isNormalized()
@@ -565,6 +593,31 @@ function ScalarAction:clearBindings()
     self:clearHidBindings()
 end
 
+--#region InputSource
+
+function ScalarAction:inputSources()
+    return ipairs(self.input_sources)
+end
+
+---@param name string
+function ScalarAction:addInputSource(name)
+    if isArrayContains(self.input_sources, name) then
+        return
+    end
+    table.insert(self.input_sources, name)
+end
+
+---@param name string
+function ScalarAction:removeInputSource(name)
+    removeArrayValue(self.input_sources, name)
+end
+
+function ScalarAction:clearInputSources()
+    clearArray(self.input_sources)
+end
+
+--#endregion
+
 ---@param name string
 ---@param non_normalized boolean?
 ---@return foundation.InputSystem.ScalarAction
@@ -578,6 +631,7 @@ function ScalarAction.create(name, non_normalized)
         mouse_bindings = {},
         controller_bindings = {},
         hid_bindings = {},
+        input_sources = {},
     }
     setmetatable(instance, { __index = ScalarAction })
     return instance
@@ -658,6 +712,7 @@ end
 ---@field package mouse_bindings      foundation.InputSystem.Vector2Binding[]
 ---@field package controller_bindings foundation.InputSystem.Vector2Binding[]
 ---@field package hid_bindings        foundation.InputSystem.Vector2Binding[]
+---@field package input_sources       string[]
 local Vector2Action = {}
 
 function Vector2Action:isNormalized()
@@ -877,6 +932,31 @@ function Vector2Action:clearBindings()
     self:clearHidBindings()
 end
 
+--#region InputSource
+
+function Vector2Action:inputSources()
+    return ipairs(self.input_sources)
+end
+
+---@param name string
+function Vector2Action:addInputSource(name)
+    if isArrayContains(self.input_sources, name) then
+        return
+    end
+    table.insert(self.input_sources, name)
+end
+
+---@param name string
+function Vector2Action:removeInputSource(name)
+    removeArrayValue(self.input_sources, name)
+end
+
+function Vector2Action:clearInputSources()
+    clearArray(self.input_sources)
+end
+
+--#endregion
+
 ---@param name string
 ---@param non_normalized boolean?
 ---@return foundation.InputSystem.Vector2Action
@@ -890,6 +970,7 @@ function Vector2Action.create(name, non_normalized)
         mouse_bindings = {},
         controller_bindings = {},
         hid_bindings = {},
+        input_sources = {},
     }
     setmetatable(instance, { __index = Vector2Action })
     return instance
