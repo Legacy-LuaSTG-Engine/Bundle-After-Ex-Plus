@@ -1131,7 +1131,7 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 量化
+--- 量化标量
 --#region
 
 ---@alias foundation.InputSystem.QuantizedScalar.Mode
@@ -1288,6 +1288,7 @@ function QuantizedScalar:fromBytes(read)
             return false, e
         end
         self.v = b
+        return true, nil
     elseif self.size == 2 then
         local l, el = read()
         if not l then
@@ -1303,6 +1304,7 @@ function QuantizedScalar:fromBytes(read)
             sign = -1
         end
         self.v = sign * (l + h * 256)
+        return true, nil
     elseif self.size == 4 then
         local lb, elb = read()
         if not lb then
@@ -1326,6 +1328,7 @@ function QuantizedScalar:fromBytes(read)
             sign = -1
         end
         self.v = sign * (lb + lw * 256 + hb * 65536 + hw * 16777216)
+        return true, nil
     else
         error("internal error")
         ---@diagnostic disable-next-line: missing-return
@@ -1363,45 +1366,153 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 量化向量
+--#region
+
+---@alias foundation.InputSystem.QuantizedVector2.Mode
+---| foundation.InputSystem.QuantizedScalar.Mode
+---| '"normalized_polar_m7_a9"'
+
+---@class foundation.InputSystem.QuantizedVector2
+---@field mode foundation.InputSystem.QuantizedVector2.Mode
+---@field size integer
+---@field x    foundation.InputSystem.QuantizedScalar
+---@field y    foundation.InputSystem.QuantizedScalar
+---@field m    integer magnitude
+---@field a    integer angle
+local QuantizedVector2 = {}
+
+---@param x number
+---@param y number
+function QuantizedVector2:set(x, y)
+    assert(type(x) == "number", "x must be a number")
+    assert(type(y) == "number", "y must be a number")
+    if self.mode == "normalized_polar_m7_a9" then
+        local m = math.sqrt(x * x + y * y)
+        local a = math.deg(math.atan2(y, x))
+        self.m = clamp(round(m * 100), 0, 100)
+        self.a = clamp(round(a) % 360, 0, 360)
+    else
+        self.x:set(x)
+        self.y:set(y)
+    end
+end
+
+---@return number x 
+---@return number y
+function QuantizedVector2:get()
+    if self.mode == "normalized_polar_m7_a9" then
+        local m = self.m / 100.0
+        local a = math.rad(self.a)
+        return m * math.cos(a), m * math.sin(a)
+    else
+        return self.x:get(), self.y:get()
+    end
+end
+
+---@param write fun(byte:integer)
+function QuantizedVector2:toBytes(write)
+    if self.mode == "normalized_polar_m7_a9" then
+        local b1 = self.m
+        local b2 = self.a
+        if b2 > 255 then
+            b1 = b1 + 128
+            b2 = b2 - 128
+        end
+        assert(b1 >= 0 and b1 <= 255)
+        assert(b2 >= 0 and b2 <= 255)
+        write(b1)
+        write(b2)
+    else
+        self.x:toBytes(write)
+        self.y:toBytes(write)
+    end
+end
+
+---@param read fun():integer?, string?
+---@return boolean result
+---@return string? message
+function QuantizedVector2:fromBytes(read)
+    if self.mode == "normalized_polar_m7_a9" then
+        local b1, eb1 = read()
+        if not b1 then
+            return false, eb1
+        end
+        local b2, eb2 = read()
+        if not b2 then
+            return false, eb2
+        end
+        if b1 >= 128 then
+            b1 = b1 - 128
+            b2 = b2 + 128
+        end
+        self.m = b1
+        self.a = b2
+        return true, nil
+    else
+        local xr, xe = self.x:fromBytes(read)
+        if not xr then
+            return false, xe
+        end
+        return self.y:fromBytes(read)
+    end
+end
+
+---@param mode foundation.InputSystem.QuantizedVector2.Mode
+---@return foundation.InputSystem.QuantizedVector2
+function QuantizedVector2.create(mode)
+    if mode == "normalized_polar_m7_a9" then
+        ---@type foundation.InputSystem.QuantizedVector2
+        return {
+            mode = mode,
+            size = 2,
+            x = QuantizedScalar.create("normalized_u8"), -- 未使用
+            y = QuantizedScalar.create("normalized_u8"), -- 未使用
+            m = 0,
+            a = 0,
+            set = QuantizedVector2.set,
+            get = QuantizedVector2.get,
+            toBytes = QuantizedVector2.toBytes,
+            fromBytes = QuantizedVector2.fromBytes,
+        }
+    else
+        ---@cast mode foundation.InputSystem.QuantizedScalar.Mode
+        local x = QuantizedScalar.create(mode)
+        local y = QuantizedScalar.create(mode)
+        ---@type foundation.InputSystem.QuantizedVector2
+        return {
+            mode = mode,
+            size = x.size + y.size,
+            x = x,
+            y = y,
+            m = 0, -- 未使用
+            a = 0, -- 未使用
+            set = QuantizedVector2.set,
+            get = QuantizedVector2.get,
+            toBytes = QuantizedVector2.toBytes,
+            fromBytes = QuantizedVector2.fromBytes,
+        }
+    end
+end
+
+---@return foundation.InputSystem.QuantizedVector2
+local function createQuantizedVector2()
+    return QuantizedVector2.create("fixed_s1_15_16")
+end
+
+---@return foundation.InputSystem.QuantizedVector2
+local function createNormalizedQuantizedVector2()
+    return QuantizedVector2.create("normalized_polar_m7_a9")
+end
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 输入系统内部状态
 --#region
 
 ---@class foundation.InputSystem.Vector2
 ---@field x number
 ---@field y number
-
----@class foundation.InputSystem.QuantizedVector2
----@field mode '"fixed_s1_15_16"' | '"polar_m100_a360_norm"'
----@field x    number
----@field y    number
----@field m    number magnitude
----@field a    number angle
-
----@return foundation.InputSystem.QuantizedVector2
-local function createQuantizedVector2()
-    ---@type foundation.InputSystem.QuantizedVector2
-    local instance = {
-        mode = "fixed_s1_15_16",
-        x = 0,
-        y = 0,
-        m = 0,
-        a = 0,
-    }
-    return instance
-end
-
----@return foundation.InputSystem.QuantizedVector2
-local function createNormalizedQuantizedVector2()
-    ---@type foundation.InputSystem.QuantizedVector2
-    local instance = {
-        mode = "polar_m100_a360_norm",
-        x = 0,
-        y = 0,
-        m = 0,
-        a = 0,
-    }
-    return instance
-end
 
 ---@class foundation.InputSystem.ActionSetValues
 ---@field last_boolean_action_values table<string, boolean>
@@ -1563,7 +1674,7 @@ local function quantizeVector2(v, pv)
         local yy = clamp(round(v.y * 65536), -2147483647, 2147483647)
         pv.x = xx
         pv.y = yy
-    elseif pv.mode == "polar_m100_a360_norm" then
+    elseif pv.mode == "normalized_polar_m7_a9" then
         local mm = math.sqrt(v.x * v.x + v.y + v.y)
         local aa = math.deg(math.atan2(v.y, v.x))
         pv.m = clamp(round(mm * 100), 0, 100)
@@ -1581,7 +1692,7 @@ local function recoverVector2(pv, v)
         local yy = pv.y / 65536.0
         v.x = round(xx * 10000.0) / 10000.0
         v.y = round(yy * 10000.0) / 10000.0
-    elseif pv.mode == "polar_m100_a360_norm" then
+    elseif pv.mode == "normalized_polar_m7_a9" then
         local mm = pv.m / 100.0
         local aa = math.rad(pv.a)
         v.x = mm * math.cos(aa)
@@ -2418,7 +2529,7 @@ function InputSystem.deserialize(bytes)
                     local quantize_mode = quantized.quantized_vector2_action_values[action_name].mode
                     if quantize_mode == "fixed_s1_15_16" then
 
-                    elseif quantize_mode == "polar_m100_a360_norm" then
+                    elseif quantize_mode == "normalized_polar_m7_a9" then
                         local b1 = bytes[index] -- 已量化
                         index = index + 1
                         local b2 = bytes[index] -- 已量化
