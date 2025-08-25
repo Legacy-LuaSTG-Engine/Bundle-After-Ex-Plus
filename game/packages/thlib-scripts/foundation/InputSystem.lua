@@ -1131,16 +1131,234 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 量化
+--#region
+
+---@alias foundation.InputSystem.QuantizedScalar.Mode
+---| '"fixed_s1_7_24"'
+---| '"fixed_s1_15_16"'
+---| '"fixed_s1_23_8"'
+---| '"fixed_s1_7_8"'
+---| '"fixed_u8_24"'
+---| '"fixed_u16_16"'
+---| '"fixed_u24_8"'
+---| '"fixed_u8_8"'
+---| '"normalized_u8"'
+
+local QUANTIZED_SCALAR_MODES = {
+    fixed_s1_7_24 = {
+        size = 4,
+        mul = 16777216,
+        min = -2147483647,
+        max = 2147483647,
+        v_min = -2147483647 / 16777216, -- -127.9999999
+        v_max = 2147483647 / 16777216, -- 127.9999999
+    },
+    fixed_s1_15_16 = {
+        size = 4,
+        mul = 65536,
+        min = -2147483647,
+        max = 2147483647,
+        v_min = -2147483647 / 65536, -- -32767.9999
+        v_max = 2147483647 / 65536, -- 32767.9999
+    },
+    fixed_s1_23_8 = {
+        size = 4,
+        mul = 256,
+        min = -2147483647,
+        max = 2147483647,
+        v_min = -2147483647 / 256, -- -8388607.99
+        v_max = 2147483647 / 256, -- 8388607.99
+    },
+    fixed_s1_7_8 = {
+        size = 2,
+        mul = 256,
+        min = -32767,
+        max = 32767,
+        v_min = -32767 / 256, -- -127.99
+        v_max = 32767 / 256, -- 127.99
+    },
+    fixed_u8_24 = {
+        size = 4,
+        mul = 16777216,
+        min = 0,
+        max = 4294967295,
+        v_min = 0,
+        v_max = 4294967295 / 16777216, -- 255.9999999
+    },
+    fixed_u16_16 = {
+        size = 4,
+        mul = 65536,
+        min = 0,
+        max = 4294967295,
+        v_min = 0,
+        v_max = 4294967295 / 65536, -- 65535.9999
+    },
+    fixed_u24_8 = {
+        size = 4,
+        mul = 256,
+        min = 0,
+        max = 4294967295,
+        v_min = 0,
+        v_max = 4294967295 / 256, -- 16777215.99
+    },
+    fixed_u8_8 = {
+        size = 2,
+        mul = 256,
+        min = 0,
+        max = 65535,
+        v_min = 0,
+        v_max = 65535 / 256, -- 255.99
+    },
+    normalized_u8 = {
+        size = 1,
+        mul = 255,
+        min = 0,
+        max = 255,
+        v_min = 0.0,
+        v_max = 1.0
+    },
+}
+
+---@class foundation.InputSystem.QuantizedScalar
+---@field mode foundation.InputSystem.QuantizedScalar.Mode
+---@field size integer
+---@field mul  integer
+---@field min  integer
+---@field max  integer
+---@field v    integer
+local QuantizedScalar = {}
+
+---@param v number
+function QuantizedScalar:set(v)
+    assert(type(v) == "number", "v must be a number")
+    self.v = clamp(round(v * self.mul), self.min, self.max)
+end
+
+---@return number
+function QuantizedScalar:get()
+    return self.v / self.mul
+end
+
+---@param write fun(byte:integer)
+function QuantizedScalar:toBytes(write)
+    if self.size == 1 then
+        assert(self.v >= 0 and self.v <= 255)
+        write(self.v)
+    elseif self.size == 2 then
+        local v = math.abs(self.v)
+        local l = v % 256
+        local h = math.floor(v / 256) % 256
+        if self.v < 0 then
+            h = h + 128
+        end
+        assert(l >= 0 and h <= 255)
+        assert(l >= 0 and h <= 255)
+        write(l)
+        write(h)
+    elseif self.size == 4 then
+        local v = math.abs(self.v)
+        local lb = v % 256
+        local lw = math.floor(v / 256) % 256
+        local hb = math.floor(v / 65536) % 256
+        local hw = math.floor(v / 16777216) % 256
+        if self.v < 0 then
+            hw = hw + 128
+        end
+        assert(lb >= 0 and lb <= 255)
+        assert(lw >= 0 and lw <= 255)
+        assert(hb >= 0 and hb <= 255)
+        assert(hw >= 0 and hw <= 255)
+        write(lb)
+        write(lw)
+        write(hb)
+        write(hw)
+    else
+        error("internal error")
+    end
+end
+
+---@param read fun():integer?, string?
+---@return boolean result
+---@return string? message
+function QuantizedScalar:fromBytes(read)
+    if self.size == 1 then
+        local b, e = read()
+        if not b then
+            return false, e
+        end
+        self.v = b
+    elseif self.size == 2 then
+        local l, el = read()
+        if not l then
+            return false, el
+        end
+        local h, eh = read()
+        if not h then
+            return false, eh
+        end
+        local sign = 1
+        if h >= 128 then
+            h = h - 128
+            sign = -1
+        end
+        self.v = sign * (l + h * 256)
+    elseif self.size == 4 then
+        local lb, elb = read()
+        if not lb then
+            return false, elb
+        end
+        local lw, elw = read()
+        if not lw then
+            return false, elw
+        end
+        local hb, ehb = read()
+        if not hb then
+            return false, ehb
+        end
+        local hw, ehw = read()
+        if not hw then
+            return false, ehw
+        end
+        local sign = 1
+        if hw >= 128 then
+            hw = hw - 128
+            sign = -1
+        end
+        self.v = sign * (lb + lw * 256 + hb * 65536 + hw * 16777216)
+    else
+        error("internal error")
+        ---@diagnostic disable-next-line: missing-return
+    end
+end
+
+---@param mode foundation.InputSystem.QuantizedScalar.Mode
+---@return foundation.InputSystem.QuantizedScalar
+function QuantizedScalar.create(mode)
+    local m = assert(QUANTIZED_SCALAR_MODES[mode], "unknown QuantizedScalar mode " .. mode)
+    ---@type foundation.InputSystem.QuantizedScalar
+    return {
+        mode = mode,
+        size = m.size,
+        mul = m.mul,
+        min = m.min,
+        max = m.max,
+        v = 0,
+        set = QuantizedScalar.set,
+        get = QuantizedScalar.get,
+        toBytes = QuantizedScalar.toBytes,
+        fromBytes = QuantizedScalar.fromBytes,
+    }
+end
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 输入系统内部状态
 --#region
 
 ---@class foundation.InputSystem.Vector2
 ---@field x number
 ---@field y number
-
----@class foundation.InputSystem.QuantizedScalar
----@field mode '"fixed_s1_15_16"' | '"u8_norm"'
----@field v    number
 
 ---@return foundation.InputSystem.QuantizedScalar
 local function createQuantizedScalar()
