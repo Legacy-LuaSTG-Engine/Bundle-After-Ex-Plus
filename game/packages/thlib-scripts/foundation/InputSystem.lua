@@ -1131,6 +1131,100 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 输入系统内部状态
+--#region
+
+---@class foundation.InputSystem.Vector2
+---@field x number
+---@field y number
+
+---@class foundation.InputSystem.ActionSetValues
+---@field last_boolean_action_values table<string, boolean>
+---@field boolean_action_values      table<string, boolean>
+---@field boolean_action_frames      table<string, integer>
+---@field last_scalar_action_values  table<string, number>
+---@field scalar_action_values       table<string, number>
+---@field last_vector2_action_values table<string, foundation.InputSystem.Vector2>
+---@field vector2_action_values      table<string, foundation.InputSystem.Vector2>
+
+---@return foundation.InputSystem.ActionSetValues
+local function createActionSetValues()
+    return {
+        last_boolean_action_values = {},
+        boolean_action_values = {},
+        boolean_action_frames = {},
+        last_scalar_action_values = {},
+        scalar_action_values = {},
+        last_vector2_action_values = {},
+        vector2_action_values = {},
+    }
+end
+
+---@type table<string, foundation.InputSystem.ActionSetValues>
+local raw_action_set_values = {}
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+---@param action foundation.InputSystem.Action
+local function initializeActionSetActionValues(action_set, action)
+    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+    if action.type == "boolean" then
+        action_set_values.last_boolean_action_values[action.name] = false
+        action_set_values.boolean_action_values[action.name] = false
+        action_set_values.boolean_action_frames[action.name] = -1
+    elseif action.type == "scalar" then
+        ---@cast action foundation.InputSystem.ScalarAction
+        action_set_values.last_scalar_action_values[action.name] = 0
+        action_set_values.scalar_action_values[action.name] = 0
+    elseif action.type == "vector2" then
+        ---@cast action foundation.InputSystem.Vector2Action
+        action_set_values.last_vector2_action_values[action.name] = { x = 0, y = 0 }
+        action_set_values.vector2_action_values[action.name] = { x = 0, y = 0 }
+    else
+        error(("unknown Action type '%s'"):format(action.type))
+    end
+end
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+---@param action foundation.InputSystem.Action
+local function uninitializeActionSetActionValues(action_set, action)
+    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+    if action.type == "boolean" then
+        action_set_values.last_boolean_action_values[action.name] = nil
+        action_set_values.boolean_action_values[action.name] = nil
+        action_set_values.boolean_action_frames[action.name] = nil
+    elseif action.type == "scalar" then
+        action_set_values.last_scalar_action_values[action.name] = nil
+        action_set_values.scalar_action_values[action.name] = nil
+    elseif action.type == "vector2" then
+        action_set_values.last_vector2_action_values[action.name] = nil
+        action_set_values.vector2_action_values[action.name] = nil
+    else
+        error(("unknown Action type '%s'"):format(action.type))
+    end
+end
+
+table.insert(on_action_added, initializeActionSetActionValues) -- internal HOOK
+table.insert(on_action_removed, uninitializeActionSetActionValues) -- internal HOOK
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+local function initializeActionSetValues(action_set)
+    raw_action_set_values[action_set.name] = createActionSetValues()
+end
+
+--- internal HOOK
+---@param action_set foundation.InputSystem.ActionSet
+local function uninitializeActionSetValues(action_set)
+    raw_action_set_values[action_set.name] = nil
+end
+
+table.insert(on_action_set_added, initializeActionSetValues) -- internal HOOK
+table.insert(on_action_set_removed, uninitializeActionSetValues) -- internal HOOK
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 量化标量
 --#region
 
@@ -1335,6 +1429,12 @@ function QuantizedScalar:fromBytes(read)
     end
 end
 
+---@param other foundation.InputSystem.QuantizedScalar
+function QuantizedScalar:assign(other)
+    assert(self.mode == other.mode, "mode not matched")
+    self.v = other.v
+end
+
 ---@param mode foundation.InputSystem.QuantizedScalar.Mode
 ---@return foundation.InputSystem.QuantizedScalar
 function QuantizedScalar.create(mode)
@@ -1351,6 +1451,7 @@ function QuantizedScalar.create(mode)
         get = QuantizedScalar.get,
         toBytes = QuantizedScalar.toBytes,
         fromBytes = QuantizedScalar.fromBytes,
+        assign = QuantizedScalar.assign,
     }
 end
 
@@ -1458,6 +1559,18 @@ function QuantizedVector2:fromBytes(read)
     end
 end
 
+---@param other foundation.InputSystem.QuantizedVector2
+function QuantizedVector2:assign(other)
+    assert(self.mode == other.mode, "mode not matched")
+    if self.mode == "normalized_polar_m7_a9" then
+        self.m = other.m
+        self.a = other.a
+    else
+        self.x:assign(other.x)
+        self.y:assign(other.y)
+    end
+end
+
 ---@param mode foundation.InputSystem.QuantizedVector2.Mode
 ---@return foundation.InputSystem.QuantizedVector2
 function QuantizedVector2.create(mode)
@@ -1474,6 +1587,7 @@ function QuantizedVector2.create(mode)
             get = QuantizedVector2.get,
             toBytes = QuantizedVector2.toBytes,
             fromBytes = QuantizedVector2.fromBytes,
+            assign = QuantizedVector2.assign,
         }
     else
         ---@cast mode foundation.InputSystem.QuantizedScalar.Mode
@@ -1491,6 +1605,7 @@ function QuantizedVector2.create(mode)
             get = QuantizedVector2.get,
             toBytes = QuantizedVector2.toBytes,
             fromBytes = QuantizedVector2.fromBytes,
+            assign = QuantizedVector2.assign,
         }
     end
 end
@@ -1507,34 +1622,8 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
---- 输入系统内部状态
+--- 输入系统内部状态量化
 --#region
-
----@class foundation.InputSystem.Vector2
----@field x number
----@field y number
-
----@class foundation.InputSystem.ActionSetValues
----@field last_boolean_action_values table<string, boolean>
----@field boolean_action_values      table<string, boolean>
----@field boolean_action_frames      table<string, integer>
----@field last_scalar_action_values  table<string, number>
----@field scalar_action_values       table<string, number>
----@field last_vector2_action_values table<string, foundation.InputSystem.Vector2>
----@field vector2_action_values      table<string, foundation.InputSystem.Vector2>
-
----@return foundation.InputSystem.ActionSetValues
-local function createActionSetValues()
-    return {
-        last_boolean_action_values = {},
-        boolean_action_values = {},
-        boolean_action_frames = {},
-        last_scalar_action_values = {},
-        scalar_action_values = {},
-        last_vector2_action_values = {},
-        vector2_action_values = {},
-    }
-end
 
 ---@class foundation.InputSystem.QuantizedActionSetValues
 ---@field quantized_last_scalar_action_values  table<string, foundation.InputSystem.QuantizedScalar>
@@ -1552,26 +1641,18 @@ local function createQuantizedActionSetValues()
         quantized_vector2_action_values = {},
     }
 end
-
----@type table<string, foundation.InputSystem.ActionSetValues>
-local raw_action_set_values = {}
 ---@type table<string, foundation.InputSystem.QuantizedActionSetValues>
 local quantized_action_set_values = {}
 
 --- internal HOOK
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action foundation.InputSystem.Action
-local function initializeActionSetActionValues(action_set, action)
-    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+local function initializeQuantizedActionSetActionValues(action_set, action)
     local quantized = assert(quantized_action_set_values[action_set.name], ("QuantizedActionSetValues '%s' does not exists"):format(action_set.name))
     if action.type == "boolean" then
-        action_set_values.last_boolean_action_values[action.name] = false
-        action_set_values.boolean_action_values[action.name] = false
-        action_set_values.boolean_action_frames[action.name] = -1
+        -- noop
     elseif action.type == "scalar" then
         ---@cast action foundation.InputSystem.ScalarAction
-        action_set_values.last_scalar_action_values[action.name] = 0
-        action_set_values.scalar_action_values[action.name] = 0
         if action:isNormalized() then
             quantized.quantized_last_scalar_action_values[action.name] = createNormalizedQuantizedScalar()
             quantized.quantized_scalar_action_values[action.name] = createNormalizedQuantizedScalar()
@@ -1581,8 +1662,6 @@ local function initializeActionSetActionValues(action_set, action)
         end
     elseif action.type == "vector2" then
         ---@cast action foundation.InputSystem.Vector2Action
-        action_set_values.last_vector2_action_values[action.name] = { x = 0, y = 0 }
-        action_set_values.vector2_action_values[action.name] = { x = 0, y = 0 }
         if action:isNormalized() then
             quantized.quantized_last_vector2_action_values[action.name] = createNormalizedQuantizedVector2()
             quantized.quantized_vector2_action_values[action.name] = createNormalizedQuantizedVector2()
@@ -1598,21 +1677,14 @@ end
 --- internal HOOK
 ---@param action_set foundation.InputSystem.ActionSet
 ---@param action foundation.InputSystem.Action
-local function uninitializeActionSetActionValues(action_set, action)
-    local action_set_values = assert(raw_action_set_values[action_set.name], ("ActionSetValues '%s' does not exists"):format(action_set.name))
+local function uninitializeQuantizedActionSetActionValues(action_set, action)
     local quantized = assert(quantized_action_set_values[action_set.name], ("QuantizedActionSetValues '%s' does not exists"):format(action_set.name))
     if action.type == "boolean" then
-        action_set_values.last_boolean_action_values[action.name] = nil
-        action_set_values.boolean_action_values[action.name] = nil
-        action_set_values.boolean_action_frames[action.name] = nil
+        -- noop
     elseif action.type == "scalar" then
-        action_set_values.last_scalar_action_values[action.name] = nil
-        action_set_values.scalar_action_values[action.name] = nil
         quantized.quantized_last_scalar_action_values[action.name] = nil
         quantized.quantized_scalar_action_values[action.name] = nil
     elseif action.type == "vector2" then
-        action_set_values.last_vector2_action_values[action.name] = nil
-        action_set_values.vector2_action_values[action.name] = nil
         quantized.quantized_last_vector2_action_values[action.name] = nil
         quantized.quantized_vector2_action_values[action.name] = nil
     else
@@ -1620,87 +1692,23 @@ local function uninitializeActionSetActionValues(action_set, action)
     end
 end
 
-table.insert(on_action_added, initializeActionSetActionValues) -- internal HOOK
-table.insert(on_action_removed, uninitializeActionSetActionValues) -- internal HOOK
+table.insert(on_action_added, initializeQuantizedActionSetActionValues) -- internal HOOK
+table.insert(on_action_removed, uninitializeQuantizedActionSetActionValues) -- internal HOOK
 
 --- internal HOOK
 ---@param action_set foundation.InputSystem.ActionSet
-local function initializeActionSetValues(action_set)
-    raw_action_set_values[action_set.name] = createActionSetValues()
+local function initializeQuantizedActionSetValues(action_set)
     quantized_action_set_values[action_set.name] = createQuantizedActionSetValues()
 end
 
 --- internal HOOK
 ---@param action_set foundation.InputSystem.ActionSet
-local function uninitializeActionSetValues(action_set)
-    raw_action_set_values[action_set.name] = nil
+local function uninitializeQuantizedActionSetValues(action_set)
     quantized_action_set_values[action_set.name] = nil
 end
 
-table.insert(on_action_set_added, initializeActionSetValues) -- internal HOOK
-table.insert(on_action_set_removed, uninitializeActionSetValues) -- internal HOOK
-
----@param v number
----@param pv foundation.InputSystem.QuantizedScalar
-local function quantizeScalar(v, pv)
-    if pv.mode == "fixed_s1_15_16" then
-        pv.v = clamp(round(v * 65536), -2147483647, 2147483647)
-    elseif pv.mode == "u8_norm" then
-        pv.v = clamp(round(v * 255), 0, 255)
-    else
-        error("unknown QuantizedScalar mode " .. pv.mode)
-    end
-end
-
----@param pv foundation.InputSystem.QuantizedScalar
----@return number
-local function recoverScalar(pv)
-    if pv.mode == "fixed_s1_15_16" then
-        local vv = pv.v / 65536.0
-        return round(vv * 10000.0) / 10000.0
-    elseif pv.mode == "u8_norm" then
-        return pv.v / 255.0
-    else
-        error("unknown QuantizedScalar mode " .. pv.mode)
-        ---@diagnostic disable-next-line: missing-return
-    end
-end
-
----@param v foundation.InputSystem.Vector2
----@param pv foundation.InputSystem.QuantizedVector2
-local function quantizeVector2(v, pv)
-    if pv.mode == "fixed_s1_15_16" then
-        local xx = clamp(round(v.x * 65536), -2147483647, 2147483647)
-        local yy = clamp(round(v.y * 65536), -2147483647, 2147483647)
-        pv.x = xx
-        pv.y = yy
-    elseif pv.mode == "normalized_polar_m7_a9" then
-        local mm = math.sqrt(v.x * v.x + v.y + v.y)
-        local aa = math.deg(math.atan2(v.y, v.x))
-        pv.m = clamp(round(mm * 100), 0, 100)
-        pv.a = clamp(round(aa) % 360, 0, 360)
-    else
-        error("unknown QuantizedVector2 mode " .. pv.mode)
-    end
-end
-
----@param pv foundation.InputSystem.QuantizedVector2
----@param v foundation.InputSystem.Vector2
-local function recoverVector2(pv, v)
-    if pv.mode == "fixed_s1_15_16" then
-        local xx = pv.x / 65536.0
-        local yy = pv.y / 65536.0
-        v.x = round(xx * 10000.0) / 10000.0
-        v.y = round(yy * 10000.0) / 10000.0
-    elseif pv.mode == "normalized_polar_m7_a9" then
-        local mm = pv.m / 100.0
-        local aa = math.rad(pv.a)
-        v.x = mm * math.cos(aa)
-        v.y = mm * math.sin(aa)
-    else
-        error("unknown QuantizedVector2 mode " .. pv.mode)
-    end
-end
+table.insert(on_action_set_added, initializeQuantizedActionSetValues) -- internal HOOK
+table.insert(on_action_set_removed, uninitializeQuantizedActionSetValues) -- internal HOOK
 
 ---@param include_action_set_names string[]?
 function InputSystem.quantize(include_action_set_names)
@@ -1708,12 +1716,12 @@ function InputSystem.quantize(include_action_set_names)
         if isActionSetIncluded(include_action_set_names, action_set_name) then
             local quantized = quantized_action_set_values[action_set_name]
             for k, v in pairs(raw.scalar_action_values) do
-                quantizeScalar(v, quantized.quantized_scalar_action_values[k])
-                raw.scalar_action_values[k] = recoverScalar(quantized.quantized_scalar_action_values[k])
+                quantized.quantized_scalar_action_values[k]:set(v)
+                raw.scalar_action_values[k] = quantized.quantized_scalar_action_values[k]:get()
             end
             for k, v in pairs(raw.vector2_action_values) do
-                quantizeVector2(v, quantized.quantized_vector2_action_values[k])
-                recoverVector2(quantized.quantized_vector2_action_values[k], raw.vector2_action_values[k])
+                quantized.quantized_vector2_action_values[k]:set(v.x, v.y)
+                v.x, v.y = quantized.quantized_vector2_action_values[k]:get()
             end
         end
     end
@@ -1948,24 +1956,18 @@ end
 ---@param clear_last boolean?
 local function clearQuantizedActionSetValues(action_set_values, clear_last)
     if clear_last then
-        for k, _ in pairs(action_set_values.quantized_last_scalar_action_values) do
-            action_set_values.quantized_last_scalar_action_values[k].v = 0
+        for _, v in pairs(action_set_values.quantized_last_scalar_action_values) do
+            v:set(0)
         end
-        for k, _ in pairs(action_set_values.quantized_last_vector2_action_values) do
-            action_set_values.quantized_last_vector2_action_values[k].x = 0
-            action_set_values.quantized_last_vector2_action_values[k].y = 0
-            action_set_values.quantized_last_vector2_action_values[k].m = 0
-            action_set_values.quantized_last_vector2_action_values[k].a = 0
+        for _, v in pairs(action_set_values.quantized_last_vector2_action_values) do
+            v:set(0, 0)
         end
     end
-    for k, _ in pairs(action_set_values.quantized_scalar_action_values) do
-        action_set_values.quantized_scalar_action_values[k].v = 0
+    for _, v in pairs(action_set_values.quantized_scalar_action_values) do
+        v:set(0)
     end
-    for k, _ in pairs(action_set_values.quantized_vector2_action_values) do
-        action_set_values.quantized_vector2_action_values[k].x = 0
-        action_set_values.quantized_vector2_action_values[k].y = 0
-        action_set_values.quantized_vector2_action_values[k].m = 0
-        action_set_values.quantized_vector2_action_values[k].a = 0
+    for _, v in pairs(action_set_values.quantized_vector2_action_values) do
+        v:set(0, 0)
     end
 end
 
@@ -1986,13 +1988,10 @@ end
 ---@param action_set_values foundation.InputSystem.QuantizedActionSetValues
 local function copyLastQuantizedActionSetValues(action_set_values)
     for k, v in pairs(action_set_values.quantized_scalar_action_values) do
-        action_set_values.quantized_last_scalar_action_values[k].v = v.v
+        action_set_values.quantized_last_scalar_action_values[k]:assign(v)
     end
     for k, v in pairs(action_set_values.quantized_vector2_action_values) do
-        action_set_values.quantized_last_vector2_action_values[k].x = v.x
-        action_set_values.quantized_last_vector2_action_values[k].y = v.y
-        action_set_values.quantized_last_vector2_action_values[k].m = v.m
-        action_set_values.quantized_last_vector2_action_values[k].a = v.a
+        action_set_values.quantized_last_vector2_action_values[k]:assign(v)
     end
 end
 
@@ -2330,15 +2329,15 @@ function InputSystem.getSerializationLength(include_action_set_names)
             end
             -- 标量动作值
             length = length + 1 -- SCALAR_ACTION_VALUES_MARKER
-            for action_name, _ in pairs(quantized.quantized_scalar_action_values) do
+            for action_name, action_value in pairs(quantized.quantized_scalar_action_values) do
                 length = length + 1 + action_name:len()
-                length = length + 1 -- scalar value
+                length = length + action_value.size
             end
             -- 矢量动作值
             length = length + 1 -- VECTOR2_ACTION_VALUES_MARKER
-            for action_name, _ in pairs(quantized.quantized_vector2_action_values) do
+            for action_name, action_value in pairs(quantized.quantized_vector2_action_values) do
                 length = length + 1 + action_name:len()
-                length = length + 2 -- polar vector2 value
+                length = length + action_value.size
             end
         end
     end
@@ -2350,6 +2349,9 @@ end
 function InputSystem.serialize(include_action_set_names)
     ---@type integer[]
     local bytes = {}
+    local function writer(byte)
+        bytes[#bytes + 1] = byte
+    end
     for action_set_name, action_set_values in pairs(raw_action_set_values) do
         if isArrayContains(include_action_set_names, action_set_name) then
             -- 动作集信息
@@ -2366,20 +2368,13 @@ function InputSystem.serialize(include_action_set_names)
             appendByte(bytes, SCALAR_ACTION_VALUES_MARKER)
             for action_name, action_value in pairs(quantized.quantized_scalar_action_values) do -- 已量化
                 appendString(bytes, action_name)
-                appendByte(bytes, action_value) -- 已量化
+                action_value:toBytes(writer)
             end
             -- 矢量动作值
             appendByte(bytes, VECTOR2_ACTION_VALUES_MARKER)
             for action_name, action_value in pairs(quantized.quantized_vector2_action_values) do -- 已量化
                 appendString(bytes, action_name)
-                local b1 = action_value.m -- 已量化
-                local b2 = action_value.a -- 已量化
-                if b2 > 255 then
-                    b1 = b1 + 128
-                    b2 = b2 - 128
-                end
-                appendByte(bytes, b1)
-                appendByte(bytes, b2)
+                action_value:toBytes(writer)
             end
         end
     end
@@ -2442,14 +2437,20 @@ local function isAnyMarker(marker)
         or marker == ACTION_SET_MARKER
 end
 
-
-
 ---@param bytes integer[]
 ---@return boolean result
 ---@return string? message
 function InputSystem.deserialize(bytes)
     local length = #bytes
     local index = 1
+    local function reader()
+        if index > #bytes then
+            return nil, "reader out of bound"
+        end
+        local byte = bytes[index]
+        index = index + 1
+        return byte, nil
+    end
     while index <= length do
         -- 动作集标记
         if bytes[index] ~= ACTION_SET_MARKER then
@@ -2501,49 +2502,20 @@ function InputSystem.deserialize(bytes)
                     action_set_values.boolean_action_values[action_name] = byteToBoolean(bytes[index])
                     index = index + 1
                 elseif marker == SCALAR_ACTION_VALUES_MARKER then
-                    local quantize_mode = quantized.quantized_scalar_action_values[action_name].mode
-                    if quantize_mode == "fixed_s1_15_16" then
-                        local b1 = bytes[index]
-                        index = index + 1
-                        local b2 = bytes[index]
-                        index = index + 1
-                        local b3 = bytes[index]
-                        index = index + 1
-                        local b4 = bytes[index]
-                        index = index + 1
-                        local sign = 1
-                        if b4 >= 128 then
-                            b4 = b4 - 128
-                            sign = -1
-                        end
-                        local s32 = sign * (b1 + b2 * 256 + b3 * 65536 + b4 * 16777216)
-                        quantized.quantized_scalar_action_values[action_name].v = s32
-                    elseif quantize_mode == "u8_norm" then
-                        quantized.quantized_scalar_action_values[action_name].v = bytes[index]
-                        index = index + 1
-                    else
-                        return false, "unknown QuantizedScalar mode " .. quantize_mode
+                    local r, e = quantized.quantized_scalar_action_values[action_name]:fromBytes(reader)
+                    if not r then
+                        return false, e
                     end
-                    action_set_values.scalar_action_values[action_name] = recoverScalar(quantized.quantized_scalar_action_values[action_name])
+                    local v = quantized.quantized_scalar_action_values[action_name]:get()
+                    action_set_values.scalar_action_values[action_name] = v
                 elseif marker == VECTOR2_ACTION_VALUES_MARKER then
-                    local quantize_mode = quantized.quantized_vector2_action_values[action_name].mode
-                    if quantize_mode == "fixed_s1_15_16" then
-
-                    elseif quantize_mode == "normalized_polar_m7_a9" then
-                        local b1 = bytes[index] -- 已量化
-                        index = index + 1
-                        local b2 = bytes[index] -- 已量化
-                        index = index + 1
-                        if b1 >= 128 then
-                            b1 = b1 - 128
-                            b2 = b2 + 128
-                        end
-                        quantized.quantized_vector2_action_values[action_name].m = b1
-                        quantized.quantized_vector2_action_values[action_name].a = b2
-                    else
-                        return false, "unknown QuantizedVector2 mode " .. quantize_mode
+                    local r, e = quantized.quantized_vector2_action_values[action_name]:fromBytes(reader)
+                    if not r then
+                        return false, e
                     end
-                    recoverVector2(quantized.quantized_vector2_action_values[action_name], action_set_values.vector2_action_values[action_name])
+                    local x, y = quantized.quantized_vector2_action_values[action_name]:get()
+                    action_set_values.vector2_action_values[action_name].x = x
+                    action_set_values.vector2_action_values[action_name].y = y
                 end
             end
         end
@@ -2801,9 +2773,10 @@ function SerializeContext:serialize()
     assert(self.initialized, "SerializeContext not initialized")
     ---@type integer[] bytes
     local bytes = {}
-    local bit_packer = BitPacker.create(function(byte)
+    local function writer(byte)
         bytes[#bytes + 1] = byte
-    end)
+    end
+    local bit_packer = BitPacker.create(writer)
     for _, action_set in ipairs(self.action_sets) do
         -- 动作集信息
         local raw = assert(raw_action_set_values[action_set.name], "ActionSetValues does not exists")
@@ -2816,23 +2789,18 @@ function SerializeContext:serialize()
         bit_packer:flush()
         -- 标量动作值
         for _, action_name in pairs(action_set.scalar_action_names) do
-            appendByte(bytes, quantized.quantized_scalar_action_values[action_name]) -- 已量化
+            quantized.quantized_scalar_action_values[action_name]:toBytes(writer)
             if SERIALIZE_CONTEXT_VERBOSE_LOG then
-                logInfo("serialize / %d", quantized.quantized_scalar_action_values[action_name])
+                local v = quantized.quantized_scalar_action_values[action_name]:get()
+                logInfo("serialize / %f", v)
             end
         end
         -- 矢量动作值
         for _, action_name in pairs(action_set.vector2_action_names) do
-            local b1 = quantized.quantized_vector2_action_values[action_name].m -- 已量化
-            local b2 = quantized.quantized_vector2_action_values[action_name].a -- 已量化
-            if b2 > 255 then
-                b1 = b1 + 128
-                b2 = b2 - 128
-            end
-            appendByte(bytes, b1)
-            appendByte(bytes, b2)
+            quantized.quantized_vector2_action_values[action_name]:toBytes(writer)
             if SERIALIZE_CONTEXT_VERBOSE_LOG then
-                logInfo("serialize ^ %d %d", b1, b2)
+                local x, y = quantized.quantized_vector2_action_values[action_name]:get()
+                logInfo("serialize ^ %f %f", x, y)
             end
         end
     end
@@ -2849,11 +2817,15 @@ function SerializeContext:deserialize(bytes)
         return false, "index out of bound"
     end
     local index = 1
-    local bit_unpacker = BitUnpacker.create(function()
+    local function reader()
+        if index > #bytes then
+            return nil, "reader out of bound"
+        end
         local byte = bytes[index]
         index = index + 1
-        return byte
-    end)
+        return byte, nil
+    end
+    local bit_unpacker = BitUnpacker.create(reader)
     for _, action_set in ipairs(self.action_sets) do
         -- 动作集信息
         local raw = assert(raw_action_set_values[action_set.name], "ActionSetValues does not exists")
@@ -2865,33 +2837,31 @@ function SerializeContext:deserialize(bytes)
         end
         -- 标量动作值
         for _, action_name in pairs(action_set.scalar_action_names) do
-            local action_value = bytes[index] -- 已量化
-            index = index + 1
-            quantized.quantized_scalar_action_values[action_name] = action_value
-            raw.scalar_action_values[action_name] = recoverScalar(action_value)
+            local r, e = quantized.quantized_scalar_action_values[action_name]:fromBytes(reader)
+            if not r then
+                return false, e
+            end
+            local v = quantized.quantized_scalar_action_values[action_name]:get()
+            raw.scalar_action_values[action_name] = v
             if SERIALIZE_CONTEXT_VERBOSE_LOG then
-                logInfo("deserialize / %d", action_value)
+                logInfo("deserialize / %f", v)
             end
         end
         -- 矢量动作值
         for _, action_name in pairs(action_set.vector2_action_names) do
-            local b1 = bytes[index] -- 已量化
-            index = index + 1
-            local b2 = bytes[index] -- 已量化
-            index = index + 1
-            if b1 >= 128 then
-                b1 = b1 - 128
-                b2 = b2 + 128
+            local r, e = quantized.quantized_vector2_action_values[action_name]:fromBytes(reader)
+            if not r then
+                return false, e
             end
-            quantized.quantized_vector2_action_values[action_name].m = b1
-            quantized.quantized_vector2_action_values[action_name].a = b2
-            recoverVector2(quantized.quantized_vector2_action_values[action_name], raw.vector2_action_values[action_name])
+            local x, y = quantized.quantized_vector2_action_values[action_name]:get()
+            raw.vector2_action_values[action_name].x = x
+            raw.vector2_action_values[action_name].y = y
             if SERIALIZE_CONTEXT_VERBOSE_LOG then
-                logInfo("deserialize ^ %d %d", b1, b2)
+                logInfo("deserialize ^ %f %f", x, y)
             end
         end
     end
-    return true
+    return true, nil
 end
 
 ---@return foundation.InputSystem.SerializeContext
