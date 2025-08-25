@@ -1351,6 +1351,16 @@ function QuantizedScalar.create(mode)
     }
 end
 
+---@return foundation.InputSystem.QuantizedScalar
+local function createQuantizedScalar()
+    return QuantizedScalar.create("fixed_s1_15_16")
+end
+
+---@return foundation.InputSystem.QuantizedScalar
+local function createNormalizedQuantizedScalar()
+    return QuantizedScalar.create("normalized_u8")
+end
+
 --#endregion
 --------------------------------------------------------------------------------
 --- 输入系统内部状态
@@ -1359,24 +1369,6 @@ end
 ---@class foundation.InputSystem.Vector2
 ---@field x number
 ---@field y number
-
----@return foundation.InputSystem.QuantizedScalar
-local function createQuantizedScalar()
-    ---@type foundation.InputSystem.QuantizedScalar
-    return {
-        mode = "fixed_s1_15_16",
-        v = 0,
-    }
-end
-
----@return foundation.InputSystem.QuantizedScalar
-local function createNormalizedQuantizedScalar()
-    ---@type foundation.InputSystem.QuantizedScalar
-    return {
-        mode = "u8_norm",
-        v = 0,
-    }
-end
 
 ---@class foundation.InputSystem.QuantizedVector2
 ---@field mode '"fixed_s1_15_16"' | '"polar_m100_a360_norm"'
