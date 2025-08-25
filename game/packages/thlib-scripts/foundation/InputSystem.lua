@@ -1919,6 +1919,109 @@ end
 
 --#endregion
 --------------------------------------------------------------------------------
+--- 自定义输入源
+--#region
+
+---@class foundation.InputSystem.InputSource
+local InputSource = {}
+
+---@return foundation.InputSystem.ActionType
+function InputSource:getType()
+    ---@diagnostic disable-next-line: missing-return
+end
+
+---@class foundation.InputSystem.BooleanInputSource : foundation.InputSystem.InputSource
+local BooleanInputSource = {}
+
+---@return boolean
+function BooleanInputSource:getValue()
+    ---@diagnostic disable-next-line: missing-return
+end
+
+---@class foundation.InputSystem.ScalarInputSource : foundation.InputSystem.InputSource
+local ScalarInputSource = {}
+
+---@return number
+function ScalarInputSource:getValue()
+    ---@diagnostic disable-next-line: missing-return
+end
+
+---@class foundation.InputSystem.Vector2InputSource : foundation.InputSystem.InputSource
+local Vector2InputSource = {}
+
+---@return number x
+---@return number y
+function Vector2InputSource:getValue()
+    ---@diagnostic disable-next-line: missing-return
+end
+
+---@type table<string, foundation.InputSystem.InputSource>
+local input_sources = {}
+
+---@param name string
+---@param input_source foundation.InputSystem.InputSource
+function InputSystem.registerInputSource(name, input_source)
+    assert(type(name) == "string", "name must be a string")
+    checkActionSetNameOrActionName(name)
+    if input_sources[name] then
+        error(("InputSource '%s' already exists"):format(name))
+    end
+    input_sources[name] = input_source
+end
+
+---@param name string
+function InputSystem.unregisterInputSource(name)
+    assert(type(name) == "string", "name must be a string")
+    input_sources[name] = nil
+end
+
+---@param name string
+---@return foundation.InputSystem.BooleanInputSource
+function InputSystem.getBooleanInputSource(name)
+    assert(type(name) == "string", "name must be a string")
+    local input_source = input_sources[name]
+    if not name then
+        error(("InputSource '%s' does not exists"):format(name))
+    end
+    if input_source:getType() ~= "boolean" then
+        error(("InputSource '%s' (type: %s) is not a BooleanInputSource"):format(name, input_source:getType()))
+    end
+    ---@cast input_source foundation.InputSystem.BooleanInputSource
+    return input_source
+end
+
+---@param name string
+---@return foundation.InputSystem.ScalarInputSource
+function InputSystem.getScalarInputSource(name)
+    assert(type(name) == "string", "name must be a string")
+    local input_source = input_sources[name]
+    if not name then
+        error(("InputSource '%s' does not exists"):format(name))
+    end
+    if input_source:getType() ~= "scalar" then
+        error(("InputSource '%s' (type: %s) is not a ScalarInputSource"):format(name, input_source:getType()))
+    end
+    ---@cast input_source foundation.InputSystem.ScalarInputSource
+    return input_source
+end
+
+---@param name string
+---@return foundation.InputSystem.Vector2InputSource
+function InputSystem.getVector2InputSource(name)
+    assert(type(name) == "string", "name must be a string")
+    local input_source = input_sources[name]
+    if not name then
+        error(("InputSource '%s' does not exists"):format(name))
+    end
+    if input_source:getType() ~= "vector2" then
+        error(("InputSource '%s' (type: %s) is not a Vector2InputSource"):format(name, input_source:getType()))
+    end
+    ---@cast input_source foundation.InputSystem.Vector2InputSource
+    return input_source
+end
+
+--#endregion
+--------------------------------------------------------------------------------
 --- 状态更新
 --#region
 
