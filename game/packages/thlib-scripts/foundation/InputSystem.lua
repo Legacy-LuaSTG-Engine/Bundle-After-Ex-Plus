@@ -2217,6 +2217,11 @@ local function updateBooleanActions(action_set, action_set_values)
         for _, binding in action:hidBindings() do
             orBooleanActionValue(values, name, isHidKeyDown(binding.key))
         end
+        -- 自定义输入源
+        for _, input_source_name in action:inputSources() do
+            local input_source = InputSystem.getBooleanInputSource(input_source_name)
+            orBooleanActionValue(values, name, input_source:getValue())
+        end
         -- 更新激活计时器
         if values[name] then
             frames[name] = frames[name] + 1
@@ -2275,6 +2280,11 @@ local function updateScalarActions(action_set, action_set_values)
                 end
             end
             -- TODO: 我要怎么弄？
+        end
+        -- 自定义输入源
+        for _, input_source_name in action:inputSources() do
+            local input_source = InputSystem.getScalarInputSource(input_source_name)
+            addScalarActionValue(values, name, input_source:getValue())
         end
         -- 归一化标量
         if action:isNormalized() then
@@ -2395,6 +2405,12 @@ local function updateVector2Actions(action_set, action_set_values)
                 addVector2ActionValue(values, name, x, y)
             end
             -- HID 设备的轴映射完全看厂家心情，只有天知道哪两个轴组合成一个摇杆，所以这里忽略摇杆绑定
+        end
+        -- 自定义输入源
+        for _, input_source_name in action:inputSources() do
+            local input_source = InputSystem.getVector2InputSource(input_source_name)
+            local x, y = input_source:getValue()
+            addVector2ActionValue(values, name, x, y)
         end
         -- 归一化向量
         if action:isNormalized() then
