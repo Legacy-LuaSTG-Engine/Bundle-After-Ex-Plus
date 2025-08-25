@@ -149,9 +149,6 @@ end
 ----------------------------------------
 ---extra user function
 
-function GameStateChange()
-end
-
 --- 设置标题
 function ChangeGameTitle()
     local mod = setting.mod and #setting.mod > 0 and setting.mod
