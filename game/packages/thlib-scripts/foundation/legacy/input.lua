@@ -6,6 +6,7 @@
 
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
+local Mouse = lstg.Input.Mouse
 local InputSystem = require("foundation.InputSystem")
 
 --------------------------------------------------------------------------------
@@ -29,9 +30,11 @@ menu_action_set:addBooleanAction("up")
 menu_action_set:addBooleanAction("confirm")
     :addKeyboardKeyBinding(Keyboard.Enter)
     :addKeyboardKeyBinding(Keyboard.Z)
+    :addMouseKeyBinding(Mouse.Left)
 menu_action_set:addBooleanAction("cancel")
     :addKeyboardKeyBinding(Keyboard.Escape)
     :addKeyboardKeyBinding(Keyboard.X)
+    :addMouseKeyBinding(Mouse.Right)
 
 -- 功能键（根据场景决定该按键功能）
 
@@ -66,6 +69,11 @@ local menu_action_retry = menu_action_set:addBooleanAction("retry")
 local menu_action_snapshot = menu_action_set:addBooleanAction("snapshot")
     :addKeyboardKeyBinding(Keyboard.P)
 
+-- 指针
+
+local menu_action_pointer = menu_action_set:addVector2Action("pointer", true)
+    :addInputSource("thlib-ui-pointer")
+
 --------------------------------------------------------------------------------
 --- 游戏动作集（玩家动作集）
 
@@ -99,6 +107,11 @@ local game_action_special = game_action_set:addBooleanAction("special") -- 一�
     :addKeyboardKeyBinding(Keyboard.C)
 local game_action_skip = game_action_set:addBooleanAction("skip") -- 一般用于跳过对话
     :addKeyboardKeyBinding(Keyboard.LeftControl)
+
+-- 指针
+
+local game_action_pointer = game_action_set:addVector2Action("pointer", true)
+    :addInputSource("thlib-world-pointer")
 
 --------------------------------------------------------------------------------
 --- 兼容性 API
