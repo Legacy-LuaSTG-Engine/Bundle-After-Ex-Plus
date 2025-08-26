@@ -6,7 +6,7 @@
 
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
-local Mouse = lstg.Input.Mouse
+--local Mouse = lstg.Input.Mouse
 local InputSystem = require("foundation.InputSystem")
 
 --------------------------------------------------------------------------------
@@ -30,11 +30,11 @@ menu_action_set:addBooleanAction("up")
 menu_action_set:addBooleanAction("confirm")
     :addKeyboardKeyBinding(Keyboard.Enter)
     :addKeyboardKeyBinding(Keyboard.Z)
-    :addMouseKeyBinding(Mouse.Left)
+    --:addMouseKeyBinding(Mouse.Left)
 menu_action_set:addBooleanAction("cancel")
     :addKeyboardKeyBinding(Keyboard.Escape)
     :addKeyboardKeyBinding(Keyboard.X)
-    :addMouseKeyBinding(Mouse.Right)
+    --:addMouseKeyBinding(Mouse.Right)
 
 -- 功能键（根据场景决定该按键功能）
 
