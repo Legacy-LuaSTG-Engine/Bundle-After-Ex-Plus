@@ -3,6 +3,9 @@
 --- 璀境石 2022-06-01
 --------------------------------------------------------------------------------
 
+local InputSystem = require("foundation.InputSystem")
+local legacy_input = require("foundation.legacy.input")
+
 ---@class ui
 local ui = {}
 
@@ -127,36 +130,7 @@ end
 --------------------------------------------------------------------------------
 --- UI 输入
 
-local default_keyboard_map = {
-    left = lstg.Input.Keyboard.Left,
-    right = lstg.Input.Keyboard.Right,
-    up = lstg.Input.Keyboard.Up,
-    down = lstg.Input.Keyboard.Down,
-    slow = lstg.Input.Keyboard.LeftShift,
-    shoot = lstg.Input.Keyboard.Z,
-    spell = lstg.Input.Keyboard.X,
-}
-
 function ui.KeyboardInput()
-    ---@param k string
-    ---@return table<string, number>
-    local function getKeyMap(k)
-        local map = default_keyboard_map
-        if setting then
-            if setting.keysys then
-                if setting.keysys[k] then
-                    map = setting.keysys
-                end
-            end
-            if setting.keys then
-                if setting.keys[k] and map == default_keyboard_map then
-                    map = setting.keys
-                end
-            end
-        end
-        return map
-    end
-
     local function makeButton()
         ---@class ui.KeyboardInput.Button
         local t = {}
@@ -170,22 +144,11 @@ function ui.KeyboardInput()
     ---@param t ui.KeyboardInput.Button
     ---@param k string
     local function updateButton(t, k)
-        local map = getKeyMap(k)
+        local action_locator = "menu:" .. k
         t.last_state = t.state
-        t.state = lstg.GetKeyState(map[k])
-        -- 按键按下
-        if not t.last_state and t.state then
-            t.down = true
-        else
-            t.down = false
-        end
-        t.down = t.down or (lstg.GetLastKey() == map[k]) -- Windows 的连击键功能
-        -- 按键抬起
-        if t.last_state and not t.state then
-            t.up = true
-        else
-            t.up = false
-        end
+        t.state = InputSystem.getBooleanAction(action_locator)
+        t.down = InputSystem.isBooleanActionActivated(action_locator, 40, 4)
+        t.up = InputSystem.isBooleanActionDeactivated(action_locator)
     end
 
     ---@class ui.KeyboardInput
@@ -207,9 +170,9 @@ function ui.KeyboardInput()
         updateButton(self.right, "right")
         updateButton(self.up, "up")
         updateButton(self.down, "down")
-        updateButton(self.shift, "slow")
-        updateButton(self.confirm, "shoot")
-        updateButton(self.cancel, "spell")
+        updateButton(self.shift, "slow-down")
+        updateButton(self.confirm, "confirm")
+        updateButton(self.cancel, "cancel")
     end
 
     cls:init()
@@ -972,7 +935,7 @@ function widget.SimpleSelector()
 
         self._enbale_getter_setter = false
         ---@type fun():number
-        self._getter = function() return false end
+        self._getter = function() return 1 end
         ---@type fun(value:number)
         self._setter = function(value) end
 
