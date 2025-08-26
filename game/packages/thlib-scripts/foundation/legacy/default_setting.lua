@@ -1,38 +1,79 @@
-local lstg = require("lstg")
-local Keyboard = lstg.Input.Keyboard
-
+--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+---@deprecated
 ---@class legacy.default_setting.player_keys
 local p1 = {
-	up = Keyboard.Up,
-	down = Keyboard.Down,
-	left = Keyboard.Left,
-	right = Keyboard.Right,
-	slow = Keyboard.LeftShift,
-	shoot = Keyboard.Z,
-	spell = Keyboard.X,
-	special = Keyboard.C,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	up = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	down = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	left = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	right = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	slow = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	shoot = 0,
+		--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	spell = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	special = 0,
 }
 
----@type legacy.default_setting.player_keys
-local p2 = {
-	up = Keyboard.NumPad5,
-	down = Keyboard.NumPad2,
-	left = Keyboard.NumPad1,
-	right = Keyboard.NumPad3,
-	slow = Keyboard.A,
-	shoot = Keyboard.S,
-	spell = Keyboard.D,
-	special = Keyboard.F,
-}
-
+--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+---@deprecated
 ---@class legacy.default_setting.system_keys
 local sys = {
-	repfast = Keyboard.LeftControl,
-	repslow = Keyboard.LeftShift,
-	menu = Keyboard.Escape,
-	snapshot = Keyboard.P,
-	retry = Keyboard.R,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	repfast = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	repslow = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	menu = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	snapshot = 0,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	retry = 0,
 }
+
+---@generic T
+---@param t T
+---@return T t
+local function copy(t)
+	local r = {}
+	for k, v in pairs(t) do
+		r[k] = v
+	end
+	return r
+end
 
 ---@class legacy.default_setting
 default_setting = {
@@ -45,8 +86,20 @@ default_setting = {
 	vsync = false,
 	sevolume = 100,
 	bgmvolume = 100,
+
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它
+	---@deprecated
+	---@type legacy.default_setting.player_keys
 	keys = p1,
-	keys2 = p2,
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它  
+	---@deprecated
+	---@type legacy.default_setting.player_keys
+	keys2 = copy(p1),
+	--- 注意：这些设置项已弃用，目前仅处于兼容性考虑保留  
+	--- 注意：按键码由输入系统定期覆盖，请不要尝试修改它  
+	---@deprecated
 	keysys = sys,
 }
 
