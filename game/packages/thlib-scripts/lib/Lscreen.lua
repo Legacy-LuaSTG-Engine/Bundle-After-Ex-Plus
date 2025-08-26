@@ -10,7 +10,7 @@ local InputSystem = require("foundation.InputSystem")
 --- build-in white
 
 lstg.LoadTexture("tex:screen-white", "assets/texture/white.png")
-lstg.LoadImage("img:screen-white", "tex:screen-white", 16, 16, 16, 16)
+lstg.LoadImage("img:screen-white", "tex:screen-white", 0, 0, 16, 16)
 
 ----------------------------------------
 ---screen

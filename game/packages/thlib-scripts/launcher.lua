@@ -1630,7 +1630,6 @@ function LauncherScene:onUpdate()
 end
 
 function LauncherScene:onRender()
-    subui.updateResources()
     SetViewMode("ui")
     local rgb = 16 * self.color_value
     RenderClearViewMode(lstg.Color(255, rgb, rgb, rgb))

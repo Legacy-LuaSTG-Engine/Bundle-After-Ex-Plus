@@ -85,8 +85,8 @@ local color_press = lstg.Color(255, 160, 160, 255)
 function ui.loadResources()
     if not lstg.CheckRes(8, "ttf:menu-font") then
         lstg.LoadTTF("ttf:menu-font", "assets/font/SourceHanSansCN-Bold.otf", 0, 36)
-        lstg.CreateRenderTarget("rt:menu-white", 64, 64)
-        lstg.LoadImage("img:menu-white", "rt:menu-white", 16, 16, 16, 16)
+        lstg.LoadTexture("tex:menu-white", "assets/texture/white.png")
+        lstg.LoadImage("img:menu-white", "tex:menu-white", 0, 0, 16, 16)
         if lstg.FileManager.FileExist("THlib/se/se_select00.wav", true) then
             lstg.LoadSound("se:menu-select", "THlib/se/se_select00.wav")
         end
@@ -97,14 +97,6 @@ function ui.loadResources()
             lstg.LoadSound("se:menu-cancel", "THlib/se/se_cancel00.wav")
         end
     end
-end
-
-function ui.updateResources()
-    ui.loadResources()
-    -- 确保这个资源一直是可用的
-    lstg.PushRenderTarget("rt:menu-white")
-    lstg.RenderClear(lstg.Color(255, 255, 255, 255))
-    lstg.PopRenderTarget()
 end
 
 --------------------------------------------------------------------------------
