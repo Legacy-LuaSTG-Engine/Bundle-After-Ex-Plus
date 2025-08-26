@@ -10,6 +10,7 @@ local Keyboard = lstg.Input.Keyboard
 local i18n = require("lib.i18n")
 local default_setting = require("foundation.legacy.default_setting")
 local SceneManager = require("foundation.SceneManager")
+local InputSystem = require("foundation.InputSystem")
 local KeyboardAdaptor = require("foundation.KeyboardAdaptor")
 
 local i18n_str = i18n.string
@@ -33,6 +34,10 @@ local function initMenuObjectCommon(obj)
     obj.x = screen.width * 0.5 - screen.width
     obj.y = screen.height * 0.5
     obj.locked = true
+end
+
+local function clamp(v, min, max)
+    return math.max(min, math.min(v, max))
 end
 
 --------------------------------------------------------------------------------
@@ -603,12 +608,169 @@ function VersionView.create(exit_f)
 end
 
 --------------------------------------------------------------------------------
+--- 输入设置
+--#region
 
----@class launcher.menu.InputSetting : launcher.menu.Base
-local InputSetting = Class(object)
+local TRANSPARENT_THRESHOLD = 1 / 255
+local TRANSITION_SPEED = 1 / 30
+
+--#region 绘图方法
+
+---@param s string css hex color
+---@param alpha number? 0.0 to 1.0
+---@return lstg.Color
+local function parseColor(s, alpha)
+    assert(type(s) == "string")
+    assert(s:sub(1, 1) == "#")
+    assert(s:len() == 7 or s:len() == 9)
+    local c = lstg.Color(0)
+    c.r = assert(tonumber(s:sub(2, 3), 16))
+    c.g = assert(tonumber(s:sub(4, 5), 16))
+    c.b = assert(tonumber(s:sub(6, 7), 16))
+    if s:len() == 9 then
+        c.a = tonumber(s:sub(8, 9), 16)
+    else
+        c.a = 255
+    end
+    if alpha ~= nil then
+        assert(type(alpha) == "number")
+        assert(alpha >= 0.0 and alpha <= 1.0)
+        c.a = c.a * alpha
+    end
+    return c
+end
+
+---@param l number
+---@param r number
+---@param b number
+---@param t number
+---@param fill_color lstg.Color
+local function drawRect(l, r, b, t, fill_color)
+    if fill_color.a >= TRANSPARENT_THRESHOLD and r > l and t > b then
+        lstg.SetImageState("img:menu-white", "", fill_color)
+        lstg.RenderRect("img:menu-white", l, r, b, t)
+    end
+end
+
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param fill_color lstg.Color
+local function drawRectAt(x, y, w, h, fill_color)
+    drawRect(x, x + w, y, y + h, fill_color)
+end
+
+---@param l number
+---@param r number
+---@param b number
+---@param t number
+---@param fill_color lstg.Color
+---@param border_size number
+---@param border_color lstg.Color
+local function drawRectWithBorder(l, r, b, t, fill_color, border_size, border_color)
+    local has_fill = (r - l) > border_size and (t - b) > border_size
+    if border_color.a >= TRANSPARENT_THRESHOLD and r > l and t > b then
+        lstg.SetImageState("img:menu-white", "", border_color)
+        if has_fill then
+            lstg.RenderRect("img:menu-white", l, l + border_size, b + border_size, t - border_size) -- left
+            lstg.RenderRect("img:menu-white", r - border_size, r, b + border_size, t - border_size) -- right
+            lstg.RenderRect("img:menu-white", l, r, b, b + border_size) -- bottom
+            lstg.RenderRect("img:menu-white", l, r, t - border_size, t) -- top
+        else
+            lstg.RenderRect("img:menu-white", l, r, b, t)
+        end
+    end
+    if fill_color.a >= TRANSPARENT_THRESHOLD and has_fill then
+        lstg.SetImageState("img:menu-white", "", fill_color)
+        lstg.RenderRect("img:menu-white", l + border_size, r - border_size, b + border_size, t - border_size)
+    end
+end
+
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param fill_color lstg.Color
+---@param border_size number
+---@param border_color lstg.Color
+local function drawRectWithBorderAt(x, y, w, h, fill_color, border_size, border_color)
+    return drawRectWithBorder(x, x + w, y, y + h, fill_color, border_size, border_color)
+end
+
+--#endregion
+
+--#region 新版本
+
+---@class launcher.menu.InputSetting
+local InputSetting = {}
+
+function InputSetting:initialize()
+    self.is_transitioning = false
+    self.transition = 0
+    self.transition_delta = -TRANSITION_SPEED
+    self.interactive = false
+
+    self.action_sets = {
+        
+    }
+end
+
+function InputSetting:update()
+    self.transition = clamp(self.transition + self.transition_delta, 0.0, 1.0)
+    if self.is_transitioning then
+        if self.transition >= 1 then
+            self.is_transitioning = false
+            self.interactive = true
+        elseif self.transition <= 0 then
+            self.is_transitioning = false
+        end
+    end
+end
+
+function InputSetting:draw()
+    local alpha = self.transition
+    if alpha >= TRANSPARENT_THRESHOLD then
+        SetViewMode("ui")
+        local x0, y0 = (screen.width - 400) / 2, screen.height - 16
+        local w, h = 400, 16
+        local gap = 8
+        local color_surface = parseColor("#211F26", alpha)
+        for i = 1, 100 do
+            drawRectAt(x0, y0 - h - (i - 1) * (h + gap), w, h, color_surface)
+        end
+        SetViewMode("world")
+    end
+end
+
+function InputSetting:enter()
+    self.is_transitioning = true
+    self.transition_delta = TRANSITION_SPEED
+end
+
+function InputSetting:leave()
+    self.is_transitioning = true
+    self.transition_delta = -TRANSITION_SPEED
+    self.interactive = false
+end
+
+---@return launcher.menu.InputSetting
+function InputSetting.create()
+    local instance = {}
+    setmetatable(instance, { __index = InputSetting })
+    instance:initialize()
+    return instance
+end
+
+--#endregion
+
+--#region 老版本
+
+---@class launcher.menu.InputSettingHost : launcher.menu.Base
+local InputSettingHost = Class(object)
 
 ---@param exit_f fun()
-function InputSetting:init(exit_f)
+function InputSettingHost:init(exit_f)
     initMenuObjectCommon(self)
 
     self.title = "?"
@@ -794,9 +956,17 @@ function InputSetting:init(exit_f)
 
     self:refresh()
     self:_updateButtonLayout()
+
+    self.view = InputSetting.create()
+    self.enter = function()
+        self.view:enter()
+    end
+    self.leave = function()
+        self.view:leave()
+    end
 end
 
-function InputSetting:frame()
+function InputSettingHost:frame()
     local function formatIndex()
         self._button_index = ((self._button_index - 1) % #self._button) + 1
     end
@@ -831,9 +1001,10 @@ function InputSetting:frame()
     for i, w in ipairs(self._text) do
         w:update(not self.locked and i == self._button_index)
     end
+    self.view:update()
 end
 
-function InputSetting:render()
+function InputSettingHost:render()
     if self.alpha0 > 0.0001 then
         SetViewMode("ui")
         local y = self.y + 9.5 * 24
@@ -851,14 +1022,18 @@ function InputSetting:render()
         end
         SetViewMode("world")
     end
+    self.view:draw()
 end
 
 ---@param exit_f fun()
----@return launcher.menu.InputSetting
-function InputSetting.create(exit_f)
-    return lstg.New(InputSetting, exit_f)
+---@return launcher.menu.InputSettingHost
+function InputSettingHost.create(exit_f)
+    return lstg.New(InputSettingHost, exit_f)
 end
 
+--#endregion
+
+--#endregion
 --------------------------------------------------------------------------------
 
 ---@class launcher.menu.GameSetting : launcher.menu.Base
@@ -1414,6 +1589,9 @@ function LauncherScene:onCreate()
     local empty_menu_obj = lstg.New(object)
     local menu_stack = {}
     local function menuFlyIn(self, dir)
+        if type(self.enter) == "function" then
+            self.enter()
+        end
         self.alpha = 1
         if dir == 'left' then
             self.x = screen.width * 0.5 - screen.width
@@ -1433,6 +1611,9 @@ function LauncherScene:onCreate()
         end)
     end
     local function menuFlyOut(self, dir)
+        if type(self.leave) == "function" then
+            self.leave()
+        end
         local x
         if dir == 'left' then
             x = screen.width * 0.5 - screen.width
@@ -1491,7 +1672,7 @@ function LauncherScene:onCreate()
     local menu_textinput = TextInput.create()
 
     -- 按键设置菜单
-    local menu_key_setting = InputSetting.create(function()
+    local menu_key_setting = InputSettingHost.create(function()
         popMenuStack()
     end)
 
@@ -1588,9 +1769,15 @@ function LauncherScene:onCreate()
 end
 
 function LauncherScene:onDestroy()
+    lstg.RemoveResource("stage")
 end
 
 function LauncherScene:onUpdate()
+    if Keyboard.GetKeyState(Keyboard.LeftControl) and InputSystem.isBooleanActionActivated("menu:retry") then
+        stage.DestroyCurrentStage()
+        lstg.DoFile("launcher.lua")
+        InitAllClass()
+    end
     -- 设置标题
     lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
     -- 获取输入

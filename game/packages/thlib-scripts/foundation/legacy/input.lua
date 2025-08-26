@@ -6,7 +6,6 @@
 
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
---local Mouse = lstg.Input.Mouse
 local InputSystem = require("foundation.InputSystem")
 
 --------------------------------------------------------------------------------
@@ -18,34 +17,38 @@ local menu_action_set = InputSystem.addActionSet("menu")
 
 menu_action_set:addBooleanAction("left")
     :addKeyboardKeyBinding(Keyboard.Left)
+    :addKeyboardKeyBinding(Keyboard.None)
 menu_action_set:addBooleanAction("right")
     :addKeyboardKeyBinding(Keyboard.Right)
+    :addKeyboardKeyBinding(Keyboard.None)
 menu_action_set:addBooleanAction("down")
     :addKeyboardKeyBinding(Keyboard.Down)
+    :addKeyboardKeyBinding(Keyboard.None)
 menu_action_set:addBooleanAction("up")
     :addKeyboardKeyBinding(Keyboard.Up)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 确认/进入、取消/返回
 
 menu_action_set:addBooleanAction("confirm")
     :addKeyboardKeyBinding(Keyboard.Enter)
     :addKeyboardKeyBinding(Keyboard.Z)
-    --:addMouseKeyBinding(Mouse.Left)
 menu_action_set:addBooleanAction("cancel")
     :addKeyboardKeyBinding(Keyboard.Escape)
     :addKeyboardKeyBinding(Keyboard.X)
-    --:addMouseKeyBinding(Mouse.Right)
 
 -- 功能键（根据场景决定该按键功能）
 
 menu_action_set:addBooleanAction("special")
     :addKeyboardKeyBinding(Keyboard.C)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 打开菜单
 -- 游戏时/回放时：打开暂停菜单
 
 local menu_action_menu = menu_action_set:addBooleanAction("menu")
     :addKeyboardKeyBinding(Keyboard.Escape)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 加速、减速
 -- 用户界面：加速或减速页面、滑块（Slider）移动等
@@ -63,11 +66,13 @@ local menu_action_speed_up = menu_action_set:addBooleanAction("speed-up")
 
 local menu_action_retry = menu_action_set:addBooleanAction("retry")
     :addKeyboardKeyBinding(Keyboard.R)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 截图
 
 local menu_action_snapshot = menu_action_set:addBooleanAction("snapshot")
     :addKeyboardKeyBinding(Keyboard.P)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 指针
 
@@ -83,12 +88,16 @@ local game_action_set = InputSystem.addActionSet("game")
 
 local game_action_left = game_action_set:addBooleanAction("left")
     :addKeyboardKeyBinding(Keyboard.Left)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_right = game_action_set:addBooleanAction("right")
     :addKeyboardKeyBinding(Keyboard.Right)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_down = game_action_set:addBooleanAction("down")
     :addKeyboardKeyBinding(Keyboard.Down)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_up = game_action_set:addBooleanAction("up")
     :addKeyboardKeyBinding(Keyboard.Up)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 玩家移动（矢量）
 
@@ -99,14 +108,19 @@ local game_action_move = game_action_set:addVector2Action("move")
 
 local game_action_slow = game_action_set:addBooleanAction("slow") -- 用于切换射击模式、移动速度（一般为按下后降低移动速度）
     :addKeyboardKeyBinding(Keyboard.LeftShift)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_shoot = game_action_set:addBooleanAction("shoot") -- 一般用于射击
     :addKeyboardKeyBinding(Keyboard.Z)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_spell = game_action_set:addBooleanAction("spell") -- 一般用于释放符卡（雷/炸弹）
     :addKeyboardKeyBinding(Keyboard.X)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_special = game_action_set:addBooleanAction("special") -- 一般用于释放特殊技能
     :addKeyboardKeyBinding(Keyboard.C)
+    :addKeyboardKeyBinding(Keyboard.None)
 local game_action_skip = game_action_set:addBooleanAction("skip") -- 一般用于跳过对话
     :addKeyboardKeyBinding(Keyboard.LeftControl)
+    :addKeyboardKeyBinding(Keyboard.None)
 
 -- 指针
 

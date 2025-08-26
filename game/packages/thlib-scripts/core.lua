@@ -237,7 +237,7 @@ function DefaultScene:onCreate()
         Include 'root.lua'
         lstg.plugin.DispatchEvent("afterMod")
     else
-        Include 'launcher.lua'
+        lstg.DoFile("launcher.lua")
     end
     -- 最后的准备
     lstg.RegisterAllGameObjectClass() -- 对所有class的回调函数进行整理，给底层调用
