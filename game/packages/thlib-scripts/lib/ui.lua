@@ -3,6 +3,8 @@
 --- 璀境石 2022-06-01
 --------------------------------------------------------------------------------
 
+local lstg = require("lstg")
+local Mouse = lstg.Input.Mouse
 local InputSystem = require("foundation.InputSystem")
 local legacy_input = require("foundation.legacy.input")
 
@@ -183,29 +185,6 @@ local ui_keyboard = ui.KeyboardInput()
 ui.keyboard = ui_keyboard
 
 function ui.MouseInput()
-    local function getMousePositionToUI()
-        local mx, my = lstg.GetMousePosition() -- 左下角为原点，y 轴向上
-        -- 转换到 UI 视口
-        mx = mx - screen.dx
-        my = my - screen.dy
-
-        -- 方法一：正常思路
-
-        -- 归一化
-        --mx = mx / (screen.width * screen.scale)
-        --my = my / (screen.height * screen.scale)
-        -- 转换到 UI 坐标
-        --mx = mx * screen.width
-        --my = my * screen.height
-
-        -- 方法二：由于 UI 坐标系左下角就是原点，直接用 screen.scale
-
-        mx = mx / screen.scale
-        my = my / screen.scale
-
-        return mx, my
-    end
-
     local function makeButton()
         ---@class ui.MouseInput.Button
         local t = {}
@@ -220,7 +199,7 @@ function ui.MouseInput()
     ---@param k number
     local function updateButton(t, k)
         t.last_state = t.state
-        t.state = lstg.GetMouseState(k)
+        t.state = Mouse.GetKeyState(k)
         -- 按键按下
         if not t.last_state and t.state then
             t.down = true
@@ -240,7 +219,7 @@ function ui.MouseInput()
 
     function cls:init()
         -- public
-        self.x, self.y = getMousePositionToUI()
+        self.x, self.y = 0, 0
         self.is_move = false
         self.wheel = 0
         self.is_wheel = false
@@ -251,21 +230,21 @@ function ui.MouseInput()
         self.xbutton2 = makeButton()
 
         -- private
-        self._last_sx, self._last_sy = lstg.GetMousePosition()
+        self._last_sx, self._last_sy = InputSystem.getVector2Action("menu:pointer")
     end
 
     function cls:update()
         self.is_move = false
         self.is_wheel = false
-        self.x, self.y = getMousePositionToUI()
-        self.wheel = lstg.GetMouseWheelDelta() / 120.0
-        updateButton(self.primary, 0)
-        updateButton(self.middle, 1)
-        updateButton(self.secondly, 2)
-        updateButton(self.xbutton1, 3)
-        updateButton(self.xbutton2, 4)
+        self.x, self.y = InputSystem.getVector2Action("menu:pointer")
+        self.wheel = Mouse.GetWheelDelta()
+        updateButton(self.primary, Mouse.Left)
+        updateButton(self.middle, Mouse.Middle)
+        updateButton(self.secondly, Mouse.Right)
+        updateButton(self.xbutton1, Mouse.XButton1)
+        updateButton(self.xbutton2, Mouse.XButton2)
         -- 检测是否有鼠标活动
-        local sx, sy = lstg.GetMousePosition()
+        local sx, sy = InputSystem.getVector2Action("menu:pointer")
         if math.abs(sx - self._last_sx) > 0.5 or math.abs(sy - self._last_sy) > 0.5 then
             self.is_move = true
         end
