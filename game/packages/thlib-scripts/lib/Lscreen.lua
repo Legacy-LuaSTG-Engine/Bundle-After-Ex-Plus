@@ -2,17 +2,15 @@
 ---luastg screen
 ---=====================================
 
+local lstg = require("lstg")
+local Mouse = lstg.Input.Mouse
+local InputSystem = require("foundation.InputSystem")
+
 ----------------------------------------
 --- build-in white
 
-lstg.CreateRenderTarget("rt:screen-white", 64, 64)
-lstg.LoadImage("img:screen-white", "rt:screen-white", 16, 16, 16, 16)
-
-function UpdateScreenResources()
-    lstg.PushRenderTarget("rt:screen-white")
-    lstg.RenderClear(lstg.Color(255, 255, 255, 255))
-    lstg.PopRenderTarget()
-end
+lstg.LoadTexture("tex:screen-white", "assets/texture/white.png")
+lstg.LoadImage("img:screen-white", "tex:screen-white", 0, 0, 16, 16)
 
 ----------------------------------------
 ---screen
@@ -414,3 +412,42 @@ end
 ---init
 
 ResetScreen()--先初始化一次，！！！注意不能漏掉这一步
+
+--------------------------------------------------------------------------------
+--- 注册 ui 鼠标和 world 鼠标输入源
+
+---@class legacy.THlibUIPointerInputSource : foundation.InputSystem.Vector2InputSource
+local THlibUIPointerInputSource = {}
+function THlibUIPointerInputSource:getType()
+    return "vector2"
+end
+function THlibUIPointerInputSource:getValue()
+    local x, y = Mouse.GetPosition()
+    x = x - screen.dx
+    y = y - screen.dy
+    x = x / screen.scale
+    y = y / screen.scale
+    return x, y
+end
+
+InputSystem.registerInputSource("thlib-ui-pointer", THlibUIPointerInputSource)
+
+---@class legacy.THlibWorldPointerInputSource : foundation.InputSystem.Vector2InputSource
+local THlibWorldPointerInputSource = {}
+function THlibWorldPointerInputSource:getType()
+    return "vector2"
+end
+function THlibWorldPointerInputSource:getValue()
+    local x, y = THlibUIPointerInputSource:getValue()
+    local x_scale = (lstg.world.r - lstg.world.l) / (lstg.world.scrr - lstg.world.scrl)
+    local y_scale = (lstg.world.t - lstg.world.b) / (lstg.world.scrt - lstg.world.scrb)
+    x = x - lstg.world.scrl
+    y = y - lstg.world.scrb
+    x = x * x_scale
+    y = y * y_scale
+    x = x + lstg.world.l
+    y = y + lstg.world.b
+    return x, y
+end
+
+InputSystem.registerInputSource("thlib-world-pointer", THlibUIPointerInputSource)

@@ -1,5 +1,3 @@
-local input_config = require("foundation.input.config.Manager")
-
 local stage_init = stage.New('init', true, true)
 function stage_init:init()
     New(mask_fader, 'open')
@@ -28,7 +26,6 @@ MusicRecord("spellcard", 'THlib/music/spellcard.ogg', 75, 0xc36e80 / 44100 / 4)
 stage_menu = stage.New('menu', false, true)
 
 function stage_menu:init()
-    input_config.switch_config("ui")
     local stage_menu_self = self
     local menu_title, menu_player_select, menu_difficulty_select, menu_difficulty_select_pr, menu_replay_loader, menu_replay_saver, menu_items, menu_sc_pr
     local menu_list = {}
@@ -132,14 +129,11 @@ function stage_menu:init()
                 task.Wait(30)
                 if practice == 'stage' then
                     stage.group.PracticeStart(last_menu.stage_name[last_menu.pos])
-                    input_config.switch_config("game")
                 elseif practice == 'spell' then
                     stage.IsSCpractice = true--判定进入符卡练习的flag add by OLC
                     stage.group.PracticeStart('Spell Practice@Spell Practice')
-                    input_config.switch_config("game")
                 else
                     stage.group.Start(last_menu.group_name)
-                    input_config.switch_config("game")
                 end
             end)
         end })
@@ -224,7 +218,6 @@ function stage_menu:init()
                 Print(filename, stageName)
                 stage.IsReplay = true--判定进入rep播放的flag add by OLC
                 stage.Set(stageName, 'load', filename)
-                input_config.switch_config("replay")
             end)
         end
     end)

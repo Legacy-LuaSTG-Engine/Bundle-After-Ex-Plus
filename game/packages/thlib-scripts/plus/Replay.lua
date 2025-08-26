@@ -27,29 +27,6 @@ end
 
 -------------------------------------------------- ReplayFrameReader
 
----@alias plus.frame_extra_data_type "Byte" | "Char" | "Short" | "UShort" | "Int" | "UInt" | "Float"
-
----@type table<plus.frame_extra_data_type, integer>
-local frame_extra_data_type_size = {
-    Byte = 1,
-    Char = 1,
-    Short = 2,
-    UShort = 2,
-    Int = 4,
-    UInt = 4,
-    Float = 4
-}
-
----@class  plus.frame_extra_data_info
----@field type plus.frame_extra_data_type
----@field fetch function
----@field name string
-local _ = {
-    type = "Byte",
-    fetch = function () end,
-    name = ""
-}
-
 ---@class plus.ReplayFrameReader
 local ReplayFrameReader = plus.Class()
 plus.ReplayFrameReader = ReplayFrameReader
@@ -110,65 +87,6 @@ function ReplayFrameReader:Close()
     self._fs:Close()
 end
 
----@class plus.ReplayFrameReaderV2
-local ReplayFrameReaderV2 = plus.Class()
-plus.ReplayFrameReaderV2 = ReplayFrameReaderV2
-
----@param path string
----@param offset number
----@param frame_count number
----@param keystate_length number
----@param frame_extra_data plus.frame_extra_data_info[] | nil
-function ReplayFrameReaderV2:init(path, offset, frame_count, keystate_length, frame_extra_data)
-    self._fs = plus.FileStream(path, "rb")
-
-    -- 定位到录像数据开始位置
-    self._fs:Seek(offset)
-    self._offset = offset
-    self._read = 0  -- 已读取数量
-    self._count = frame_count  -- 帧数量
-
-    self.keystate_length = keystate_length
-    self.frame_extra_data = frame_extra_data
-    self.frame_extra_length = 0
-
-    if self.frame_extra_data and type(self.frame_extra_data) == "table" then
-        for _, v in ipairs(self.frame_extra_data) do
-            assert(type(v.type) == "string" and frame_extra_data_type_size[v.type], "Invalid data type.")
-            self.frame_extra_length = self.frame_extra_length + frame_extra_data_type_size[v.type]
-        end
-    end
-end
-
---! @brief 下一帧
----@return boolean 若达到结尾则返回False，否则返回True
-function ReplayFrameReaderV2:Next(framedata)
-    if self._read >= self._count then
-        return false
-    else
-        assert(type(framedata) == "table", "Parameter 'framedata' must be a table.")
-        framedata.keystate = self._fs:ReadBytes(self.keystate_length)
-        framedata.extra = {}
-        local reader = plus.BinaryReader(self._fs)
-        for _, v in ipairs(self.frame_extra_data) do
-            framedata.extra[v.name] = reader["Read" .. v.type](reader)
-        end
-        self._read = self._read + 1
-        return true
-    end
-end
-
---! @brief 重置
-function ReplayFrameReaderV2:Reset()
-    self._read = 0
-    self._fs:Seek(self._offset)
-end
-
---! @brief 关闭文件流
-function ReplayFrameReaderV2:Close()
-    self._fs:Close()
-end
-
 -------------------------------------------------- ReplayFrameWriter
 
 ---@class plus.ReplayFrameWriter
@@ -212,80 +130,6 @@ function ReplayFrameWriter:GetCount()
     return self._count
 end
 
----@class plus.ReplayFrameWriterV2
-local ReplayFrameWriterV2 = plus.Class()
-plus.ReplayFrameWriterV2 = ReplayFrameWriterV2
-
----@param keystate_length number
----@param frame_extra_data plus.frame_extra_data_info[] | nil
-function ReplayFrameWriterV2:init(keystate_length, frame_extra_data)
-    self.keystate_data = {}
-    self.extra_data = {}
-    self._count = 0
-    
-    self.keystate_length = keystate_length
-    self.frame_extra_data = frame_extra_data
-    self.frame_extra_length = 0
-
-    if self.frame_extra_data and type(self.frame_extra_data) == "table" then
-        for _, v in ipairs(self.frame_extra_data) do
-            assert(type(v.type) == "string" and frame_extra_data_type_size[v.type], "Invalid data type.")
-            self.frame_extra_length = self.frame_extra_length + frame_extra_data_type_size[v.type]
-        end
-    end
-end
-
----@param keystate string
-function ReplayFrameWriterV2:Record(keystate)
-    self._count = self._count + 1
-    self.keystate_data[self._count] = keystate
-    self.extra_data[self._count] = {}
-    local extra_data = self.extra_data[self._count]
-    for i, v in ipairs(self.frame_extra_data) do
-        extra_data[i] = v.fetch()
-    end
-end
-
----@param fs plus.FileStream
-function ReplayFrameWriterV2:CopyToFileStream(fs)
-    local writer = plus.BinaryWriter(fs)
-    for i = 1, self._count do
-        fs:WriteBytes(self.keystate_data[i])
-        for j, v in ipairs(self.frame_extra_data) do
-            writer["Write" .. v.type](writer, self.extra_data[i][j])
-        end
-    end
-end
-
-function ReplayFrameWriterV2:dump(path)
-    local fhandle = io.open(path, "a")
-    if fhandle then
-        for i = 1, self._count do
-            fhandle:write("Framecount #" .. tostring(i) .. "\n")
-            fhandle:write("keystate:")
-            fhandle:write(string.byte(self.keystate_data[i], 1, #self.keystate_data[i]))
-            fhandle:write("\n")
-            fhandle:write("extradata:" .. "\n")
-            for j, v in ipairs(self.frame_extra_data) do
-                fhandle:write(string.format("[#%d] type : %s , value : %s\n", j, v.type, tostring(self.extra_data[i][j])))
-            end
-            fhandle:write("\n")
-        end
-        fhandle:close()
-        return true
-    else
-        return false
-    end
-end
-
-function ReplayFrameWriterV2:GetCount()
-    return self._count
-end
-
-function ReplayFrameWriterV2:GetFrameSize()
-    return self.keystate_length + self.frame_extra_length
-end
-
 -------------------------------------------------- ReplayManager
 
 ---@class plus.ReplayManager.ReadData.StageData
@@ -324,7 +168,7 @@ local _ = {
     stageTime = 0,
     stageDate = 0,
     stagePlayer = "",
-    ---@type plus.ReplayFrameWriterV2
+    ---@type plus.ReplayFrameWriter
     frameData = {},
 }
 
@@ -339,6 +183,8 @@ local _ = {
     ---@type plus.ReplayManager.SaveData.StageData[]
     stages = {},
 }
+
+plus.REPLAY_FILE_VERSION = 2
 
 ---@class plus.ReplayManager
 local ReplayManager = plus.Class()
@@ -388,9 +234,9 @@ function ReplayManager.ReadReplayInfo(path)
             -- 读取文件头
             assert(r:ReadString(4) == "STGR", "invalid file format.")
 
-            -- 版本号1
+            -- 版本号
             ret.fileVersion = r:ReadUShort()  -- 文件版本
-            assert(ret.fileVersion == 2, "unsupported file version.")
+            assert(ret.fileVersion == plus.REPLAY_FILE_VERSION, "unsupported file version.")
 
             -- 游戏数据
             local gameNameLength = r:ReadUShort()  -- 游戏名称
@@ -429,9 +275,8 @@ function ReplayManager.ReadReplayInfo(path)
                 --                   stage.group_num= r:ReadUShort() --关卡组长度
                 -- 录像数据
                 stage.frameCount = r:ReadUInt()  -- 帧数
-                stage.frameDataSize = r:ReadUInt()  -- 帧数据大小
                 stage.frameDataPosition = f:GetPosition()  -- 数据起始位置
-                f:Seek(stage.frameDataSize)  -- 跳过帧数据
+                f:Seek(stage.frameCount)  -- 跳过帧数据
 
                 table.insert(ret.stages, stage)
             end
@@ -472,8 +317,8 @@ function ReplayManager.SaveReplayInfo(path, data)
             -- 写入文件头
             w:WriteString("STGR", false)
 
-            -- 版本号1
-            w:WriteUShort(2)
+            -- 文件版本号
+            w:WriteUShort(plus.REPLAY_FILE_VERSION)
 
             -- 游戏数据
             w:WriteUShort(string.len(data.gameName))  -- 游戏名称
@@ -522,21 +367,10 @@ function ReplayManager.SaveReplayInfo(path, data)
                 --                   w:WriteUShort(stage.group_num)  --关卡组长度
                 -- 录像数据
                 w:WriteUInt(stage.frameData:GetCount())  -- 帧数
-                w:WriteUInt(stage.frameData:GetCount() * stage.frameData:GetFrameSize())  -- 帧数
                 stage.frameData:CopyToFileStream(f)  -- 数据
             end
 
             _save_finish = true
-        end,
-        catch = function(e)
-            local stageCount = #data.stages
-            local dump_success = true
-            for i = 1, stageCount do
-                local stage = data.stages[i]
-                dump_success = dump_success and stage.frameData:dump("stagedatadump" .. ".stage" .. i)
-            end
-            print(e)
-            print("dump_success:", dump_success)
         end,
         finally = function()
             f:Close()

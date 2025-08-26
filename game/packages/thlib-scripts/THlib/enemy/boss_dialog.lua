@@ -177,7 +177,7 @@ function dialog_displayer:frame()
         if p.key then
             shoot = p.key["shoot"] or shoot
         else
-            shoot = KeyIsDown "shoot" or shoot
+            shoot = KeyIsDown("shoot") or shoot
         end
     end
     if dialog and self.active == true then
@@ -267,7 +267,7 @@ function boss.dialog:sentence(img, pos, text, t, hscale, vscale, tpic, num, px, 
     lastsentence = balloon
     t = t or (60 + #text * 5)
     for _ = 1, t do
-        if (KeyIsPressed "shoot" or master.jump_dialog > 60) and _dialog_can_skip then
+        if (KeyIsPressed("shoot") or master.jump_dialog > 60) and _dialog_can_skip then
             PlaySound("plst00", 0.35, 0, true)
             if master.jump_dialog > 60 then
                 master.jump_dialog = 56

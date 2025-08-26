@@ -46,6 +46,8 @@ end
 
 --------------------------------------------------------------------------------
 
+local lstg = require("lstg")
+local Keyboard = lstg.Input.Keyboard
 local imgui_exist, imgui = pcall(require, "imgui")
 
 ---@param vkey number
@@ -65,8 +67,8 @@ function M.KeyDownTrigger(vkey)
     end
 end
 
-local F1_trigger = M.KeyDownTrigger(KEY.F1)
-local F3_trigger = M.KeyDownTrigger(KEY.F3)
+local F1_trigger = M.KeyDownTrigger(Keyboard.F1)
+local F3_trigger = M.KeyDownTrigger(Keyboard.F3)
 
 -- global cheat = false
 

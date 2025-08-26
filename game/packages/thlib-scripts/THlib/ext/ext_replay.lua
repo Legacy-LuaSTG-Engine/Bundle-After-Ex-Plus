@@ -3,8 +3,6 @@
 ---======================================
 
 local LocalFileStorage = require("foundation.LocalFileStorage")
-local input = require("foundation.input.core")
-local input_rep = require("foundation.input.replay")
 
 ----------------------------------------
 ---replay
@@ -84,11 +82,6 @@ function ext.reload()
 end
 
 ext.reload()--加载一次replay管理器
-
----@type plus.frame_extra_data_info[]
-local frame_extra_data = {
-    { name = "fps", fetch = GetFPS, type = "Float"}
-}
 
 ----------------------------------------
 ---关卡切换增强功能
@@ -183,7 +176,7 @@ function stage.Set(stageName, mode, path)
         --ran:Seed(lstg.var.ran_seed)
         -- 开始执行录像
         local sg = string.match(stageName, '^.+@(.+)$')
-        replayWriter = plus.ReplayFrameWriterV2(input_rep.getEncodeSize(), frame_extra_data)
+        replayWriter = plus.ReplayFrameWriter()
         replayStages[stageName] = {
             stageName = stageName, score = 0, randomSeed = lstg.var.ran_seed,
             stageTime = os.time(), stageDate = os.time(), stagePlayer = lstg.var.rep_player,
@@ -192,6 +185,8 @@ function stage.Set(stageName, mode, path)
             frameData = replayWriter,
             stageExtendInfo = Serialize(lstg.var)--by OLC
         }
+        -- 重置输入序列化上下文
+        ext.input_serialize_context:uninitialize()
 
         -- 转场
         --lstg.var.stage_name = stageName
@@ -222,7 +217,9 @@ function stage.Set(stageName, mode, path)
 
         --加载数据
         local nextRecordStage = replayInfo.stages[replayStageIdx]
-        replayReader = plus.ReplayFrameReaderV2(path, nextRecordStage.frameDataPosition, nextRecordStage.frameCount, input_rep.getEncodeSize(), frame_extra_data)
+        replayReader = plus.ReplayFrameReader(path, nextRecordStage.frameDataPosition, nextRecordStage.frameCount)
+        -- 重置输入序列化上下文
+        ext.input_serialize_context:uninitialize()
 
         --加载数据
         --lstg.var = DeSerialize(nextRecordStage.stageExtendInfo)--不能这么加载，因为场景里还有东西，在下一帧加载

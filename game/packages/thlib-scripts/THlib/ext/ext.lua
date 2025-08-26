@@ -5,11 +5,12 @@
 
 local SceneManager = require("foundation.SceneManager")
 local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
+local InputSystem = require("foundation.InputSystem")
+local legacy_input = require("foundation.legacy.input")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
--- input system
-local input = require("foundation.input.core")
-local input_rep = require("foundation.input.replay")
+local REPLAY_ACTION_SET_NAMES = { "game" }
+local MENU_ACTION_SET_NAMES = { "menu" }
 
 ----------------------------------------
 ---ext加强库
@@ -149,9 +150,6 @@ end
 ----------------------------------------
 ---extra user function
 
-function GameStateChange()
-end
-
 --- 设置标题
 function ChangeGameTitle()
     local mod = setting.mod and #setting.mod > 0 and setting.mod
@@ -218,31 +216,39 @@ function ChangeGameStage()
     SaveScoreData()
 end
 
+ext.input_serialize_context = InputSystem.createSerializeContext()
+
 --- 获取输入
-local framedata = {}
 function GetInput()
-    if stage.next_stage then
-        input.clear()
-        input_rep.clear()
+    if stage.NextStageExist() then
+        legacy_input.fillLegacyKeySetting() -- 按键码兼容性处理
+        InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     end
-    input.update()
+    InputSystem.update()
 
     if ext.pause_menu:IsKilled() then
-        -- 不是录像且非暂停时更新按键状态
-        if not ext.replay.IsReplay() then
-            input_rep.update()
-        end
         if ext.replay.IsRecording() then
-            -- 录像模式下记录当前帧的按键
-            replayWriter:Record(input_rep.encodeToString())
+            -- 录制时记录输入状态
+            if not ext.input_serialize_context.initialized then
+                ext.input_serialize_context:initialize(REPLAY_ACTION_SET_NAMES)
+            end
+            local packet = ext.input_serialize_context:serialize()
+            replayWriter:Write(packet)
         elseif ext.replay.IsReplay() then
-            -- 回放时载入按键状态
-            framedata = {}
-            if not replayReader:Next(framedata) then
+            -- 回放时恢复输入状态
+            if not ext.input_serialize_context.initialized then
+                ext.input_serialize_context:initialize(REPLAY_ACTION_SET_NAMES)
+            end
+            local length = ext.input_serialize_context:getPacketSize()
+            local packet = {}
+            if replayReader:Read(packet, length) then
+                local ret, msg = ext.input_serialize_context:deserialize(packet)
+                if not ret then
+                    lstg.Log(4, "[foundation.InputSystem] SerializeContext deserialize failed: " .. tostring(msg))
+                end
+            else
                 ext.PushPauseMenuOrder("Replay Again")
                 ext.pause_menu:FlyIn()
-            else
-                input_rep.decodeFromString(framedata.keystate)
             end
         end
     end
@@ -250,11 +256,11 @@ end
 
 gameEventDispatcher:RegisterEvent("GameState.AfterObjRender", "render_replay_fps", 0, function ()
     if ext.replay.IsReplay() then
-        if framedata.extra and framedata.extra.fps then
-            SetViewMode("ui")
-            RenderTTF2("menuttf", string.format("Original FPS %0.1f", framedata.extra.fps), screen.width - 10, screen.width - 10, 30, 30, 1, Color(255, 255, 255, 255), "right", "vcenter")
-            SetViewMode("world")
-        end
+        --if framedata.extra and framedata.extra.fps then
+        --    SetViewMode("ui")
+        --    RenderTTF2("menuttf", string.format("Original FPS %0.1f", framedata.extra.fps), screen.width - 10, screen.width - 10, 30, 30, 1, Color(255, 255, 255, 255), "right", "vcenter")
+        --    SetViewMode("world")
+        --end
     end
 end)
 
@@ -350,12 +356,12 @@ function DoFrameEx()
         --播放录像时
         ext.replayTicker = ext.replayTicker + 1
         ext.slowTicker = ext.slowTicker + 1
-        if GetKeyState(setting.keysys.repfast) then
+        if MenuKeyIsDown("speed-up") then
             for _ = 1, 4 do
                 DoFrame()
                 ext.pause_menu_order = nil
             end
-        elseif GetKeyState(setting.keysys.repslow) then
+        elseif MenuKeyIsDown("slow-down") then
             if ext.replayTicker % 4 == 0 then
                 DoFrame()
                 ext.pause_menu_order = nil
@@ -410,7 +416,8 @@ function GameScene:onUpdate()
         --处理录像速度与正常更新逻辑
         DoFrameEx()
     else
-        GetInput()
+        -- 依然需要读取输入更新菜单动作
+        InputSystem.update(MENU_ACTION_SET_NAMES)
     end
     gameEventDispatcher:DispatchEvent("GameState.AfterDoFrame")
 end

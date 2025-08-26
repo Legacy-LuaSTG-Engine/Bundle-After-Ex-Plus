@@ -1,4 +1,7 @@
-KEY={NULL=0x00}
+---@class legacy.KEY
+local KEY = {}
+
+KEY.NULL=0x00
 
 KEY.LBUTTON=0x01
 KEY.RBUTTON=0x02
@@ -114,14 +117,5 @@ KEY.F9=0x78
 KEY.F10=0x79
 KEY.F11=0x7A
 KEY.F12=0x7B
-
--- LuaSTG Sub 引擎不再映射手柄按键到这些位置，要支持手柄请查看 API 文档
--- TODO: THlib aex 尚未内置手柄支持，以后谁写了请把这行删掉
---[[
-for i=1,32 do
-	KEY['JOY1_'..i]=0x91+i
-	KEY['JOY2_'..i]=0xDE+i
-end
---]]
 
 return KEY

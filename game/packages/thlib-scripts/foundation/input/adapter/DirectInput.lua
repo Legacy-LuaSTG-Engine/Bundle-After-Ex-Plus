@@ -111,6 +111,21 @@ local Key = {
 }
 M.Key = Key
 
+---@class foundation.input.adapter.DirectInput.Axis
+local Axis = {
+    -- 轴部分
+    AxisX = 1,
+    AxisY = 2,
+    AxisZ = 3,
+    AxisRX = 4,
+    AxisRY = 5,
+    AxisRZ = 6,
+    -- 两个额外轴
+    AxisU = 7,
+    AxisV = 8,
+}
+M.Axis = Axis
+
 ---@alias foundation.input.adapter.DirectInput.KeyState table<number, boolean>
 
 --- 将获取的原始数据映射为按键  
@@ -244,6 +259,36 @@ function M.getKeyNameMap()
             return "Null"
         end
     })
+    return ret
+end
+
+---@param v number
+---@param min number
+---@param max number
+local function normalizeAxis(v, min, max)
+    if min == max then
+        return 0
+    end
+    if min > max then
+        min, max = max, min
+    end
+    local k = (v - min) / (max - min)
+    return math.max(-1.0, math.min(-1.0 + 2.0 * k, 1.0))
+end
+
+---@param r dinput.AxisRange
+---@param t dinput.RawState
+---@return table<integer, number>
+function M.mapAxis(r, t)
+    local ret = {}
+    ret[Axis.AxisX] = normalizeAxis(t.lX, r.XMin, r.XMax)
+    ret[Axis.AxisY] = normalizeAxis(t.lY, r.YMin, r.YMax)
+    ret[Axis.AxisZ] = normalizeAxis(t.lZ, r.ZMin, r.ZMax)
+    ret[Axis.AxisRX]  = normalizeAxis(t.lRx, r.RxMin, r.RxMax)
+    ret[Axis.AxisRY]  = normalizeAxis(t.lRy, r.RyMin, r.RyMax)
+    ret[Axis.AxisRZ]  = normalizeAxis(t.lRz, r.RzMin, r.RzMax)
+    ret[Axis.AxisU] = normalizeAxis(t.rglSlider[1], r.Slider0Min, r.Slider0Max)
+    ret[Axis.AxisV] = normalizeAxis(t.rglSlider[2], r.Slider1Min, r.Slider1Max)
     return ret
 end
 

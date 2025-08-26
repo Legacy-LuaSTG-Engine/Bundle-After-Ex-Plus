@@ -1,4 +1,5 @@
-local lstg = lstg
+local lstg = require("lstg")
+local Keyboard = lstg.Input.Keyboard
 local io = io
 local math = math
 local string = string
@@ -65,8 +66,8 @@ local function copy(t, all)
     end
 end
 
-local KEY_COLLIDER = KEY.GRAVE
-local KEY_CHEAT = KEY.F12
+local KEY_COLLIDER = Keyboard.Tilde -- `~
+local KEY_CHEAT = Keyboard.F12
 
 local toggleColliderRender, keyDownCollider, keyDownCheat
 
