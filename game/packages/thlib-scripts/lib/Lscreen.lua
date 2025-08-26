@@ -5,14 +5,9 @@
 ----------------------------------------
 --- build-in white
 
-lstg.CreateRenderTarget("rt:screen-white", 64, 64)
-lstg.LoadImage("img:screen-white", "rt:screen-white", 16, 16, 16, 16)
-
-function UpdateScreenResources()
-    lstg.PushRenderTarget("rt:screen-white")
-    lstg.RenderClear(lstg.Color(255, 255, 255, 255))
-    lstg.PopRenderTarget()
-end
+-- TODO: 应该改为引擎提供默认常用贴图
+lstg.LoadTexture("tex:screen-white", "assets/texture/white.png")
+lstg.LoadImage("img:screen-white", "tex:screen-white", 16, 16, 16, 16)
 
 ----------------------------------------
 ---screen
