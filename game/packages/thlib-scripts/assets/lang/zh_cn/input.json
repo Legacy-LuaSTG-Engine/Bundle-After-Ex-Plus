@@ -1,0 +1,17 @@
+{
+    "thlib.input.action_set.menu": "菜单",
+    "thlib.input.action_set.menu.action.left": "左移",
+    "thlib.input.action_set.menu.action.right": "右移",
+    "thlib.input.action_set.menu.action.up": "上移",
+    "thlib.input.action_set.menu.action.down": "下移",
+    "thlib.input.action_set.menu.action.confirm": "确认",
+    "thlib.input.action_set.menu.action.cancel": "取消",
+    "thlib.input.action_set.menu.action.special": "特殊功能",
+    "thlib.input.action_set.menu.action.menu": "暂停",
+    "thlib.input.action_set.menu.action.snapshot": "截图",
+    "thlib.input.action_set.menu.action.slow-down": "减速",
+    "thlib.input.action_set.menu.action.speed-up": "加速",
+    "thlib.input.action_set.menu.action.retry": "重试",
+
+    "": ""
+}

@@ -90,6 +90,7 @@ local color_press = lstg.Color(255, 160, 160, 255)
 function ui.loadResources()
     if not lstg.CheckRes(8, "ttf:menu-font") then
         lstg.LoadTTF("ttf:menu-font", "assets/font/SourceHanSansCN-Bold.otf", 0, 36)
+        lstg.LoadTTF("ttf:menu-font-32", "assets/font/SourceHanSansCN-Bold.otf", 0, 32)
         lstg.LoadTexture("tex:menu-white", "assets/texture/white.png")
         lstg.LoadImage("img:menu-white", "tex:menu-white", 0, 0, 16, 16)
         if lstg.FileManager.FileExist("THlib/se/se_select00.wav", true) then

@@ -614,6 +614,26 @@ end
 local TRANSPARENT_THRESHOLD = 1 / 255
 local TRANSITION_SPEED = 1 / 30
 
+--#region 数组
+
+---@generic T
+---@param array T[]
+---@param value T
+---@return boolean
+local function isArrayContains(array, value)
+    if #array == 0 then
+        return false
+    end
+    for _, v in ipairs(array) do
+        if v == value then
+            return true
+        end
+    end
+    return false
+end
+
+--#endregion
+
 --#region 绘图方法
 
 ---@param s string css hex color
@@ -698,6 +718,110 @@ local function drawRectWithBorderAt(x, y, w, h, fill_color, border_size, border_
     return drawRectWithBorder(x, x + w, y, y + h, fill_color, border_size, border_color)
 end
 
+---@param horizontal_alignment '"left"' | '"center"' | '"right"'
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"'
+---@return integer
+local function translateAlignment(horizontal_alignment, vertical_alignment)
+    local alignment = 0
+    if horizontal_alignment == "left" then
+        alignment = alignment + 0
+    elseif horizontal_alignment == "center" then
+        alignment = alignment + 1
+    elseif horizontal_alignment == "right" then
+        alignment = alignment + 2
+    else
+        error("invalid horizontal alignment")
+    end
+    if vertical_alignment == "top" then
+        alignment = alignment + 0
+    elseif vertical_alignment == "center" then
+        alignment = alignment + 4
+    elseif vertical_alignment == "bottom" then
+        alignment = alignment + 8
+    else
+        error("invalid horizontal alignment")
+    end
+    return alignment
+end
+
+---@param font string
+---@param text string
+---@param l number
+---@param r number
+---@param b number
+---@param t number
+---@param scale number
+---@param color lstg.Color
+---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"' | nil
+local function drawTextInRect(font, text, l, r, b, t, scale, color, horizontal_alignment, vertical_alignment)
+    if scale > 0 and color.a >= TRANSPARENT_THRESHOLD then
+        lstg.RenderTTF(font, text, l, r, b, t, translateAlignment(horizontal_alignment or "left", vertical_alignment or "top"), color, scale * 2.0) -- fuck LuaSTG
+    end
+end
+
+---@param font string
+---@param text string
+---@param x number
+---@param y number
+---@param scale number
+---@param color lstg.Color
+---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"' | nil
+local function drawText(font, text, x, y, scale, color, horizontal_alignment, vertical_alignment)
+    drawTextInRect(font, text, x, x, y, y, scale, color, horizontal_alignment, vertical_alignment) -- fuck LuaSTG
+end
+
+local SQRT2_2 = 0.7071067811865476
+
+---@type number[][]
+local stroke_offset = {
+    { 1, 0 },
+    { 0, 1 },
+    { -1, 0 },
+    { 0, - 1 },
+    { SQRT2_2, SQRT2_2 },
+    { -SQRT2_2, SQRT2_2 },
+    { -SQRT2_2, -SQRT2_2 },
+    { SQRT2_2, -SQRT2_2 },
+}
+
+---@param font string
+---@param text string
+---@param l number
+---@param r number
+---@param b number
+---@param t number
+---@param scale number
+---@param color lstg.Color
+---@param stroke_size number
+---@param stroke_color lstg.Color
+---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"' | nil
+local function drawTextWithStrokeInRect(font, text, l, r, b, t, scale, color, stroke_size, stroke_color, horizontal_alignment, vertical_alignment)
+    if stroke_size > 0 and stroke_color.a >= TRANSPARENT_THRESHOLD then
+        for _, offset in ipairs(stroke_offset) do
+            local dx, dy = offset[1] * stroke_size, offset[2] * stroke_size
+            drawTextInRect(font, text, l + dx, r + dx, b + dy, t + dy, scale, color, horizontal_alignment, vertical_alignment)
+        end
+    end
+    drawTextInRect(font, text, l, r, b, t, scale, color, horizontal_alignment, vertical_alignment)
+end
+
+---@param font string
+---@param text string
+---@param x number
+---@param y number
+---@param scale number
+---@param color lstg.Color
+---@param stroke_size number
+---@param stroke_color lstg.Color
+---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"' | nil
+local function drawTextWithStroke(font, text, x, y, scale, color, stroke_size, stroke_color, horizontal_alignment, vertical_alignment)
+    return drawTextWithStrokeInRect(font, text, x, x, y, y, scale, color, stroke_size, stroke_color, horizontal_alignment, vertical_alignment)
+end
+
 --#endregion
 
 --#region 新版本
@@ -710,10 +834,7 @@ function InputSetting:initialize()
     self.transition = 0
     self.transition_delta = -TRANSITION_SPEED
     self.interactive = false
-
-    self.action_sets = {
-        
-    }
+    self.y_offset = 0
 end
 
 function InputSetting:update()
@@ -726,19 +847,143 @@ function InputSetting:update()
             self.is_transitioning = false
         end
     end
+    if self.interactive then
+        local scroll_speed = 6 * 24 / 60
+        if InputSystem.getBooleanAction("menu:up") then
+            self.y_offset = math.max(0, self.y_offset - scroll_speed)
+        elseif InputSystem.getBooleanAction("menu:down") then
+            self.y_offset = self.y_offset + scroll_speed
+        end
+    end
+end
+
+---@param binding foundation.InputSystem.BooleanBinding
+---@param vertical_padding integer
+---@return integer height
+function InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, vertical_padding)
+    return 24
+end
+---@param action foundation.InputSystem.BooleanAction
+---@param vertical_padding integer
+---@return integer height
+function InputSetting.measureBooleanActionContainerHeight(action, vertical_padding)
+    local height = 0
+    height = height + vertical_padding -- top padding
+    height = height + 24 -- label
+    for _, binding in action:keyboardBindings() do
+        height = height + vertical_padding -- padding
+        height = height + InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, vertical_padding)
+    end
+    height = height + vertical_padding -- padding
+    height = height + 24 -- add binding button
+    height = height + vertical_padding -- bottom padding
+    return height
+end
+---@param action_set foundation.InputSystem.ActionSet
+---@param exclude_actions string[]
+---@param vertical_padding integer
+---@return integer height
+function InputSetting.measureActionSetContainerHeight(action_set, exclude_actions, vertical_padding)
+    local height = 0
+    height = height + vertical_padding -- top padding
+    height = height + 24 -- label
+    for _, action in action_set:booleanActions() do
+        if not isArrayContains(exclude_actions, action.name) then
+            height = height + vertical_padding -- padding
+            height = height + InputSetting.measureBooleanActionContainerHeight(action, vertical_padding)
+        end
+    end
+    height = height + vertical_padding -- bottom padding
+    return height
 end
 
 function InputSetting:draw()
     local alpha = self.transition
     if alpha >= TRANSPARENT_THRESHOLD then
         SetViewMode("ui")
-        local x0, y0 = (screen.width - 400) / 2, screen.height - 16
-        local w, h = 400, 16
+        local font_scale = 0.5
+        local x0, y0 = (screen.width - 400) / 2, screen.height - 16 + self.y_offset
+        local w0, h0 = 400, 24
         local gap = 8
-        local color_surface = parseColor("#211F26", alpha)
-        for i = 1, 100 do
-            drawRectAt(x0, y0 - h - (i - 1) * (h + gap), w, h, color_surface)
+        local color_on_surface = parseColor("#E6E0E9", alpha)
+        local color_surface_container = parseColor("#211F26", alpha)
+        local color_surface_container_high = parseColor("#2B2930", alpha)
+        local color_surface_container_highest = parseColor("#36343B", alpha)
+
+        local menu_action_set = InputSystem.getActionSet("menu")
+        local game_action_set = InputSystem.getActionSet("menu")
+
+        local exclude_actions = { "pointer" }
+        local padding = 8
+        local action_set_container_width = w0
+        local action_set_container_height = InputSetting.measureActionSetContainerHeight(menu_action_set, exclude_actions, padding)
+        drawRectAt(x0, y0 - action_set_container_height, action_set_container_width, action_set_container_height, color_surface_container)
+        do
+            local x, y = x0, y0
+            local w = action_set_container_width
+            x = x + padding
+            w = w - padding * 2
+
+            y = y - padding
+
+            local menu_action_set_name = i18n_str("thlib.input.action_set." .. menu_action_set.name)
+            drawTextInRect("ttf:menu-font-32", menu_action_set_name, x, x + w, y - 24, y, font_scale, color_on_surface, "center")
+            y = y - 24
+            y = y - padding
+
+            for _, action in menu_action_set:booleanActions() do
+                local action_container_height = InputSetting.measureBooleanActionContainerHeight(action, padding)
+                drawRectAt(x, y - action_container_height, w, action_container_height, color_surface_container_high)
+
+                x = x + padding
+                w = w - padding * 2
+
+                y = y - padding
+
+                local menu_action_name = i18n_str("thlib.input.action_set." .. menu_action_set.name .. ".action." .. action.name)
+                drawTextInRect("ttf:menu-font-32", menu_action_name, x, x + w, y - 24, y, font_scale, color_on_surface)
+                y = y - 24
+
+                for _, binding in action:keyboardBindings() do
+                    y = y - padding
+
+                    local binding_container_height = InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, padding)
+                    drawRectAt(x, y - binding_container_height, w, binding_container_height, color_surface_container_highest)
+
+                    x = x + padding
+                    w = w - padding * 2
+
+                    drawTextInRect("ttf:menu-font-32", KeyboardAdaptor.getKeyName(binding.key), x, x + w, y - 24, y, font_scale, color_on_surface, "center")
+                    y = y - 24
+
+                    w = w + padding * 2
+                    x = x - padding
+                end
+
+                y = y - padding
+
+                do
+                    drawRectAt(x, y - 24, w, 24, color_surface_container_highest)
+
+                    x = x + padding
+                    w = w - padding * 2
+
+                    drawTextInRect("ttf:menu-font-32", "+添加", x, x + w, y - 24, y, font_scale, color_on_surface, "center")
+                    y = y - 24
+
+                    w = w + padding * 2
+                    x = x - padding
+                end
+
+                y = y - padding
+
+                w = w + padding * 2
+                x = x - padding
+
+                y = y - padding -- padding between actions
+            end
         end
+
         SetViewMode("world")
     end
 end
@@ -1777,6 +2022,7 @@ function LauncherScene:onUpdate()
         stage.DestroyCurrentStage()
         lstg.DoFile("launcher.lua")
         InitAllClass()
+        i18n.refresh()
     end
     -- 设置标题
     lstg.SetTitle(string.format("%s", gconfig.window_title)) -- 启动器阶段不用显示那么多信息
