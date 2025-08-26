@@ -7,6 +7,7 @@
 
 local lstg = require("lstg")
 local Keyboard = lstg.Input.Keyboard
+local Mouse = lstg.Input.Mouse
 local i18n = require("lib.i18n")
 local default_setting = require("foundation.legacy.default_setting")
 local SceneManager = require("foundation.SceneManager")
@@ -835,6 +836,7 @@ function InputSetting:initialize()
     self.transition_delta = -TRANSITION_SPEED
     self.interactive = false
     self.y_offset = 0
+    self.y_offset_transition = 0
 end
 
 function InputSetting:update()
@@ -848,13 +850,16 @@ function InputSetting:update()
         end
     end
     if self.interactive then
-        local scroll_speed = 6 * 24 / 60
+        local scroll_speed = screen.height
         if InputSystem.getBooleanAction("menu:up") then
             self.y_offset = math.max(0, self.y_offset - scroll_speed)
         elseif InputSystem.getBooleanAction("menu:down") then
             self.y_offset = self.y_offset + scroll_speed
         end
+        local wheel_delta = Mouse.GetWheelDelta()
+        self.y_offset = math.max(0, self.y_offset - wheel_delta * (screen.height / 4))
     end
+    self.y_offset_transition = self.y_offset_transition + (self.y_offset - self.y_offset_transition) * 0.2
 end
 
 ---@param binding foundation.InputSystem.BooleanBinding
@@ -902,7 +907,7 @@ function InputSetting:draw()
     if alpha >= TRANSPARENT_THRESHOLD then
         SetViewMode("ui")
         local font_scale = 0.5
-        local x0, y0 = (screen.width - 400) / 2, screen.height - 16 + self.y_offset
+        local x0, y0 = (screen.width - 400) / 2, screen.height - 16 + self.y_offset_transition
         local w0, h0 = 400, 24
         local gap = 8
         local color_on_surface = parseColor("#E6E0E9", alpha)
