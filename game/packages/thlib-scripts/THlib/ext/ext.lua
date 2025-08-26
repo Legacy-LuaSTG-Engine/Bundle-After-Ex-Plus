@@ -6,6 +6,7 @@
 local SceneManager = require("foundation.SceneManager")
 local IntersectionDetectionManager = require("foundation.IntersectionDetectionManager")
 local InputSystem = require("foundation.InputSystem")
+local legacy_input = require("foundation.legacy.input")
 local gameEventDispatcher = lstg.globalEventDispatcher
 
 local REPLAY_ACTION_SET_NAMES = { "game" }
@@ -220,6 +221,7 @@ ext.input_serialize_context = InputSystem.createSerializeContext()
 --- 获取输入
 function GetInput()
     if stage.NextStageExist() then
+        legacy_input.fillLegacyKeySetting() -- 按键码兼容性处理
         InputSystem.clear() -- 清除输入系统内部状态，避免切换关卡后残留上一帧的输入状态
     end
     InputSystem.update()

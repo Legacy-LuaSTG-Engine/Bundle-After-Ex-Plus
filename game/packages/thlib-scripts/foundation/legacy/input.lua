@@ -111,61 +111,75 @@ local MENU_ACTION_SET_PREFIX = "menu:"
 local function fillLegacyKeySetting()
     -- keys
 
+    local keys = {}
+
     for _, binding in game_action_left:keyboardBindings() do
-        setting.keys.left = binding.key
+        keys.left = binding.key
         break
     end
     for _, binding in game_action_right:keyboardBindings() do
-        setting.keys.right = binding.key
+        keys.right = binding.key
         break
     end
     for _, binding in game_action_down:keyboardBindings() do
-        setting.keys.down = binding.key
+        keys.down = binding.key
         break
     end
     for _, binding in game_action_up:keyboardBindings() do
-        setting.keys.up = binding.key
+        keys.up = binding.key
         break
     end
 
     for _, binding in game_action_slow:keyboardBindings() do
-        setting.keys.slow = binding.key
+        keys.slow = binding.key
         break
     end
     for _, binding in game_action_shoot:keyboardBindings() do
-        setting.keys.shoot = binding.key
+        keys.shoot = binding.key
         break
     end
     for _, binding in game_action_spell:keyboardBindings() do
-        setting.keys.spell = binding.key
+        keys.spell = binding.key
         break
     end
     for _, binding in game_action_special:keyboardBindings() do
-        setting.keys.special = binding.key
+        keys.special = binding.key
         break
+    end
+
+    for k, v in pairs(keys) do
+        ---@diagnostic disable-next-line: deprecated
+        setting.keys[k] = v
     end
 
     -- keysys
 
+    local sys_keys = {}
+
     for _, binding in menu_action_menu:keyboardBindings() do
-        setting.keysys.menu = binding.key
+        sys_keys.menu = binding.key
         break
     end
     for _, binding in menu_action_slow_down:keyboardBindings() do
-        setting.keysys.repslow = binding.key
+        sys_keys.repslow = binding.key
         break
     end
     for _, binding in menu_action_speed_up:keyboardBindings() do
-        setting.keysys.repfast = binding.key
+        sys_keys.repfast = binding.key
         break
     end
     for _, binding in menu_action_retry:keyboardBindings() do
-        setting.keysys.retry = binding.key
+        sys_keys.retry = binding.key
         break
     end
     for _, binding in menu_action_snapshot:keyboardBindings() do
-        setting.keysys.snapshot = binding.key
+        sys_keys.snapshot = binding.key
         break
+    end
+
+    for k, v in pairs(sys_keys) do
+        ---@diagnostic disable-next-line: deprecated
+        setting.keysys[k] = v
     end
 end
 
