@@ -475,29 +475,6 @@ local function isVersionHigher(v, v2)
     return n1 < n2
 end
 
-local function checkNewVersion()
-    local http = require("socket.http")
-    local ltn12 = require("ltn12")
-    local cjson = require("cjson")
-
-    local t = {}
-    local r, c, h = http.request({
-        url = api_url_root .. "/framework/after-ex-plus/version/latest",
-        method = "GET",
-        sink = ltn12.sink.table(t),
-    })
-
-    if r and c == 200 then
-        local json_text = table.concat(t)
-        local json_data = cjson.decode(json_text)
-        if isVersionHigher(gconfig.bundle_version, json_data.version) then
-            return true, json_data.description
-        end
-    end
-
-    return false, ""
-end
-
 ---@param t any
 local function validateVersionData(t)
     return type(t) == "table" and type(t.name) == "string" and type(t.version) == "string" and type(t.description) == "string"
