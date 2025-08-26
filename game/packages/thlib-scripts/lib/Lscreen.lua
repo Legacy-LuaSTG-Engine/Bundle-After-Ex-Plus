@@ -5,7 +5,6 @@
 ----------------------------------------
 --- build-in white
 
--- TODO: 应该改为引擎提供默认常用贴图
 lstg.LoadTexture("tex:screen-white", "assets/texture/white.png")
 lstg.LoadImage("img:screen-white", "tex:screen-white", 16, 16, 16, 16)
 
