@@ -661,6 +661,13 @@ local function parseColor(s, alpha)
     return c
 end
 
+---@param color lstg.Color
+---@param alpha number
+---@return lstg.Color
+local function withAlpha(color, alpha)
+    return lstg.Color(alpha * color.a, color.r, color.g, color.b)
+end
+
 ---@param l number
 ---@param r number
 ---@param b number
@@ -765,6 +772,20 @@ end
 ---@param text string
 ---@param x number
 ---@param y number
+---@param w number
+---@param h number
+---@param scale number
+---@param color lstg.Color
+---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
+---@param vertical_alignment  '"top"' | '"center"' | '"bottom"' | nil
+local function drawTextInRectAt(font, text, x, y, w, h, scale, color, horizontal_alignment, vertical_alignment)
+    return drawTextInRect(font, text, x, x + w, y, y + h, scale, color, horizontal_alignment, vertical_alignment)
+end
+
+---@param font string
+---@param text string
+---@param x number
+---@param y number
 ---@param scale number
 ---@param color lstg.Color
 ---@param horizontal_alignment '"left"' | '"center"' | '"right"' | nil
@@ -825,10 +846,182 @@ end
 
 --#endregion
 
+--#region 鼠标
+
+---@param l number
+---@param r number
+---@param b number
+---@param t number
+---@return boolean
+local function isMouseInRect(l, r, b, t)
+    local x, y = InputSystem.getVector2Action("menu:pointer")
+    return x >= l and x <= r and y >= b and y <= t
+end
+
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@return boolean
+local function isMouseInRectAt(x, y, w, h)
+    return isMouseInRect(x, x + w, y, y + h)
+end
+
+--#endregion
+
+--#region Rect
+
+---@class launcher.menu.InputSetting.Rect
+---@field left number
+---@field top number
+---@field right number
+---@field bottom number
+---@field x number
+---@field y number
+---@field width number
+---@field height number
+local Rect = {}
+
+---@param k string
+---@return number
+function Rect:__index(k)
+    if k == "x" then
+        return self.left
+    elseif k == "y" then
+        return self.bottom
+    elseif k == "width" then
+        return self.right - self.left
+    elseif k == "height" then
+        return self.top - self.bottom
+    else
+        error(("field '%s' does not exists"):format(tostring(k)))
+    end
+end
+
+---@param k string
+---@param v number
+function Rect:__newindex(k, v)
+    if type(v) ~= "number" then
+        error(("field '%s' must be a number"):format(tostring(k)))
+    end
+    if k == "x" then
+        self.left = v
+    elseif k == "y" then
+        self.bottom = v
+    elseif k == "width" then
+        self.right = self.left + v
+    elseif k == "height" then
+        self.top = self.bottom + v
+    else
+        error(("field '%s' does not exists"):format(tostring(k)))
+    end
+end
+
+---@param left number
+---@param top number
+---@param right number
+---@param bottom number
+function Rect.rect(left, top, right, bottom)
+    ---@type launcher.menu.InputSetting.Rect
+    ---@diagnostic disable-next-line: missing-fields
+    local instance = {
+        left = left,
+        top = top,
+        right = right,
+        bottom = bottom,
+    }
+    setmetatable(instance, Rect)
+    return instance
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+function Rect.at(x, y, width, height)
+    ---@type launcher.menu.InputSetting.Rect
+    ---@diagnostic disable-next-line: missing-fields
+    local instance = {
+        left = x,
+        top = y + height,
+        right = x + width,
+        bottom = y,
+    }
+    setmetatable(instance, Rect)
+    return instance
+end
+
+--#endregion
+
 --#region 新版本
+
+---@class launcher.menu.InputSetting.ActionSnapshot
+---@field action foundation.InputSystem.Action
+---@field keyboard_bindings foundation.InputSystem.BooleanBinding[]
+
+---@class launcher.menu.InputSetting.ActionSetSnapshot
+---@field action_set foundation.InputSystem.ActionSet
+---@field boolean_actions launcher.menu.InputSetting.ActionSnapshot[]
 
 ---@class launcher.menu.InputSetting
 local InputSetting = {}
+
+--#region 主题
+
+local theme = {
+    color = {
+        on_surface = parseColor("#E6E0E9"),
+        on_surface_variant = parseColor("#CAC4D0"),
+
+        surface = parseColor("#141218"),
+
+        surface_container = parseColor("#211F26"),
+        surface_container_high = parseColor("#2B2930"),
+        surface_container_highest = parseColor("#36343B"),
+
+        button_filled_hovered_container_state_layer = parseColor("#381E72"),
+    },
+    widget = {
+    },
+}
+
+theme.widget.common_container = {
+    padding_left = 8,
+    padding_right = 8,
+    padding_top = 8,
+    padding_bottom = 8,
+    row_gap = 8,
+    column_gap = 8,
+}
+theme.widget.label = {
+    height = 24,
+}
+theme.widget.button = {
+    height = 24,
+}
+theme.widget.action_edit = {
+    padding_left = 8,
+    padding_right = 8,
+    padding_top = 8,
+    padding_bottom = 8,
+    width = 420,
+    height = 8 --[[padding_top]] + theme.widget.label.height + theme.widget.common_container.row_gap + theme.widget.button.height + 8 --[[padding_bottom]],
+}
+theme.widget.keyboard_binding_edit = {
+    width = (theme.widget.action_edit.width - theme.widget.action_edit.padding_left - theme.widget.action_edit.padding_right - theme.widget.common_container.column_gap) / 2,
+    height = theme.widget.button.height,
+}
+theme.widget.top_bar = {
+    padding_left = 8,
+    padding_right = 8,
+    padding_top = 8,
+    padding_bottom = 8,
+    height = 8 --[[padding_top]] + theme.widget.button.height + 8 --[[padding_bottom]]
+}
+
+InputSetting.theme = theme
+
+--#endregion
 
 function InputSetting:initialize()
     self.is_transitioning = false
@@ -837,6 +1030,16 @@ function InputSetting:initialize()
     self.interactive = false
     self.y_offset = 0
     self.y_offset_transition = 0
+
+    self.action_set_names = {
+        "menu",
+        "game",
+    }
+    self.action_set_index = 1
+
+    self.list_container_height = 0
+    self.list_visible_height = 0
+    self:takeActionSetSnapshot()
 end
 
 function InputSetting:update()
@@ -859,47 +1062,66 @@ function InputSetting:update()
         local wheel_delta = Mouse.GetWheelDelta()
         self.y_offset = math.max(0, self.y_offset - wheel_delta * (screen.height / 4))
     end
+    do
+        local action_set_snapshot = self.action_set_snapshots[self.action_set_index]
+        local count = #action_set_snapshot.boolean_actions
+        self.list_container_height = count * theme.widget.action_edit.height + (count - 1) * theme.widget.common_container.row_gap
+        self.list_visible_height = screen.height - theme.widget.top_bar.height - theme.widget.common_container.padding_top - theme.widget.common_container.padding_bottom
+    end
+    local y_offset_max = math.max(0, self.list_container_height - self.list_visible_height)
+    self.y_offset = math.min(self.y_offset, y_offset_max)
     self.y_offset_transition = self.y_offset_transition + (self.y_offset - self.y_offset_transition) * 0.2
 end
 
----@param binding foundation.InputSystem.BooleanBinding
----@param vertical_padding integer
----@return integer height
-function InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, vertical_padding)
-    return 24
-end
----@param action foundation.InputSystem.BooleanAction
----@param vertical_padding integer
----@return integer height
-function InputSetting.measureBooleanActionContainerHeight(action, vertical_padding)
-    local height = 0
-    height = height + vertical_padding -- top padding
-    height = height + 24 -- label
-    for _, binding in action:keyboardBindings() do
-        height = height + vertical_padding -- padding
-        height = height + InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, vertical_padding)
-    end
-    height = height + vertical_padding -- padding
-    height = height + 24 -- add binding button
-    height = height + vertical_padding -- bottom padding
-    return height
-end
----@param action_set foundation.InputSystem.ActionSet
----@param exclude_actions string[]
----@param vertical_padding integer
----@return integer height
-function InputSetting.measureActionSetContainerHeight(action_set, exclude_actions, vertical_padding)
-    local height = 0
-    height = height + vertical_padding -- top padding
-    height = height + 24 -- label
-    for _, action in action_set:booleanActions() do
-        if not isArrayContains(exclude_actions, action.name) then
-            height = height + vertical_padding -- padding
-            height = height + InputSetting.measureBooleanActionContainerHeight(action, vertical_padding)
+local EXCLUDE_ACTION_NAMES = {
+    "pointer",
+}
+
+---@param action_set_snapshot launcher.menu.InputSetting.ActionSetSnapshot
+local function takeActionSnapshot(action_set_snapshot)
+    for _, action in action_set_snapshot.action_set:booleanActions() do
+        if not isArrayContains(EXCLUDE_ACTION_NAMES, action.name) then
+            ---@type launcher.menu.InputSetting.ActionSnapshot
+            local action_snapshot = {
+                action = action,
+                keyboard_bindings = {},
+            }
+            for _, binding in action:keyboardBindings() do
+                table.insert(action_snapshot.keyboard_bindings, binding)
+            end
+            table.insert(action_set_snapshot.boolean_actions, action_snapshot)
         end
     end
-    height = height + vertical_padding -- bottom padding
-    return height
+end
+
+function InputSetting:takeActionSetSnapshot()
+    ---@type launcher.menu.InputSetting.ActionSetSnapshot
+    local menu_action_set_snapshot = {
+        action_set = InputSystem.getActionSet("menu"),
+        boolean_actions = {},
+    }
+
+    takeActionSnapshot(menu_action_set_snapshot)
+
+    ---@type launcher.menu.InputSetting.ActionSetSnapshot
+    local game_action_set_snapshot = {
+        action_set = InputSystem.getActionSet("game"),
+        boolean_actions = {},
+    }
+
+    takeActionSnapshot(game_action_set_snapshot)
+
+    ---@type launcher.menu.InputSetting.ActionSetSnapshot[]
+    self.action_set_snapshots = {
+        menu_action_set_snapshot,
+        game_action_set_snapshot,
+    }
+end
+
+---@param id string
+---@return string
+local function quoteId(id)
+    return '[' .. id .. ']'
 end
 
 function InputSetting:draw()
@@ -907,86 +1129,132 @@ function InputSetting:draw()
     if alpha >= TRANSPARENT_THRESHOLD then
         SetViewMode("ui")
         local font_scale = 0.5
-        local x0, y0 = (screen.width - 400) / 2, screen.height - 16 + self.y_offset_transition
-        local w0, h0 = 400, 24
-        local gap = 8
-        local color_on_surface = parseColor("#E6E0E9", alpha)
-        local color_surface_container = parseColor("#211F26", alpha)
-        local color_surface_container_high = parseColor("#2B2930", alpha)
-        local color_surface_container_highest = parseColor("#36343B", alpha)
+        local id_scale = 0.8
 
-        local menu_action_set = InputSystem.getActionSet("menu")
-        local game_action_set = InputSystem.getActionSet("menu")
+        local color_on_surface = withAlpha(theme.color.on_surface, alpha)
+        local color_on_surface_variant = withAlpha(theme.color.on_surface_variant, alpha)
+        local color_surface = withAlpha(theme.color.surface, alpha)
+        local color_surface_container = withAlpha(theme.color.surface_container, alpha)
+        local color_surface_container_high = withAlpha(theme.color.surface_container_high, alpha)
+        local color_button_filled_hovered_container_state_layer = withAlpha(theme.color.button_filled_hovered_container_state_layer, alpha * 0.08)
 
-        local exclude_actions = { "pointer" }
-        local padding = 8
-        local action_set_container_width = w0
-        local action_set_container_height = InputSetting.measureActionSetContainerHeight(menu_action_set, exclude_actions, padding)
-        drawRectAt(x0, y0 - action_set_container_height, action_set_container_width, action_set_container_height, color_surface_container)
+        -- 绘制背景
+
+        drawRect(0, screen.width, 0, screen.height, color_surface)
+
+        -- 左边栏
+
         do
-            local x, y = x0, y0
-            local w = action_set_container_width
-            x = x + padding
-            w = w - padding * 2
+            local x = theme.widget.common_container.padding_left
+            local y = theme.widget.common_container.padding_bottom
+            local other_button_height = theme.widget.button.height
+            local other_button_width = screen.width
+                - theme.widget.common_container.padding_left
+                - theme.widget.common_container.column_gap
+                - theme.widget.action_edit.width
+                - theme.widget.common_container.padding_right
 
-            y = y - padding
-
-            local menu_action_set_name = i18n_str("thlib.input.action_set." .. menu_action_set.name)
-            drawTextInRect("ttf:menu-font-32", menu_action_set_name, x, x + w, y - 24, y, font_scale, color_on_surface, "center")
-            y = y - 24
-            y = y - padding
-
-            for _, action in menu_action_set:booleanActions() do
-                local action_container_height = InputSetting.measureBooleanActionContainerHeight(action, padding)
-                drawRectAt(x, y - action_container_height, w, action_container_height, color_surface_container_high)
-
-                x = x + padding
-                w = w - padding * 2
-
-                y = y - padding
-
-                local menu_action_name = i18n_str("thlib.input.action_set." .. menu_action_set.name .. ".action." .. action.name)
-                drawTextInRect("ttf:menu-font-32", menu_action_name, x, x + w, y - 24, y, font_scale, color_on_surface)
-                y = y - 24
-
-                for _, binding in action:keyboardBindings() do
-                    y = y - padding
-
-                    local binding_container_height = InputSetting.measureBooleanActionKeyboardBindingContainerHeight(binding, padding)
-                    drawRectAt(x, y - binding_container_height, w, binding_container_height, color_surface_container_highest)
-
-                    x = x + padding
-                    w = w - padding * 2
-
-                    drawTextInRect("ttf:menu-font-32", KeyboardAdaptor.getKeyName(binding.key), x, x + w, y - 24, y, font_scale, color_on_surface, "center")
-                    y = y - 24
-
-                    w = w + padding * 2
-                    x = x - padding
+            do
+                local bx, by, bw, bh = x, y, other_button_width, other_button_height
+                drawRectAt(bx, by, bw, bh, color_surface_container)
+                if isMouseInRectAt(bx, by, bw, bh) then
+                    drawRectAt(bx, by, bw, bh, color_button_filled_hovered_container_state_layer)
                 end
+                drawTextInRectAt("ttf:menu-font-32", i18n_str("launcher.save"), bx, by, bw, bh, font_scale, color_on_surface, "center", "center")
+            end
 
-                y = y - padding
+            y = y + other_button_height + theme.widget.common_container.row_gap
+
+            do
+                local bx, by, bw, bh = x, y, other_button_width, other_button_height
+                drawRectAt(bx, by, bw, bh, color_surface_container)
+                if isMouseInRectAt(bx, by, bw, bh) then
+                    drawRectAt(bx, by, bw, bh, color_button_filled_hovered_container_state_layer)
+                end
+                drawTextInRectAt("ttf:menu-font-32", i18n_str("launcher.restore_to_default"), bx, by, bw, bh, font_scale, color_on_surface, "center", "center")
+            end
+
+            y = screen.height - theme.widget.top_bar.height - theme.widget.common_container.padding_top
+
+            for i, name in ipairs(self.action_set_names) do
+                local bx, by, bw, bh = x, y - other_button_height, other_button_width, other_button_height
+                drawRectAt(bx, by, bw, bh, color_surface_container)
+                if isMouseInRectAt(bx, by, bw, bh) then
+                    drawRectAt(bx, by, bw, bh, color_button_filled_hovered_container_state_layer)
+                end
+                local text = i18n_str("thlib.input.action_set." .. name)
+                drawTextInRectAt("ttf:menu-font-32", text, bx, by, bw, bh, font_scale, color_on_surface, "center", "center")
+
+                y = y - other_button_height - theme.widget.common_container.row_gap
+            end
+        end
+
+        -- 绘制动作集和动作
+
+        do
+            local action_set_snapshot = self.action_set_snapshots[self.action_set_index]
+            local action_container_width = theme.widget.action_edit.width
+            local action_container_height = theme.widget.action_edit.height
+            local x = screen.width - theme.widget.common_container.padding_right - action_container_width
+            local y = screen.height - theme.widget.top_bar.height - theme.widget.common_container.padding_top + self.y_offset_transition
+
+            for _, action_snapshot in ipairs(action_set_snapshot.boolean_actions) do
+                -- 背景
+
+                drawRectAt(x, y - action_container_height, action_container_width, action_container_height, color_surface_container)
+
+                -- 标签
 
                 do
-                    drawRectAt(x, y - 24, w, 24, color_surface_container_highest)
-
-                    x = x + padding
-                    w = w - padding * 2
-
-                    drawTextInRect("ttf:menu-font-32", "+添加", x, x + w, y - 24, y, font_scale, color_on_surface, "center")
-                    y = y - 24
-
-                    w = w + padding * 2
-                    x = x - padding
+                    local tw, th = action_container_width - theme.widget.action_edit.padding_left - theme.widget.action_edit.padding_right, theme.widget.label.height
+                    local tx, ty = x + theme.widget.action_edit.padding_left, y - theme.widget.action_edit.padding_top - th
+                    local action_id = quoteId(action_snapshot.action.name)
+                    local action_name = i18n_str("thlib.input.action_set." .. action_set_snapshot.action_set.name .. ".action." .. action_snapshot.action.name)
+                    drawTextInRectAt("ttf:menu-font-32", action_name, tx, ty, tw, th, font_scale, color_on_surface, "left", "center")
+                    drawTextInRectAt("ttf:menu-font-32", action_id, tx, ty, tw, th, font_scale * id_scale, color_on_surface_variant, "right", "center")
                 end
 
-                y = y - padding
+                -- 两个绑定槽位
 
-                w = w + padding * 2
-                x = x - padding
+                local binding_container_y = y - theme.widget.action_edit.padding_top - theme.widget.label.height - theme.widget.common_container.row_gap
 
-                y = y - padding -- padding between actions
+                for i = 1, 2 do
+                    local binding = action_snapshot.keyboard_bindings[i]
+                    local bw, bh = theme.widget.keyboard_binding_edit.width, theme.widget.keyboard_binding_edit.height
+                    local bx = x + theme.widget.action_edit.padding_left + (i - 1) * (bw + theme.widget.common_container.column_gap)
+                    local by = binding_container_y - bh
+                    drawRectAt(bx, by, bw, bh, color_surface_container_high)
+                    if isMouseInRectAt(bx, by, bw, bh) then
+                        drawRectAt(bx, by, bw, bh, color_button_filled_hovered_container_state_layer)
+                    end
+                    if binding.key ~= Keyboard.None then
+                        drawTextInRectAt("ttf:menu-font-32", KeyboardAdaptor.getKeyName(binding.key), bx, by, bw, bh, font_scale, color_on_surface, "center", "center")
+                    end
+                end
+
+                y = y - action_container_height - theme.widget.common_container.row_gap
             end
+        end
+
+        -- 绘制顶栏，覆盖在最上层
+
+        local top_bar_width = screen.width
+        local top_bar_height = theme.widget.top_bar.height
+        do
+            local rx, ry, rw, rh = 0, screen.height - top_bar_height, top_bar_width, top_bar_height
+            drawRectAt(rx, ry, rw, rh, color_surface_container)
+            local title = i18n_str("launcher.menu.setting.input.keyboard.title")
+            drawTextInRectAt("ttf:menu-font-32", title, rx, ry, rw, rh, font_scale, color_on_surface, "center", "center")
+        end
+
+        do
+            local bw, bh = 4 * theme.widget.button.height, theme.widget.button.height
+            local bx, by = theme.widget.top_bar.padding_left, screen.height - theme.widget.top_bar.padding_top - bh
+            drawRectAt(bx, by, bw, bh, color_surface_container_high)
+            if isMouseInRectAt(bx, by, bw, bh) then
+                drawRectAt(bx, by, bw, bh, color_button_filled_hovered_container_state_layer)
+            end
+            drawTextInRectAt("ttf:menu-font-32", i18n_str("launcher.back"), bx, by, bw, bh, font_scale, color_on_surface, "center", "center")
         end
 
         SetViewMode("world")
@@ -1255,23 +1523,23 @@ function InputSettingHost:frame()
 end
 
 function InputSettingHost:render()
-    if self.alpha0 > 0.0001 then
-        SetViewMode("ui")
-        local y = self.y + 9.5 * 24
-        subui.drawTTF("ttf:menu-font", self.title, self.x, self.x, y, y, lstg.Color(self.alpha * 255, 255, 255, 255), "center", "vcenter")
-        for i, w in ipairs(self._button) do
-            if i == self._current_edit then
-                local a = 48 + 16 * math.sin(self.timer / math.pi)
-                lstg.SetImageState("img:menu-white", "", lstg.Color(self.alpha * a, 255, 255, 255))
-                lstg.RenderRect("img:menu-white", w.x, w.x + w.width, w.y - w.height, w.y)
-            end
-            w:draw()
-        end
-        for _, w in ipairs(self._text) do
-            w:draw()
-        end
-        SetViewMode("world")
-    end
+    --if self.alpha0 > 0.0001 then
+    --    SetViewMode("ui")
+    --    local y = self.y + 9.5 * 24
+    --    subui.drawTTF("ttf:menu-font", self.title, self.x, self.x, y, y, lstg.Color(self.alpha * 255, 255, 255, 255), "center", "vcenter")
+    --    for i, w in ipairs(self._button) do
+    --        if i == self._current_edit then
+    --            local a = 48 + 16 * math.sin(self.timer / math.pi)
+    --            lstg.SetImageState("img:menu-white", "", lstg.Color(self.alpha * a, 255, 255, 255))
+    --            lstg.RenderRect("img:menu-white", w.x, w.x + w.width, w.y - w.height, w.y)
+    --        end
+    --        w:draw()
+    --    end
+    --    for _, w in ipairs(self._text) do
+    --        w:draw()
+    --    end
+    --    SetViewMode("world")
+    --end
     self.view:draw()
 end
 

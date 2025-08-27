@@ -2,8 +2,14 @@
     "launcher.comment.common": "公共部分",
 
     "launcher.back_icon": "< 返回",
+    "launcher.save": "保存",
     "launcher.save_and_return": "保存并返回",
     "launcher.restore_to_default": "恢复默认",
+    "launcher.back": "返回",
+    "launcher.add": "添加",
+    "launcher.add_with_plus": "+添加",
+    "launcher.remove": "移除",
+    "launcher.remove_with_x": "x移除",
 
     "launcher.comment.menu_and_title": "-- 菜单标题 & 主菜单",
 
@@ -43,6 +49,8 @@
     "launcher.menu.setting.game.vsync": "垂直同步",
     "launcher.menu.setting.game.sound_effect": "音效音量",
     "launcher.menu.setting.game.music": "背景音乐音量",
+
+    "launcher.menu.setting.input.keyboard.title": "键盘输入设置",
 
     "launcher.comment.setting.version": "-- 检查更新",
 

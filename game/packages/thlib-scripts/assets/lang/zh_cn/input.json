@@ -1,5 +1,5 @@
 {
-    "thlib.input.action_set.menu": "菜单",
+    "thlib.input.action_set.menu": "菜单操作",
     "thlib.input.action_set.menu.action.left": "左移",
     "thlib.input.action_set.menu.action.right": "右移",
     "thlib.input.action_set.menu.action.up": "上移",
@@ -12,6 +12,18 @@
     "thlib.input.action_set.menu.action.slow-down": "减速",
     "thlib.input.action_set.menu.action.speed-up": "加速",
     "thlib.input.action_set.menu.action.retry": "重试",
+
+    "thlib.input.action_set.game": "玩家操作",
+    "thlib.input.action_set.game.action.left": "左移",
+    "thlib.input.action_set.game.action.right": "右移",
+    "thlib.input.action_set.game.action.up": "上移",
+    "thlib.input.action_set.game.action.down": "下移",
+    "thlib.input.action_set.game.action.slow": "切换射击模式/降低移动速度",
+    "thlib.input.action_set.game.action.shoot": "射击/确认",
+    "thlib.input.action_set.game.action.spell": "释放符卡/取消",
+    "thlib.input.action_set.game.action.special": "释放技能",
+    "thlib.input.action_set.game.action.snapshot": "截图",
+    "thlib.input.action_set.game.action.skip": "跳过对话",
 
     "": ""
 }
