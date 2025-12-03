@@ -549,7 +549,8 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
         for i = 1, idleFrames do
             idleIds[i] = i
         end
-        self:registerMirroredAnimation("idle", buildFrameData("idle_", idleIds), "right", interval, true)
+        self:registerAnimation("idle_right", buildFrameData("idle_", idleIds), interval, true)
+        self:copyAnimation("idle_right", "idle_left", false, true)
 
         -- move_right 动画
         if moveLoop > 0 and moveLoop < moveFrames then
@@ -562,8 +563,10 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
                 loopIds[#loopIds + 1] = i
             end
 
-            self:registerMirroredAnimation("move_enter", buildFrameData("move_right_", enterIds), "right", interval, false)
-            self:registerMirroredAnimation("move_loop", buildFrameData("move_right_", loopIds), "right", interval, true)
+            self:registerAnimation("move_right_enter", buildFrameData("move_right_", enterIds), interval, false)
+            self:registerAnimation("move_right_loop", buildFrameData("move_right_", loopIds), interval, true)
+            self:copyAnimation("move_right_enter", "move_left_enter", false, true)
+            self:copyAnimation("move_right_loop", "move_left_loop", false, true)
             self:copyAnimation("move_right_enter", "move_right_exit", true)
             self:copyAnimation("move_left_enter", "move_left_exit", true)
         else
@@ -571,7 +574,8 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
             for i = 1, moveFrames do
                 loopIds[i] = i
             end
-            self:registerMirroredAnimation("move_loop", buildFrameData("move_right_", loopIds), "right", interval, true)
+            self:registerAnimation("move_right_loop", buildFrameData("move_right_", loopIds), interval, true)
+            self:copyAnimation("move_right_loop", "move_left_loop", false, true)
         end
 
     elseif nRow == 3 then
@@ -591,7 +595,8 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
         for i = 1, idleFrames do
             idleIds[i] = i
         end
-        self:registerMirroredAnimation("idle", buildFrameData("idle_", idleIds), "right", interval, true)
+        self:registerAnimation("idle_right", buildFrameData("idle_", idleIds), interval, true)
+        self:copyAnimation("idle_right", "idle_left", false, true)
 
         -- move 动画（镜像）
         if moveLoop > 0 and moveLoop < moveFrames then
@@ -604,8 +609,10 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
                 loopIds[#loopIds + 1] = i
             end
 
-            self:registerMirroredAnimation("move_enter", buildFrameData("move_right_", enterIds), "right", interval, false)
-            self:registerMirroredAnimation("move_loop", buildFrameData("move_right_", loopIds), "right", interval, true)
+            self:registerAnimation("move_right_enter", buildFrameData("move_right_", enterIds), interval, false)
+            self:registerAnimation("move_right_loop", buildFrameData("move_right_", loopIds), interval, true)
+            self:copyAnimation("move_right_enter", "move_left_enter", false, true)
+            self:copyAnimation("move_right_loop", "move_left_loop", false, true)
             self:copyAnimation("move_right_enter", "move_right_exit", true)
             self:copyAnimation("move_left_enter", "move_left_exit", true)
         else
@@ -613,7 +620,8 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
             for i = 1, moveFrames do
                 loopIds[i] = i
             end
-            self:registerMirroredAnimation("move_loop", buildFrameData("move_right_", loopIds), "right", interval, true)
+            self:registerAnimation("move_right_loop", buildFrameData("move_right_", loopIds), interval, true)
+            self:copyAnimation("move_right_loop", "move_left_loop", false, true)
         end
 
         -- cast 动画（镜像，保持和移动方向一致）
@@ -627,8 +635,10 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
                 loopIds[#loopIds + 1] = i
             end
 
-            self:registerMirroredAnimation("cast_enter", buildFrameData("cast_", enterIds), "right", interval, false)
-            self:registerMirroredAnimation("cast_loop", buildFrameData("cast_", loopIds), "right", interval, true)
+            self:registerAnimation("cast_right_enter", buildFrameData("cast_", enterIds), interval, false)
+            self:registerAnimation("cast_right_loop", buildFrameData("cast_", loopIds), interval, true)
+            self:copyAnimation("cast_right_enter", "cast_left_enter", false, true)
+            self:copyAnimation("cast_right_loop", "cast_left_loop", false, true)
             self:copyAnimation("cast_right_enter", "cast_right_exit", true)
             self:copyAnimation("cast_left_enter", "cast_left_exit", true)
         else
@@ -636,7 +646,8 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
             for i = 1, castFrames do
                 loopIds[i] = i
             end
-            self:registerMirroredAnimation("cast_loop", buildFrameData("cast_", loopIds), "right", interval, true)
+            self:registerAnimation("cast_right_loop", buildFrameData("cast_", loopIds), interval, true)
+            self:copyAnimation("cast_right_loop", "cast_left_loop", false, true)
         end
 
     elseif nRow >= 4 then
@@ -769,19 +780,10 @@ end
 ---@param sourceName string @源动画名称
 ---@param targetName string @目标动画名称
 ---@param reverse boolean|nil @是否倒序（默认 false）
+---@param mirror boolean|nil @是否镜像（默认 false）
 ---@return boolean @是否复制成功
-function M:copyAnimation(sourceName, targetName, reverse)
-    return self.walkSystem:copyAnimation(sourceName, targetName, reverse)
-end
-
----注册镜像动画
----@param baseName string @基础动画名称
----@param frameData (string|number|table)[] @帧数据列表
----@param baseDirection string @基础动画的方向："left" 或 "right"
----@param interval number|nil @帧间隔（默认 8）
----@param loop boolean|nil @是否循环（默认 false）
-function M:registerMirroredAnimation(baseName, frameData, baseDirection, interval, loop)
-    self.walkSystem:registerMirroredAnimation(baseName, frameData, baseDirection, interval, loop)
+function M:copyAnimation(sourceName, targetName, reverse, mirror)
+    return self.walkSystem:copyAnimation(sourceName, targetName, reverse, mirror)
 end
 
 ---设置混合模式

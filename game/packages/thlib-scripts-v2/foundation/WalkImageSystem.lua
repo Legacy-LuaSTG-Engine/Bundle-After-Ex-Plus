@@ -167,8 +167,9 @@ end
 ---@param sourceName string @源动画名称
 ---@param targetName string @目标动画名称
 ---@param reverse boolean|nil @是否倒序（默认 false）
+---@param mirror boolean|nil @是否镜像（默认 false）
 ---@return boolean @是否复制成功
-function M:copyAnimation(sourceName, targetName, reverse)
+function M:copyAnimation(sourceName, targetName, reverse, mirror)
     local sourceAnim = self.animations[sourceName]
     if not sourceAnim then
         return false
@@ -180,12 +181,37 @@ function M:copyAnimation(sourceName, targetName, reverse)
         -- 倒序复制
         local frameCount = #sourceAnim.frames
         for i = 1, frameCount do
-            frames[i] = sourceAnim.frames[frameCount - i + 1]
+            local sourceFrame = sourceAnim.frames[frameCount - i + 1]
+            if mirror then
+                -- 倒序+镜像
+                frames[i] = {
+                    image = sourceFrame.image,
+                    dx = -sourceFrame.dx,
+                    dy = sourceFrame.dy,
+                    hscale = -sourceFrame.hscale,
+                    vscale = sourceFrame.vscale,
+                    rot = -sourceFrame.rot,
+                }
+            else
+                frames[i] = sourceFrame
+            end
         end
     else
         -- 正序复制
-        for i, frame in ipairs(sourceAnim.frames) do
-            frames[i] = frame  -- AnimationFrame 可以共享，因为它们是不可变的
+        for i, sourceFrame in ipairs(sourceAnim.frames) do
+            if mirror then
+                -- 正序+镜像
+                frames[i] = {
+                    image = sourceFrame.image,
+                    dx = -sourceFrame.dx,
+                    dy = sourceFrame.dy,
+                    hscale = -sourceFrame.hscale,
+                    vscale = sourceFrame.vscale,
+                    rot = -sourceFrame.rot,
+                }
+            else
+                frames[i] = sourceFrame  -- AnimationFrame 可以共享，因为它们是不可变的
+            end
         end
     end
 
@@ -196,56 +222,6 @@ function M:copyAnimation(sourceName, targetName, reverse)
     }
 
     return true
-end
-
----注册镜像动画（自动创建左右对称动画）
----@param baseName string @基础动画名称（会自动添加 _left 和 _right 后缀）
----@param frameData (string|number|table)[] @帧数据列表
----@param baseDirection string @基础动画的方向："left" 或 "right"
----@param interval number|nil @帧间隔（默认 8）
----@param loop boolean|nil @是否循环（默认 false）
-function M:registerMirroredAnimation(baseName, frameData, baseDirection, interval, loop)
-    -- 确定方向后缀
-    local baseSuffix, mirrorSuffix
-    if baseDirection == "left" then
-        baseSuffix = "_left"
-        mirrorSuffix = "_right"
-    else
-        baseSuffix = "_right"
-        mirrorSuffix = "_left"
-    end
-
-    -- 注册基础方向的动画（原始数据）
-    self:registerAnimation(baseName .. baseSuffix, frameData, interval, loop)
-
-    -- 创建镜像数据用于另一个方向
-    local mirroredData = {}
-    for i, data in ipairs(frameData) do
-        if type(data) == "table" then
-            -- 完整格式，镜像变换参数
-            mirroredData[i] = {
-                id = data.id,
-                dx = -(data.dx or 0), -- 镜像 X 偏移
-                dy = data.dy or 0, -- Y 偏移不变
-                hscale = -(data.hscale or 1), -- 镜像水平缩放
-                vscale = data.vscale or 1, -- 垂直缩放不变
-                rot = -(data.rot or 0), -- 镜像旋转
-            }
-        else
-            -- 简单格式，使用默认镜像（水平翻转）
-            mirroredData[i] = {
-                id = data,
-                dx = 0,
-                dy = 0,
-                hscale = -1, -- 水平翻转
-                vscale = 1,
-                rot = 0,
-            }
-        end
-    end
-
-    -- 注册镜像方向的动画
-    self:registerAnimation(baseName .. mirrorSuffix, mirroredData, interval, loop)
 end
 
 ---播放指定动画
