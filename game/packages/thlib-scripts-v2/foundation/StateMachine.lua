@@ -1,9 +1,6 @@
 local type = type
 local setmetatable = setmetatable
 
-local STATE_CACHE_SIZE = 32
-local TRANSITION_CACHE_SIZE = 64
-
 ---@class foundation.StateMachine.StateCallbacks
 ---@field onEnter function|nil @进入状态时的回调函数
 ---@field onExit function|nil @离开状态时的回调函数
@@ -11,24 +8,6 @@ local TRANSITION_CACHE_SIZE = 64
 
 ---@class foundation.StateMachine
 local M = {}
-
-local function createStateObject(id, name)
-    return {
-        id = id,
-        name = name,
-        onEnter = nil,
-        onExit = nil,
-        onUpdate = nil,
-    }
-end
-
-local function createTransitionObject(fromId, toId, condition)
-    return {
-        from = fromId,
-        to = toId,
-        condition = condition,
-    }
-end
 
 ---@private
 function M:initialize()
@@ -38,25 +17,12 @@ function M:initialize()
 
     self.transitions = {}
     self.transitionCount = 0
+    self.transitionsByState = {}
 
     self.currentStateId = 0
     self.previousStateId = 0
 
     self.context = {}
-
-    -- 状态对象缓存池，用于减少 GC 压力
-    self.stateCache = {}
-    for i = 1, STATE_CACHE_SIZE do
-        self.stateCache[i] = createStateObject(0, "")
-    end
-    self.stateCacheIndex = 1
-
-    -- 转换对象缓存池，用于减少 GC 压力
-    self.transitionCache = {}
-    for i = 1, TRANSITION_CACHE_SIZE do
-        self.transitionCache[i] = createTransitionObject(0, 0, nil)
-    end
-    self.transitionCacheIndex = 1
 end
 
 ---注册一个新状态
@@ -68,24 +34,13 @@ function M:registerState(name, callbacks)
     self.stateCount = id
     self.nameToId[name] = id
 
-    local state
-    if self.stateCacheIndex <= STATE_CACHE_SIZE then
-        state = self.stateCache[self.stateCacheIndex]
-        self.stateCacheIndex = self.stateCacheIndex + 1
-        state.id = id
-        state.name = name
-        state.onEnter = callbacks and callbacks.onEnter or nil
-        state.onExit = callbacks and callbacks.onExit or nil
-        state.onUpdate = callbacks and callbacks.onUpdate or nil
-    else
-        state = {
-            id = id,
-            name = name,
-            onEnter = callbacks and callbacks.onEnter or nil,
-            onExit = callbacks and callbacks.onExit or nil,
-            onUpdate = callbacks and callbacks.onUpdate or nil,
-        }
-    end
+    local state = {
+        id = id,
+        name = name,
+        onEnter = callbacks and callbacks.onEnter or nil,
+        onExit = callbacks and callbacks.onExit or nil,
+        onUpdate = callbacks and callbacks.onUpdate or nil,
+    }
 
     self.states[id] = state
     return id
@@ -107,22 +62,21 @@ function M:addTransition(fromState, toState, condition)
     local idx = self.transitionCount + 1
     self.transitionCount = idx
 
-    local transition
-    if self.transitionCacheIndex <= TRANSITION_CACHE_SIZE then
-        transition = self.transitionCache[self.transitionCacheIndex]
-        self.transitionCacheIndex = self.transitionCacheIndex + 1
-        transition.from = fromId
-        transition.to = toId
-        transition.condition = condition
-    else
-        transition = {
-            from = fromId,
-            to = toId,
-            condition = condition,
-        }
-    end
+    local transition = {
+        from = fromId,
+        to = toId,
+        condition = condition,
+    }
 
     self.transitions[idx] = transition
+
+    local stateTransitions = self.transitionsByState[fromId]
+    if not stateTransitions then
+        stateTransitions = {}
+        self.transitionsByState[fromId] = stateTransitions
+    end
+    stateTransitions[#stateTransitions + 1] = transition
+
     return true
 end
 
@@ -154,8 +108,8 @@ function M:setState(state)
 end
 
 ---更新状态机
----@param deltaTime number @帧间隔时间
-function M:update(deltaTime)
+---@vararg any @传递给状态更新回调的参数
+function M:update(...)
     local currentState = self.states[self.currentStateId]
 
     if not currentState then
@@ -163,17 +117,14 @@ function M:update(deltaTime)
     end
 
     if currentState.onUpdate then
-        currentState.onUpdate(self.context, deltaTime)
+        currentState.onUpdate(self.context, ...)
     end
 
-    -- 检查状态转换
-    local transitions = self.transitions
-    local transitionCount = self.transitionCount
-    local currentStateId = self.currentStateId
+    local transitions = self.transitionsByState[self.currentStateId]
 
-    for i = 1, transitionCount do
-        local transition = transitions[i]
-        if transition.from == currentStateId then
+    if transitions then
+        for i = 1, #transitions do
+            local transition = transitions[i]
             local condition = transition.condition
             if not condition or condition(self.context) then
                 self:setState(transition.to)

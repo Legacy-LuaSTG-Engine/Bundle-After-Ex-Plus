@@ -37,13 +37,10 @@ local M = {}
 ---@private
 function M:initialize(obj, texture)
     self.obj = obj
-    self.texture = texture  -- 默认纹理（可选）
+    self.texture = texture
 
-    -- 图像帧注册表
     self.frames = {}
-    self.frameCount = 0
 
-    -- 动画状态注册表
     self.animations = {}
 
     -- 当前渲染状态
@@ -79,7 +76,6 @@ function M:registerFrame(id, x, y, w, h, texture)
         w = w,
         h = h,
     }
-    self.frameCount = self.frameCount + 1
 end
 
 ---注册一组连续的图像帧
@@ -123,12 +119,12 @@ end
 ---    }
 function M:registerAnimation(name, frameData, interval, loop)
     local frames = {}
+    local frameIndex = 1
 
     for i, data in ipairs(frameData) do
         local frameId, dx, dy, hscale, vscale, rot
 
         if type(data) == "table" then
-            -- 完整格式
             frameId = data.id
             dx = data.dx or 0
             dy = data.dy or 0
@@ -136,7 +132,6 @@ function M:registerAnimation(name, frameData, interval, loop)
             vscale = data.vscale or 1
             rot = data.rot or 0
         else
-            -- 简单格式（仅帧 ID）
             frameId = data
             dx = 0
             dy = 0
@@ -147,7 +142,7 @@ function M:registerAnimation(name, frameData, interval, loop)
 
         local imageFrame = self.frames[frameId]
         if imageFrame then
-            frames[i] = {
+            frames[frameIndex] = {
                 image = imageFrame,
                 dx = dx,
                 dy = dy,
@@ -155,6 +150,9 @@ function M:registerAnimation(name, frameData, interval, loop)
                 vscale = vscale,
                 rot = rot,
             }
+            frameIndex = frameIndex + 1
+        else
+            print(string.format("[WalkImageSystem] 警告: 动画 '%s' 中找不到帧 ID '%s'", name, tostring(frameId)))
         end
     end
 

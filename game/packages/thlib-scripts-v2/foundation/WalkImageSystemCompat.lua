@@ -54,7 +54,7 @@ end
 
 ---设置标准行走状态机（包含移动、施法、漂浮等默认行为）
 ---
---- 需要的动画名称（循环动画需要显式指定 loop = true）：
+--- 需要的动画名称：
 --- - idle_left, idle_right: 静止动画（必需，循环）
 --- - move_left_loop, move_right_loop: 移动循环动画（必需，循环）
 --- - move_left_enter, move_right_enter: 开始移动动画（可选，非循环）
@@ -519,7 +519,7 @@ function M:setupLegacyWalkImage(texture, nRow, nCol, images, anis, interval, a, 
     if nRow < 1 or nCol < 1 then
         return
     end
-    
+
     local frameW = texW / nCol
     local frameH = texH / nRow
 
