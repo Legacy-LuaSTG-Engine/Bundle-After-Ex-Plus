@@ -804,7 +804,7 @@ end
 ---开始施法
 ---@param duration number|nil @持续帧数（如果为 nil 则需要手动设置 cast_t = 0 来停止）
 function M:startCast(duration)
-    if duration then
+    if duration ~= nil then
         self.obj.cast_t = duration
     else
         self.obj.cast_t = 1
@@ -830,10 +830,13 @@ function M:frame()
             -- cast_t 减到 0，停止施法
             obj.cast = 0
         end
+    elseif obj.cast_t == 0 then
+        -- cast_t 为 0，确保停止施法
+        obj.cast = 0
     elseif obj.cast_t < 0 then
         -- 异常情况，重置
-        self.obj.cast = 0
-        self.obj.cast_t = 0
+        obj.cast = 0
+        obj.cast_t = 0
     end
 
     -- 更新行走图系统
