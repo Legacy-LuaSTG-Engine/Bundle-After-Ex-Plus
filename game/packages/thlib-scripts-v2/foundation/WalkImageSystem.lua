@@ -60,6 +60,13 @@ function M:initialize(obj, texture)
 
     -- 设置状态机上下文
     self.stateMachine:setContext("owner", self)
+    
+    -- 初始化动画附加变换参数
+    self.stateMachine:setContext("dx", 0)
+    self.stateMachine:setContext("dy", 0)
+    self.stateMachine:setContext("hscale", 1)
+    self.stateMachine:setContext("vscale", 1)
+    self.stateMachine:setContext("rot", 0)
 end
 
 ---注册一个图像帧
@@ -419,15 +426,19 @@ function M:render(damageTime, damageTimeMax)
         color = Color(a, r, g, b)
     end
 
-    -- 计算位置和缩放（从状态机上下文读取偏移）
+    -- 计算位置和缩放（从状态机上下文读取附加变换参数）
     local ctx = self.stateMachine.context
-    local offsetX = ctx.renderOffsetX or 0
-    local offsetY = ctx.renderOffsetY or 0
-    local x = obj.x + animFrame.dx + offsetX
-    local y = obj.y + animFrame.dy + offsetY
-    local w = imgFrame.w * (obj.hscale or 1) * animFrame.hscale / 2
-    local h = imgFrame.h * (obj.vscale or 1) * animFrame.vscale / 2
-    local rot = (obj.rot or 0) + animFrame.rot
+    local ctxDx = ctx.dx or 0
+    local ctxDy = ctx.dy or 0
+    local ctxHscale = ctx.hscale or 1
+    local ctxVscale = ctx.vscale or 1
+    local ctxRot = ctx.rot or 0
+    
+    local x = obj.x + animFrame.dx + ctxDx
+    local y = obj.y + animFrame.dy + ctxDy
+    local w = imgFrame.w * (obj.hscale or 1) * animFrame.hscale * ctxHscale / 2
+    local h = imgFrame.h * (obj.vscale or 1) * animFrame.vscale * ctxVscale / 2
+    local rot = (obj.rot or 0) + animFrame.rot + ctxRot
 
     -- 计算四个顶点（纹理坐标来自图像帧）
     local tx = imgFrame.x

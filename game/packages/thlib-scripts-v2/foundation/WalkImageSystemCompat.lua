@@ -79,8 +79,8 @@ end
 ---
 --- 状态变量：
 --- - 所有状态变量都存储在状态机的 context 中
---- - 浮动效果：ctx.floatTimer, ctx.floatOffsetX, ctx.floatOffsetY
---- - 渲染偏移：ctx.renderOffsetX, ctx.renderOffsetY
+--- - 动画附加变换：ctx.dx, ctx.dy, ctx.hscale, ctx.vscale, ctx.rot（浮动效果直接修改 dx/dy）
+--- - 浮动定时器：ctx.floatTimer
 --- - 面向：ctx.facing
 --- - 状态标志：ctx.moveEntering, ctx.moveExiting, ctx.castEntering, ctx.castExiting
 ---
@@ -107,16 +107,16 @@ function M:setupDefaultStates(options)
         dt = dt or 1
 
         if not enabled then
-            local dx = ctx.floatOffsetX or 0
-            local dy = ctx.floatOffsetY or 0
+            local dx = ctx.dx or 0
+            local dy = ctx.dy or 0
 
             if abs(dx) < 0.01 and abs(dy) < 0.01 then
-                ctx.floatOffsetX = 0
-                ctx.floatOffsetY = 0
+                ctx.dx = 0
+                ctx.dy = 0
             else
                 local factor = floatReturnSpeed
-                ctx.floatOffsetX = dx * (1 - factor)
-                ctx.floatOffsetY = dy * (1 - factor)
+                ctx.dx = dx * (1 - factor)
+                ctx.dy = dy * (1 - factor)
             end
         else
             ctx.floatTimer = (ctx.floatTimer or 0) + dt
@@ -134,12 +134,9 @@ function M:setupDefaultStates(options)
                 end
             end
 
-            ctx.floatOffsetX = 0
-            ctx.floatOffsetY = dy
+            ctx.dx = 0
+            ctx.dy = dy
         end
-
-        ctx.renderOffsetX = ctx.floatOffsetX or 0
-        ctx.renderOffsetY = ctx.floatOffsetY or 0
     end
 
     -- 静止状态（面向左）
