@@ -17,6 +17,10 @@ local RenderTexture = lstg and lstg.RenderTexture or RenderTexture
 ---@field y number @纹理 Y 坐标
 ---@field w number @图像宽度
 ---@field h number @图像高度
+---@field anchorX number @锚点 X 坐标（0~1，默认 0.5 中心）
+---@field anchorY number @锚点 Y 坐标（0~1，默认 0.5 中心）
+---@field offsetX number @相对于锚点的偏移量 X（像素单位，默认 0）
+---@field offsetY number @相对于锚点的偏移量 Y（像素单位，默认 0）
 
 ---@class foundation.WalkImageSystem.AnimationFrame
 ---@field image foundation.WalkImageSystem.ImageFrame @引用的图像帧
@@ -60,7 +64,7 @@ function M:initialize(obj, texture)
 
     -- 设置状态机上下文
     self.stateMachine:setContext("owner", self)
-    
+
     -- 初始化动画附加变换参数
     self.stateMachine:setContext("dx", 0)
     self.stateMachine:setContext("dy", 0)
@@ -76,13 +80,26 @@ end
 ---@param w number @图像宽度
 ---@param h number @图像高度
 ---@param texture string|nil @纹理名称（可选，不指定则使用默认纹理）
-function M:registerFrame(id, x, y, w, h, texture)
+---@param anchorX number|nil @锚点 X（0~1，默认 0.5）
+---@param anchorY number|nil @锚点 Y（0~1，默认 0.5）
+---@param offsetX number|nil @偏移量 X（像素，默认 0）
+---@param offsetY number|nil @偏移量 Y（像素，默认 0）
+function M:registerFrame(id, x, y, w, h, texture, anchorX, anchorY, offsetX, offsetY)
+    anchorX = anchorX or 0.5
+    anchorY = anchorY or 0.5
+    offsetX = offsetX or 0
+    offsetY = offsetY or 0
+    
     self.frames[id] = {
         texture = texture,
         x = x,
         y = y,
         w = w,
         h = h,
+        anchorX = anchorX,
+        anchorY = anchorY,
+        offsetX = offsetX,
+        offsetY = offsetY,
     }
 end
 
@@ -95,7 +112,11 @@ end
 ---@param cols number @列数
 ---@param rows number|nil @行数（默认 1）
 ---@param texture string|nil @纹理名称（可选，不指定则使用默认纹理）
-function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, texture)
+---@param anchorX number|nil @锚点 X（0~1，默认 0.5）
+---@param anchorY number|nil @锚点 Y（0~1，默认 0.5）
+---@param offsetX number|nil @偏移量 X（像素，默认 0）
+---@param offsetY number|nil @偏移量 Y（像素，默认 0）
+function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, texture, anchorX, anchorY, offsetX, offsetY)
     rows = rows or 1
     local index = 1
     for row = 0, rows - 1 do
@@ -106,7 +127,9 @@ function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, textur
                     startX + col * w,
                     startY + row * h,
                     w, h,
-                    texture
+                    texture,
+                    anchorX, anchorY,
+                    offsetX, offsetY
             )
             index = index + 1
         end
@@ -433,9 +456,19 @@ function M:render(damageTime, damageTimeMax)
     local ctxHscale = ctx.hscale or 1
     local ctxVscale = ctx.vscale or 1
     local ctxRot = ctx.rot or 0
-    
-    local x = obj.x + animFrame.dx + ctxDx
-    local y = obj.y + animFrame.dy + ctxDy
+
+    -- 应用锚点和偏移量
+    local anchorX = imgFrame.anchorX or 0.5
+    local anchorY = imgFrame.anchorY or 0.5
+    local offsetX = imgFrame.offsetX or 0
+    local offsetY = imgFrame.offsetY or 0
+
+    -- 计算基于锚点的偏移
+    local anchorOffsetX = (anchorX - 0.5) * imgFrame.w
+    local anchorOffsetY = (anchorY - 0.5) * imgFrame.h
+
+    local x = obj.x + animFrame.dx + ctxDx + offsetX + anchorOffsetX
+    local y = obj.y + animFrame.dy + ctxDy + offsetY + anchorOffsetY
     local w = imgFrame.w * (obj.hscale or 1) * animFrame.hscale * ctxHscale / 2
     local h = imgFrame.h * (obj.vscale or 1) * animFrame.vscale * ctxVscale / 2
     local rot = (obj.rot or 0) + animFrame.rot + ctxRot
