@@ -25,6 +25,7 @@ local RenderTexture = lstg and lstg.RenderTexture or RenderTexture
 ---@field hscale number @水平缩放
 ---@field vscale number @垂直缩放
 ---@field rot number @旋转角度
+---@field duration number @帧持续时间
 
 ---@class foundation.WalkImageSystem.AnimationState
 ---@field frames foundation.WalkImageSystem.AnimationFrame[] @帧序列
@@ -108,21 +109,23 @@ end
 ---注册一个动画状态
 ---@param name string @动画名称
 ---@param frameData (string|number|table)[] @帧数据列表，可以是帧 ID 或包含变换参数的表
----@param interval number|nil @帧间隔（默认 8）
+---@param interval number|nil @帧间隔（默认 8），作为未指定 duration 的帧的默认持续时间
 ---@param loop boolean|nil @是否循环（默认 false）
 ---
 --- frameData 可以是以下格式之一：
 --- 1. 简单格式：{"frame1", "frame2", "frame3"}
 --- 2. 完整格式：{
----      {id = "frame1", dx = 0, dy = 0, hscale = 1, vscale = 1, rot = 0},
----      {id = "frame2", dx = 10, dy = 0, hscale = 1, vscale = 1, rot = 45}
+---      {id = "frame1", dx = 0, dy = 0, hscale = 1, vscale = 1, rot = 0, duration = 8},
+---      {id = "frame2", dx = 10, dy = 0, hscale = 1, vscale = 1, rot = 45, duration = 12}
 ---    }
+--- 3. 混合格式（部分帧指定 duration，其余使用动画的 interval）
 function M:registerAnimation(name, frameData, interval, loop)
     local frames = {}
     local frameIndex = 1
+    local defaultDuration = interval or 8
 
     for i, data in ipairs(frameData) do
-        local frameId, dx, dy, hscale, vscale, rot
+        local frameId, dx, dy, hscale, vscale, rot, duration
 
         if type(data) == "table" then
             frameId = data.id
@@ -131,6 +134,7 @@ function M:registerAnimation(name, frameData, interval, loop)
             hscale = data.hscale or 1
             vscale = data.vscale or 1
             rot = data.rot or 0
+            duration = data.duration or defaultDuration
         else
             frameId = data
             dx = 0
@@ -138,6 +142,7 @@ function M:registerAnimation(name, frameData, interval, loop)
             hscale = 1
             vscale = 1
             rot = 0
+            duration = defaultDuration
         end
 
         local imageFrame = self.frames[frameId]
@@ -149,6 +154,7 @@ function M:registerAnimation(name, frameData, interval, loop)
                 hscale = hscale,
                 vscale = vscale,
                 rot = rot,
+                duration = duration,
             }
             frameIndex = frameIndex + 1
         else
@@ -158,7 +164,7 @@ function M:registerAnimation(name, frameData, interval, loop)
 
     self.animations[name] = {
         frames = frames,
-        interval = interval or 8,
+        interval = defaultDuration,
         loop = not not loop,
     }
 end
@@ -191,6 +197,7 @@ function M:copyAnimation(sourceName, targetName, reverse, mirror)
                     hscale = -sourceFrame.hscale,
                     vscale = sourceFrame.vscale,
                     rot = -sourceFrame.rot,
+                    duration = sourceFrame.duration,
                 }
             else
                 frames[i] = sourceFrame
@@ -208,6 +215,7 @@ function M:copyAnimation(sourceName, targetName, reverse, mirror)
                     hscale = -sourceFrame.hscale,
                     vscale = sourceFrame.vscale,
                     rot = -sourceFrame.rot,
+                    duration = sourceFrame.duration,
                 }
             else
                 frames[i] = sourceFrame  -- AnimationFrame 可以共享，因为它们是不可变的
@@ -251,7 +259,6 @@ function M:updateAnimation(deltaTime)
 
     deltaTime = deltaTime or 1
     local anim = self.currentAnimation
-    local interval = anim.interval
     local frameCount = #anim.frames
 
     -- 非循环动画已经播放完毕，不再更新
@@ -261,16 +268,28 @@ function M:updateAnimation(deltaTime)
 
     self.animationTimer = self.animationTimer + deltaTime
 
-    if self.animationTimer >= interval then
-        self.animationTimer = self.animationTimer - interval
+    -- 循环处理，可能需要跳过多帧
+    while self.animationTimer >= 0 do
+        -- 获取当前帧的持续时间
+        local currentFrameDuration = self.currentFrame and self.currentFrame.duration or anim.interval
+
+        if self.animationTimer < currentFrameDuration then
+            -- 当前帧还未播放完，退出循环
+            break
+        end
+
+        -- 消耗当前帧的时间
+        self.animationTimer = self.animationTimer - currentFrameDuration
 
         -- 非循环动画在最后一帧
         if not anim.loop and self.animationIndex >= frameCount then
             -- 最后一帧已经显示够时间了，标记为完成
             self.animationFinished = true
+            self.animationTimer = 0  -- 重置计时器
             return
         end
 
+        -- 切换到下一帧
         self.animationIndex = self.animationIndex + 1
 
         if self.animationIndex > frameCount then
@@ -278,9 +297,12 @@ function M:updateAnimation(deltaTime)
                 self.animationIndex = 1
             else
                 self.animationIndex = frameCount
+                self.animationTimer = 0  -- 停在最后一帧
+                break
             end
         end
 
+        -- 更新当前帧
         self.currentFrame = anim.frames[self.animationIndex]
     end
 end
