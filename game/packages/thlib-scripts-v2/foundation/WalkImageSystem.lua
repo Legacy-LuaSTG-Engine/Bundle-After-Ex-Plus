@@ -21,6 +21,7 @@ local RenderTexture = lstg and lstg.RenderTexture or RenderTexture
 ---@field anchorY number @锚点 Y 坐标（0~1，默认 0.5 中心）
 ---@field offsetX number @相对于锚点的偏移量 X（像素单位，默认 0）
 ---@field offsetY number @相对于锚点的偏移量 Y（像素单位，默认 0）
+---@field rot number @图像帧旋转角度（默认 0）
 
 ---@class foundation.WalkImageSystem.AnimationFrame
 ---@field image foundation.WalkImageSystem.ImageFrame @引用的图像帧
@@ -73,23 +74,50 @@ function M:initialize(obj, texture)
     self.stateMachine:setContext("rot", 0)
 end
 
----注册一个图像帧
----@param id string|number @帧 ID
----@param x number @纹理 X 坐标
----@param y number @纹理 Y 坐标
----@param w number @图像宽度
----@param h number @图像高度
+---注册一个图像帧（支持位置参数和表参数两种方式）
+---@param id string|number|table @帧 ID 或参数表
+---@param x number|nil @纹理 X 坐标
+---@param y number|nil @纹理 Y 坐标
+---@param w number|nil @图像宽度
+---@param h number|nil @图像高度
 ---@param texture string|nil @纹理名称（可选，不指定则使用默认纹理）
 ---@param anchorX number|nil @锚点 X（0~1，默认 0.5）
 ---@param anchorY number|nil @锚点 Y（0~1，默认 0.5）
 ---@param offsetX number|nil @偏移量 X（像素，默认 0）
 ---@param offsetY number|nil @偏移量 Y（像素，默认 0）
-function M:registerFrame(id, x, y, w, h, texture, anchorX, anchorY, offsetX, offsetY)
+---@param rot number|nil @旋转角度（默认 0）
+---
+--- 表参数格式：{
+---   id = "frameId",
+---   x = 0, y = 0, w = 32, h = 32,
+---   texture = "tex",
+---   anchorX = 0.5, anchorY = 0.5,
+---   offsetX = 0, offsetY = 0,
+---   rot = 0
+--- }
+function M:registerFrame(id, x, y, w, h, texture, anchorX, anchorY, offsetX, offsetY, rot)
+    -- 支持表参数
+    if type(id) == "table" then
+        local params = id
+        id = params.id
+        x = params.x
+        y = params.y
+        w = params.w
+        h = params.h
+        texture = params.texture
+        anchorX = params.anchorX
+        anchorY = params.anchorY
+        offsetX = params.offsetX
+        offsetY = params.offsetY
+        rot = params.rot
+    end
+
     anchorX = anchorX or 0.5
     anchorY = anchorY or 0.5
     offsetX = offsetX or 0
     offsetY = offsetY or 0
-    
+    rot = rot or 0
+
     self.frames[id] = {
         texture = texture,
         x = x,
@@ -100,23 +128,54 @@ function M:registerFrame(id, x, y, w, h, texture, anchorX, anchorY, offsetX, off
         anchorY = anchorY,
         offsetX = offsetX,
         offsetY = offsetY,
+        rot = rot,
     }
 end
 
----注册一组连续的图像帧
----@param idPrefix string @帧 ID 前缀
----@param startX number @起始纹理 X 坐标
----@param startY number @起始纹理 Y 坐标
----@param w number @单帧宽度
----@param h number @单帧高度
----@param cols number @列数
+---注册一组连续的图像帧（支持位置参数和表参数两种方式）
+---@param idPrefix string|table @帧 ID 前缀或参数表
+---@param startX number|nil @起始纹理 X 坐标
+---@param startY number|nil @起始纹理 Y 坐标
+---@param w number|nil @单帧宽度
+---@param h number|nil @单帧高度
+---@param cols number|nil @列数
 ---@param rows number|nil @行数（默认 1）
 ---@param texture string|nil @纹理名称（可选，不指定则使用默认纹理）
 ---@param anchorX number|nil @锚点 X（0~1，默认 0.5）
 ---@param anchorY number|nil @锚点 Y（0~1，默认 0.5）
 ---@param offsetX number|nil @偏移量 X（像素，默认 0）
 ---@param offsetY number|nil @偏移量 Y（像素，默认 0）
-function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, texture, anchorX, anchorY, offsetX, offsetY)
+---@param rot number|nil @旋转角度（默认 0）
+---
+--- 表参数格式：{
+---   idPrefix = "frame",
+---   startX = 0, startY = 0,
+---   w = 32, h = 32,
+---   cols = 4, rows = 2,
+---   texture = "tex",
+---   anchorX = 0.5, anchorY = 0.5,
+---   offsetX = 0, offsetY = 0,
+---   rot = 0
+--- }
+function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, texture, anchorX, anchorY, offsetX, offsetY, rot)
+    -- 支持表参数
+    if type(idPrefix) == "table" then
+        local params = idPrefix
+        idPrefix = params.idPrefix
+        startX = params.startX
+        startY = params.startY
+        w = params.w
+        h = params.h
+        cols = params.cols
+        rows = params.rows
+        texture = params.texture
+        anchorX = params.anchorX
+        anchorY = params.anchorY
+        offsetX = params.offsetX
+        offsetY = params.offsetY
+        rot = params.rot
+    end
+
     rows = rows or 1
     local index = 1
     for row = 0, rows - 1 do
@@ -129,7 +188,8 @@ function M:registerFrameGroup(idPrefix, startX, startY, w, h, cols, rows, textur
                     w, h,
                     texture,
                     anchorX, anchorY,
-                    offsetX, offsetY
+                    offsetX, offsetY,
+                    rot
             )
             index = index + 1
         end
@@ -462,6 +522,7 @@ function M:render(damageTime, damageTimeMax)
     local anchorY = imgFrame.anchorY or 0.5
     local offsetX = imgFrame.offsetX or 0
     local offsetY = imgFrame.offsetY or 0
+    local imgRot = imgFrame.rot or 0
 
     -- 计算基于锚点的偏移
     local anchorOffsetX = (anchorX - 0.5) * imgFrame.w
@@ -471,7 +532,7 @@ function M:render(damageTime, damageTimeMax)
     local y = obj.y + animFrame.dy + ctxDy + offsetY + anchorOffsetY
     local w = imgFrame.w * (obj.hscale or 1) * animFrame.hscale * ctxHscale / 2
     local h = imgFrame.h * (obj.vscale or 1) * animFrame.vscale * ctxVscale / 2
-    local rot = (obj.rot or 0) + animFrame.rot + ctxRot
+    local rot = (obj.rot or 0) + imgRot + animFrame.rot + ctxRot
 
     -- 计算四个顶点（纹理坐标来自图像帧）
     local tx = imgFrame.x

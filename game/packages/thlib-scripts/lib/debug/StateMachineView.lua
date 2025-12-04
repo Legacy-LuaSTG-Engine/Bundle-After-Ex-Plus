@@ -436,9 +436,9 @@ function StateMachineView:layoutStateGraph(machine)
                 for i, transition in ipairs(transitions) do
                     local toState = machine.states[transition.to]
                     if toState then
-                        local arrow = "  ├─→ "
+                        local arrow = "├─→ "
                         if i == #transitions then
-                            arrow = "  └─→ "
+                            arrow = "└─→ "
                         end
 
                         if transition.condition then
