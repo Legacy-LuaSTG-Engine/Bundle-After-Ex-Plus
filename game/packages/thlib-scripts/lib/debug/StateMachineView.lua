@@ -15,33 +15,101 @@ local StateMachineView = {}
 function StateMachineView:getWindowName()
     return "State Machine Debugger"
 end
+
 function StateMachineView:getMenuItemName()
     return "State Machine Debugger"
 end
+
 function StateMachineView:getMenuGroupName()
     return "Tool"
 end
+
 function StateMachineView:getEnable()
     return self.enable
 end
+
 ---@param v boolean
 function StateMachineView:setEnable(v)
     self.enable = v
 end
 
 function StateMachineView:initialize()
-    ---@type foundation.StateMachine|nil
-    self.watching_machine = nil
+    ---@type table<integer, {id: integer, name: string, machine: foundation.StateMachine}>
+    self.watching_machines = {}
+    self.next_id = 1
+    self.selected_machine_id = nil
     self.show_callbacks = true
     self.show_state_transitions = true
     self.auto_scroll = true
     self.selected_state = 0
 end
 
----设置要监视的状态机实例
+---添加要监视的状态机
 ---@param machine foundation.StateMachine
-function StateMachineView:setMachine(machine)
-    self.watching_machine = machine
+---@param name string|nil 状态机的显示名称，如果不提供则使用默认名称
+---@return integer watch_id 监视ID，可用于后续移除
+function StateMachineView:addWatch(machine, name)
+    if not machine then
+        return -1
+    end
+
+    local watch_id = self.next_id
+    self.next_id = self.next_id + 1
+
+    local display_name = name or string.format("StateMachine_%d", watch_id)
+
+    self.watching_machines[watch_id] = {
+        id = watch_id,
+        name = display_name,
+        machine = machine
+    }
+
+    -- 如果这是第一个添加的状态机，自动选中它
+    if not self.selected_machine_id then
+        self.selected_machine_id = watch_id
+    end
+
+    return watch_id
+end
+
+---移除监视的状态机
+---@param watch_id integer
+---@return boolean success 是否成功移除
+function StateMachineView:removeWatch(watch_id)
+    if not self.watching_machines[watch_id] then
+        return false
+    end
+
+    self.watching_machines[watch_id] = nil
+
+    -- 如果移除的是当前选中的状态机，切换到另一个
+    if self.selected_machine_id == watch_id then
+        self.selected_machine_id = nil
+        -- 寻找第一个可用的状态机
+        for id, _ in pairs(self.watching_machines) do
+            self.selected_machine_id = id
+            break
+        end
+    end
+
+    return true
+end
+
+---清除所有监视的状态机
+function StateMachineView:clearWatch()
+    self.watching_machines = {}
+    self.selected_machine_id = nil
+    self.selected_state = 0
+end
+
+---获取当前监视的状态机数量
+---@return integer
+function StateMachineView:getWatchCount()
+    local count = 0
+    for _ in pairs(self.watching_machines) do
+        count = count + 1
+    end
+    return count
 end
 
 function StateMachineView:update()
@@ -50,14 +118,71 @@ end
 function StateMachineView:layout()
     local ImGui = imgui.ImGui
 
-    if not self.watching_machine then
-        ImGui.Text("未设置监视的状态机")
-        ImGui.Text("使用以下代码设置要监视的状态机：")
-        ImGui.Text('lstg_debug.getView("lstg.debug.StateMachineView"):setMachine(your_machine)')
+    -- 显示当前监视的状态机数量
+    local watch_count = self:getWatchCount()
+    ImGui.Text(string.format("监视中的状态机: %d", watch_count))
+
+    if watch_count == 0 then
+        ImGui.Separator()
+        ImGui.TextColored(imgui.ImVec4(1.0, 0.8, 0.2, 1.0), "未添加任何监视的状态机")
+        ImGui.Text("")
+        ImGui.Text("使用以下代码添加要监视的状态机：")
+        ImGui.TextColored(imgui.ImVec4(0.6, 0.8, 1.0, 1.0), 'local view = require("lib.debug.StateMachineView")')
+        ImGui.TextColored(imgui.ImVec4(0.6, 0.8, 1.0, 1.0), 'local id = view:addWatch(your_machine, "显示名称")')
+        ImGui.Text("")
+        ImGui.Text("移除监视：")
+        ImGui.TextColored(imgui.ImVec4(0.6, 0.8, 1.0, 1.0), 'view:removeWatch(id)')
+        ImGui.Text("")
+        ImGui.Text("清除所有监视：")
+        ImGui.TextColored(imgui.ImVec4(0.6, 0.8, 1.0, 1.0), 'view:clearWatch()')
         return
     end
 
-    local machine = self.watching_machine
+    ImGui.SameLine()
+
+    -- 状态机选择器（使用组合框）
+    ImGui.SetNextItemWidth(200)
+    if ImGui.BeginCombo("##MachineSelector", self.selected_machine_id and self.watching_machines[self.selected_machine_id] and self.watching_machines[self.selected_machine_id].name or "选择状态机") then
+        for id, watch_info in pairs(self.watching_machines) do
+            local is_selected = (self.selected_machine_id == id)
+            if ImGui.Selectable(watch_info.name, is_selected) then
+                self.selected_machine_id = id
+                self.selected_state = 0
+            end
+            if is_selected then
+                ImGui.SetItemDefaultFocus()
+            end
+        end
+        ImGui.EndCombo()
+    end
+
+    -- 移除按钮
+    if self.selected_machine_id then
+        ImGui.SameLine()
+        if ImGui.Button("移除此监视") then
+            self:removeWatch(self.selected_machine_id)
+            return
+        end
+    end
+
+    -- 清除全部按钮
+    if watch_count > 0 then
+        ImGui.SameLine()
+        if ImGui.Button("清除全部") then
+            self:clearWatch()
+            return
+        end
+    end
+
+    ImGui.Separator()
+
+    -- 如果没有选中的状态机，提示选择
+    if not self.selected_machine_id or not self.watching_machines[self.selected_machine_id] then
+        ImGui.Text("请选择一个状态机")
+        return
+    end
+
+    local machine = self.watching_machines[self.selected_machine_id].machine
 
     -- 控制选项
     _, self.show_callbacks = ImGui.Checkbox("显示回调函数", self.show_callbacks)
@@ -76,7 +201,8 @@ function StateMachineView:layout()
 
     local currentStateName = machine:getCurrentStateName()
     if currentStateName then
-        ImGui.TextColored(imgui.ImVec4(0.2, 1.0, 0.2, 1.0), string.format("当前状态: %s (ID: %d)", currentStateName, machine.currentStateId))
+        ImGui.TextColored(imgui.ImVec4(0.2, 1.0, 0.2, 1.0),
+                string.format("当前状态: %s (ID: %d)", currentStateName, machine.currentStateId))
     else
         ImGui.TextColored(imgui.ImVec4(1.0, 0.2, 0.2, 1.0), "当前状态: 无")
     end
@@ -91,28 +217,27 @@ function StateMachineView:layout()
 
     -- 使用 TabBar 组织不同的视图
     if ImGui.BeginTabBar("@StateMachineTabBar") then
-
         -- 状态列表标签页
         if ImGui.BeginTabItem("状态列表") then
-            self:layoutStateList()
+            self:layoutStateList(machine)
             ImGui.EndTabItem()
         end
 
         -- 转换列表标签页
         if ImGui.BeginTabItem("转换列表") then
-            self:layoutTransitionList()
+            self:layoutTransitionList(machine)
             ImGui.EndTabItem()
         end
 
         -- 上下文数据标签页
         if ImGui.BeginTabItem("上下文数据") then
-            self:layoutContextData()
+            self:layoutContextData(machine)
             ImGui.EndTabItem()
         end
 
         -- 状态图标签页
         if ImGui.BeginTabItem("状态图") then
-            self:layoutStateGraph()
+            self:layoutStateGraph(machine)
             ImGui.EndTabItem()
         end
 
@@ -120,9 +245,8 @@ function StateMachineView:layout()
     end
 end
 
-function StateMachineView:layoutStateList()
+function StateMachineView:layoutStateList(machine)
     local ImGui = imgui.ImGui
-    local machine = self.watching_machine
 
     ImGui.Text("所有状态:")
     ImGui.Separator()
@@ -199,9 +323,8 @@ function StateMachineView:layoutStateList()
     ImGui.EndChild()
 end
 
-function StateMachineView:layoutTransitionList()
+function StateMachineView:layoutTransitionList(machine)
     local ImGui = imgui.ImGui
-    local machine = self.watching_machine
 
     ImGui.Text("所有转换:")
     ImGui.Separator()
@@ -246,9 +369,8 @@ function StateMachineView:layoutTransitionList()
     ImGui.EndChild()
 end
 
-function StateMachineView:layoutContextData()
+function StateMachineView:layoutContextData(machine)
     local ImGui = imgui.ImGui
-    local machine = self.watching_machine
 
     ImGui.Text("上下文数据:")
     ImGui.Separator()
@@ -287,9 +409,8 @@ function StateMachineView:layoutContextData()
     ImGui.EndChild()
 end
 
-function StateMachineView:layoutStateGraph()
+function StateMachineView:layoutStateGraph(machine)
     local ImGui = imgui.ImGui
-    local machine = self.watching_machine
 
     ImGui.Text("状态转换图:")
     ImGui.Separator()
@@ -342,16 +463,4 @@ StateMachineView:initialize()
 
 lstg_debug.addView("lstg.debug.StateMachineView", StateMachineView)
 
--- 导出全局访问函数，方便用户设置要监视的状态机
-if not _G.StateMachineDebugger then
-    _G.StateMachineDebugger = {}
-end
-
----设置要监视的状态机
----@param machine foundation.StateMachine
-function _G.StateMachineDebugger.setMachine(machine)
-    StateMachineView:setMachine(machine)
-end
-
 return StateMachineView
-
