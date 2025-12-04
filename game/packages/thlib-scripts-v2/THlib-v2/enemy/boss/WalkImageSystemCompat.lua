@@ -144,6 +144,11 @@ function M:setupDefaultStates(options)
         onEnter = function(ctx)
             ctx.owner:playAnimation("idle_left")
             ctx.facing = "left"
+            -- 如果不是从 idle 状态进入的，重置漂浮计时器
+            if not ctx.isInIdle then
+                ctx.floatTimer = 0
+            end
+            ctx.isInIdle = true
         end,
         onUpdate = function(ctx, dt)
             ctx.owner:updateAnimation(dt)
@@ -156,6 +161,11 @@ function M:setupDefaultStates(options)
         onEnter = function(ctx)
             ctx.owner:playAnimation("idle_right")
             ctx.facing = "right"
+            -- 如果不是从 idle 状态进入的，重置漂浮计时器
+            if not ctx.isInIdle then
+                ctx.floatTimer = 0
+            end
+            ctx.isInIdle = true
         end,
         onUpdate = function(ctx, dt)
             ctx.owner:updateAnimation(dt)
@@ -166,6 +176,7 @@ function M:setupDefaultStates(options)
     -- 左移动进入
     sm:registerState("move_left_enter", {
         onEnter = function(ctx)
+            ctx.isInIdle = false
             if ctx.owner:playAnimation("move_left_enter") then
                 ctx.moveEntering = true
             else
@@ -214,6 +225,7 @@ function M:setupDefaultStates(options)
     -- 右移动进入
     sm:registerState("move_right_enter", {
         onEnter = function(ctx)
+            ctx.isInIdle = false
             if ctx.owner:playAnimation("move_right_enter") then
                 ctx.moveEntering = true
             else
@@ -262,6 +274,7 @@ function M:setupDefaultStates(options)
     -- 施法进入
     sm:registerState("cast_enter", {
         onEnter = function(ctx)
+            ctx.isInIdle = false
             local animName = "cast_" .. (ctx.facing or "right") .. "_enter"
             local success = ctx.owner:playAnimation(animName)
             if not success then
