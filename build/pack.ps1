@@ -123,6 +123,11 @@ New-Directory-If-Not-Exist -Path $GameOutput
 New-Directory-If-Not-Exist -Path $ToolOutput
 
 #--------------------------------------------------------------------------------
+# 重新获取一次引擎
+
+& "$PSScriptRoot/../Update-Engine.ps1"
+
+#--------------------------------------------------------------------------------
 # 复制文档
 
 [string] $ReadmeAll = "使用说明（必读）.txt"

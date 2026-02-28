@@ -1,6 +1,10 @@
 # ide & editor
 .vscode/*
 
+# engine cache
+.engine/
+document/engine/
+
 # mod
 game/mod/*
 !game/mod/模组安装说明（必读）.txt
