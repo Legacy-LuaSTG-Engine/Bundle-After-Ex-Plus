@@ -763,8 +763,13 @@ end
 --拖影特效
 --？细节：现有的拖影是通过HGE粒子特效来实现的，无法更改混合模式和颜色，无法更改大小和拖影长度
 
+---@param name string
+local function isSpriteExists(name)
+    return lstg.CheckRes(2, name) ~= nil
+end
+
 function MakeSmear(obj, length, interval, blend, color, size)
-    if IsValid(obj) and ImageList[obj.img] then
+    if IsValid(obj) and obj.img and isSpriteExists(obj.img) then
         length = length or 10
         interval = interval or 1
         blend = blend or ''

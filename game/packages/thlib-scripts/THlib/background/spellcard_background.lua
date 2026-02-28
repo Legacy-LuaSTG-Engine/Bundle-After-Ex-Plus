@@ -1,13 +1,11 @@
 local ipairs = ipairs
 local pairs = pairs
 local table = table
-local unpack = unpack or table.unpack
 local lstg = lstg
 local AttributeProxy = require("foundation.AttributeProxy")
 local emptyFunction = function()
 end
 local emptyColor = lstg.Color(0, 0, 0, 0)
-local fullColor = lstg.Color(255, 255, 255, 255)
 ----------------------------------------
 ---符卡背景基类
 
@@ -223,10 +221,16 @@ local function prepareRenderTexture(self, layers)
         return
     end
     for _, img in ipairs(list) do
+        -- TODO: 过于绿皮的实现方式，如果能直接截取纹理子区域生成新纹理就好了
+        local img_copy = img .. ":sc-bg-copy"
+        if not lstg.CheckRes(2, img_copy) then
+            lstg.CopyImage(img_copy, img)
+            lstg.SetImageCenter(img_copy, 0, 0)
+            lstg.SetImageScale(img_copy, 1)
+        end
+        local w, h = lstg.GetImageSize(img_copy)
         local rt = self.__render_texture[img]
-        local args = ImageList[img]
-        local tex, x, y, w, h = unpack(args)
-        lstg.CreateRenderTarget(rt, w, h)
+        lstg.CreateRenderTarget(rt, w, h, false)
         lstg.PushRenderTarget(rt)
         lstg.SetViewport(0, w, 0, h)
         lstg.SetScissorRect(0, w, 0, h)
@@ -234,11 +238,7 @@ local function prepareRenderTexture(self, layers)
         lstg.SetFog()
         lstg.SetImageScale(1)
         lstg.RenderClear(emptyColor)
-        lstg.RenderTexture(tex, "",
-                { 0, 0, 0.5, x, y + h, fullColor },
-                { w, 0, 0.5, x + w, y + h, fullColor },
-                { w, h, 0.5, x + w, y, fullColor },
-                { 0, h, 0.5, x, y, fullColor })
+        lstg.Render(img_copy, 0, h)
         lstg.PopRenderTarget()
         lstg.SetTextureSamplerState(rt, "linear+wrap")
     end

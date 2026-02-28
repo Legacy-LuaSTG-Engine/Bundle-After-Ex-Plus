@@ -29,32 +29,6 @@ end
 ----------------------------------------
 ---资源载入
 
-ImageList = {}
-ImageSize = {}--由OLC添加，用于储存加载的图片的大小
-OriginalLoadImage = LoadImage
-
-function LoadImage(img, ...)
-    local arg = { ... }
-    ImageList[img] = arg
-    ImageSize[img] = { arg[4], arg[5] }--由OLC添加，储存加载的图片的大小
-    OriginalLoadImage(img, ...)
-end
-
----由OLC添加，获得加载的图片的大小
-function GetImageSize(img)
-    return unpack(ImageSize[img])
-end
-
-function CopyImage(newname, img)
-    if ImageList[img] then
-        LoadImage(newname, unpack(ImageList[img]))
-    elseif img then
-        error("The image \"" .. img .. "\" can't be copied.")
-    else
-        error("Wrong argument #2 (expect string get nil)")
-    end
-end
-
 function LoadImageGroup(prefix, texname, x, y, w, h, cols, rows, a, b, rect)
     for i = 0, cols * rows - 1 do
         LoadImage(prefix .. (i + 1), texname, x + w * (i % cols), y + h * (int(i / cols)), w, h, a or 0, b or 0, rect or false)

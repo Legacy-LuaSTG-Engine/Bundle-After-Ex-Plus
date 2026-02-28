@@ -8,6 +8,11 @@
 
 更新日志：
 
+    TBD
+        THlib
+            移除：移除 CopyImage 方法，现在引擎已内置该方法
+            移除：移除 GetImageSize 方法，现在引擎已内置该方法
+            移除：移除此前为了实现 MakeSmear、CopyImage、GetImageSize 方法声明的全局变量 ImageList、ImageSize 以及全局函数 OriginalLoadImage
     aex+ v0.9.0-alpha.9
         LuaSTG Sub 引擎
             更新到 v0.21.112
