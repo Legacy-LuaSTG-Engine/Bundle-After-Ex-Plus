@@ -1,9 +1,6 @@
 [submodule "game/packages/thlib-resources"]
 	path = game/packages/thlib-resources
 	url = https://github.com/Legacy-LuaSTG-Engine/Unsafe-THlib-Resources.git
-[submodule "document/engine"]
-	path = document/engine
-	url = https://github.com/Legacy-LuaSTG-Engine/LuaSTG-Sub-Documentation
 [submodule "game/plugins/danmaku-recorder"]
 	path = game/plugins/danmaku-recorder
 	url = https://github.com/TonyWu1201/LuaSTG_danmaku_recorder.git
