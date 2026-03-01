@@ -13,3 +13,6 @@
 [submodule "game/packages/community-creations"]
 	path = game/packages/community-creations
 	url = https://github.com/Legacy-LuaSTG-Engine/Community-Creations
+[submodule "game/packages/lua-ffi-math"]
+	path = game/packages/lua-ffi-math
+	url = https://github.com/BAKAOLC/Lua-FFI-Math.git

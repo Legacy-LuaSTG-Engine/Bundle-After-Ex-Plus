@@ -51,6 +51,11 @@
                 "path": "packages/thlib-scripts-v2/"
             },
             {
+                "name": "lua-ffi-math",
+                "type": "directory",
+                "path": "packages/lua-ffi-math/"
+            },
+            {
                 "name": "community-creations",
                 "type": "directory",
                 "path": "packages/community-creations/"
@@ -64,7 +69,7 @@
     "window": {
         "title": "LuaSTG aex+",
         "cursor_visible": true,
-        "allow_window_corner": true
+        "allow_window_corner": false
     },
     "graphics_system": {
         "preferred_device_name": "",
